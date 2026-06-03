@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 import { features } from "process";
 const productSchema = new mongoose.Schema({
+  organization: {type: mongoose.Schema.Types.ObjectId,ref: "User",required: true},
   name: { type: String, required: true },
   description: String,
   price: { type: Number, required: true },
