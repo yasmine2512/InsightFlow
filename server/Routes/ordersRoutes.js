@@ -1,35 +1,45 @@
 import express from "express";
 import Order from "../Models/Order.js";
-import User from "../Models/User.js";
-// import Product from "../Models/Product";
+import Product from "../Models/Product";
 import asyncHandler from "express-async-handler";
 import { verifyTokenAndAdmin, verifyTokenAndAuthorization } from "../Middlewares/JWTauth.js";
+import {getallOrders,gettotalOrders,getcompletedOrders,getordersperday} 
+from "../queries/ordersQueries.js";
+import { getrevenueResult } from "../queries/dashboardQueries.js";
 const router = express.Router();
 export default router; 
 
 /** 
    * @desc show all orders ,total orders,pending orders,completed orders,canceled orders per day 7,orders by status,Average Order Value (AOV)
-   * @route /api/orders/:organisationid
+   * @route /api/orders/:organisationId
    * @method GET
    * @access private
    */  
-router.get("/user/:id",verifyTokenAndAuthorization,asyncHandler(async(req,res)=>{
-   const userId = req.params.id;
-const userOrders = await Order.find({user : userId});
-return res.json(userOrders);
+router.get("/:organizationId",verifyTokenAndAuthorization,asyncHandler(async(req,res)=>{
+   const orgid = req.params.organizationId;
+   const[allOrders,totalOrders,completedOrders,ordersperday,revenueResult] = await Promise.all([
+   getallOrders(orgid),
+   gettotalOrders(orgid),
+   getcompletedOrders(orgid),
+   getordersperday(orgid),
+   getrevenueResult(orgid)
+   ]);
 
-}))
-
+   const revenue = revenueResult[0]?.revenue || 0;
+   const AOV =
+  completedOrders === 0 ? 0 : revenue / completedOrders;
+   return res.status(200).json({ orders :allOrders ,totalOrders :totalOrders,ordersperday:ordersperday,AverageOrderValue:AOV});
+}));
 
 
 /** 
    * @desc create an order
-   * @route /api/orders/:id
+   * @route /api/orders/:organizationId
    * @method POST
    * @access private
    */  
-router.post("/:id", verifyTokenAndAuthorization, asyncHandler(async (req, res) => {
-  const { products, totalprice } = req.body;
+router.post("/:organizationId", verifyTokenAndAuthorization, asyncHandler(async (req, res) => {
+  const { products, totalPrice , customer} = req.body;
   const decremented = [];
 
   for (const item of products) {
@@ -52,26 +62,27 @@ router.post("/:id", verifyTokenAndAuthorization, asyncHandler(async (req, res) =
   }
 
   const order = new Order({
-    user: req.params.id,
+    organization: req.params.organizationId,
+    customer,
     products,
-    totalPrice: totalprice,
+    totalPrice,
+    status : "pending"
   });
 
-  await order.save();
   return res.status(201).json({ message: "Order created", order });
 }));
 
  
 /** 
    * @desc check the order
-   * @route /api/orders/completed/:id
+   * @route /api/orders/:orderId/complete
    * @method PUT
    * @access private
    */  
-router.put("/completed/:id",verifyTokenAndAdmin,asyncHandler(async(req,res)=>{
-   const orderId = req.params.id;
+router.put("/:orderId/complete",verifyTokenAndAuthorization,asyncHandler(async(req,res)=>{
+   const orderId = req.params.orderId;
    const order = await Order.findByIdAndUpdate(orderId,{
-      $set:{status: "completed",}
+      $set:{status: "completed"}
    },{new : true});
    await order.save();
    if (!order) return res.status(404).json({ message: "Order not found" });
@@ -80,16 +91,28 @@ router.put("/completed/:id",verifyTokenAndAdmin,asyncHandler(async(req,res)=>{
  
 /** 
    * @desc deliver order
-   * @route /api/orders/delivered/:id
+   * @route /api/orders/:orderId/cancel
    * @method POST
    * @access private
    */  
-  router.put("/delivered/:id",verifyTokenAndAdmin,asyncHandler(async(req,res)=>{
-   const orderId = req.params.id;
-   const order = await Order.findByIdAndUpdate(orderId,{
-      $set:{status: "delivered",}
+  router.put("/:orderId/cancel",verifyTokenAndAuthorization,asyncHandler(async(req,res)=>{
+   const orderId = req.params.orderId;
+   const order = await Order.findByIdAndUpdate({ _id: req.params.orderId, 
+      status: { $ne: "canceled" }},{
+      $set:{status: "canceled",}
    },{new : true});
-   await order.save();
-   if (!order) return res.status(404).json({ message: "Order not found" });
-   return res.json({ message: "updated to completed", order });
+     if (!order) {
+      return res.status(404).json({
+        message:
+          "Order not found or already canceled"
+      });
+    }
+   await Promise.all(
+      order.products.map(item => {
+        return Product.findByIdAndUpdate(item.product,{
+            $inc: {
+              stock: item.quantity
+            }}); }) );
+
+   return res.json({ message: "updated to canceled", order });
 }))
