@@ -4,6 +4,11 @@ import Order from "../models/Order.js";
 const toObjectId = (id) =>
   new mongoose.Types.ObjectId(id);
 
+
+//number of orders
+export const getOrderscoumnt = async(orgId) =>{
+    return Order.countDocuments({organization : orgId});
+};
 //all orders
 export const getallOrders = async(orgId) =>{
     return Order.find({organization : orgId});

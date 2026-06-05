@@ -10,22 +10,22 @@ import {
   verifyTokenAndAuthorization,
   verifyTokenAndAdmin
 } from '../Middlewares/JWTauth.js'
-import{getrevenueResult, getnorders,getnproducts,getcustomerResult,getrevenuel7m,getordersthisweek,getBSP,getstockalert,getTC,getrecentorders} from "../queries/dashboardQueries.js"
+import{getrevenueResult, getnorders,getnproducts,gettotalcustomers,getrevenuel7m,getordersthisweek,getBSP,getstockalert,getTC,getrecentorders} from "../Queries/dashboardQueries.js"
 
 /** 
  * @desc revenu,norders,nproducts,ncustomers,revenu in last 7 months(month),n ordersin week (day),5 best sellers products,stock alert,monthly recurring revenue (MRR),top 5 customers,recent orders,Monthly Growth Rate
- * @route  /api/dashboard/:organiztionid
+ * @route  /api/dashboard/:id
  * @method GET
  * @access private
  */  
-router.get("/:organizationId",verifyTokenAndAdmin,asyncHandler(async(req,res)=>{
-  const orgid= req.params.organizationId;
+router.get("/:id",verifyTokenAndAdmin,asyncHandler(async(req,res)=>{
+  const orgid= req.params.id;
 
-const [ revenueResult, norders,nproducts,customerResult,revenuel7m,ordersthisweek,BSP,stockalert,TC,recentorders] = await Promise.all([
+const [ revenueResult, norders,nproducts,ncustomers,revenuel7m,ordersthisweek,BSP,stockalert,TC,recentorders] = await Promise.all([
 getrevenueResult(orgid),
 getnorders(orgid),
 getnproducts(orgid),
-getcustomerResult(orgid),
+gettotalcustomers(orgid),
 getrevenuel7m(orgid),
 getordersthisweek(orgid),
 getBSP(orgid),
@@ -34,7 +34,6 @@ getTC(orgid),
 getrecentorders(orgid)
 ]);
 const revenue = revenueResult[0]?.revenue || 0;
-const ncustomers = customerResult[0]?.customers || 0;
 //Monthly Growth Rate
 const currentMonth = revenuel7m[revenuel7m.length - 1];
 const previousMonth = revenuel7m[revenuel7m.length - 2];

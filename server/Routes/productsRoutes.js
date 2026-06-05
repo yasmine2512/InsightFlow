@@ -12,28 +12,35 @@ const router = express.Router();
 
 
 /** 
-   * @desc get all product , top selling broduct , revenu by product chart
-   * @route /api/products/:id
+   * @desc get all product , top selling products with revenu chart
+   * @route /api/products/:organizationId
    * @method GET
-   * @access public
+   * @access private
    */ 
 
 router.get("/:id",verifyTokenAndAuthorization,asyncHandler(async(req,res)=>{
-    const products =await Product.find();
+    const orgid = req.params.id;
+    const products =await Product.find({organization: orgid});
     // const count = await Product.countDocuments(); //for pagination
+
     return res.json({products});
 }))
 
 /** 
    * @desc get product ,its revenu ,unit sold, conversion rate,stock level 
-   * @route /api/products/detail/:productid
+   * @route /api/products/:id/detail/:productid
    * @method GET
    * @access public
    */ 
-  router.get("/detail/:productid", asyncHandler(async (req, res) => {
-  const product = await Product.findById(req.params.productid);
+  router.get("/:id/detail/:productid",verifyTokenAndAuthorization, asyncHandler(async (req, res) => {
+  const orgid= req.params.id;
+  const productid = req.params.productid;  
+  const product = await Product.findOne({_id:productid,organization:orgid});
   if (!product) return res.status(404).json({ message: "Product not found" });
   return res.json({ product });
+  //Conversion Rate=Number of PurchasesNumber of Visitors or Views×100
+//Conversion Rate=Number of Visitors or ViewsNumber of Purchases​×100
+
 }));
 
 /** 
@@ -42,23 +49,23 @@ router.get("/:id",verifyTokenAndAuthorization,asyncHandler(async(req,res)=>{
    * @method POST
    * @access private
    */ 
-router.post("/:id/new-product", verifyTokenAndAdmin, (req, res, next) => {
+router.post("/:id/new-product", verifyTokenAndAuthorization, (req, res, next) => {
   getUpload().single("image")(req, res, next); // ← initialized when request hits
 }, asyncHandler(async (req, res) => {
- 
+ const orgid = req.params.id;
 const {name,price,desc,category,stock} = req.body;
 let features = []
-console.log("file:", req.file);       // check if multer received the file
     try {
       features = JSON.parse(req.body.features)
     } catch (err) {
       return res.status(400).json({ message: "Features must be JSON array" })
     }
 if (!req.file) return res.status(400).json({ message: "Image is required" });
- if (!name || !desc || !price || !stock) {
+ if (!name || !desc ||  price === undefined ||stock === undefined ){
     return res.status(400).json({ message: "Missing required fields" });
   }
 const newproduct = new Product({
+    organization: orgid,
     name,
     price,
     category,
@@ -69,7 +76,7 @@ const newproduct = new Product({
 })
 
 await newproduct.save();
-return res.status(201).json({message: "Product added succesfully"});
+return res.status(201).json({message: "Product added successfully"});
 
 }))
 
@@ -79,8 +86,9 @@ return res.status(201).json({message: "Product added succesfully"});
    * @method DELETE
    * @access private
    */ 
-  router.delete("/:id/product/:productid",verifyTokenAndAdmin,asyncHandler(async(req,res)=>{
-    const product = await Product.findById(req.params.productid);
+  router.delete("/:id/product/:productid",verifyTokenAndAuthorization,asyncHandler(async(req,res)=>{
+    const orgid = req.params.id;
+    const product = await Product.findOne({_id: req.params.productid,organization: orgid});
   if (!product) return res.status(404).json({ message: "Product not found" });
 
   // URL looks like: https://res.cloudinary.com/yourcloud/image/upload/v123/products/abc123.jpg
@@ -88,7 +96,7 @@ return res.status(201).json({message: "Product added succesfully"});
   const publicId = `products/${urlParts[urlParts.length - 1].split(".")[0]}`;
   await cloudinary.uploader.destroy(publicId);
 
-  await Product.deleteOne({ _id: req.params.productid });
+  await Product.deleteOne({ _id: req.params.productid ,organization:orgid});
   return res.status(200).json({ message: "Product deleted successfully" });
   }))
 
@@ -98,12 +106,12 @@ return res.status(201).json({message: "Product added succesfully"});
    * @method PUT
    * @access private
    */ 
-  router.put("/:id/product/:productid", verifyTokenAndAdmin, (req, res, next) => {
+  router.put("/:id/product/:productid", verifyTokenAndAuthorization, (req, res, next) => {
   getUpload().single("image")(req, res, next);
 }, asyncHandler(async (req, res) => {
   const productId = req.params.productid;
-
-  const product = await Product.findById(productId);
+  const orgid = req.params.id;
+  const product = await Product.findOne({_id: productId,organization: orgid});
   if (!product) return res.status(404).json({ message: "Product not found" });
 
   const { name, desc, price, stock, category, features } = req.body;
@@ -138,8 +146,8 @@ return res.status(201).json({message: "Product added succesfully"});
     return res.status(400).json({ message: "No fields to update" });
   }
 
-  const updated = await Product.findByIdAndUpdate(
-    productId,
+  const updated = await Product.findOneAndUpdate(
+    {_id:productId,organization:orgid},
     { $set: updateFields },
     { new: true }
   );

@@ -1,22 +1,24 @@
 import express from "express";
 import Order from "../Models/Order.js";
 import Product from "../Models/Product";
+import Customer from "../Models/Customer.js"
 import asyncHandler from "express-async-handler";
 import { verifyTokenAndAdmin, verifyTokenAndAuthorization } from "../Middlewares/JWTauth.js";
 import {getallOrders,gettotalOrders,getcompletedOrders,getordersperday} 
-from "../queries/ordersQueries.js";
-import { getrevenueResult } from "../queries/dashboardQueries.js";
+from "../Queries/ordersQueries.js";
+import { getrevenueResult } from "../Queries/dashboardQueries.js";
+import { forEachPrimitiveInScene } from "gltf-pipeline/lib/NodeHelpers.js";
 const router = express.Router();
 export default router; 
 
 /** 
    * @desc show all orders ,total orders,pending orders,completed orders,canceled orders per day 7,orders by status,Average Order Value (AOV)
-   * @route /api/orders/:organisationId
+   * @route /api/orders/:id
    * @method GET
    * @access private
    */  
-router.get("/:organizationId",verifyTokenAndAuthorization,asyncHandler(async(req,res)=>{
-   const orgid = req.params.organizationId;
+router.get("/:id",verifyTokenAndAuthorization,asyncHandler(async(req,res)=>{
+   const orgid = req.params.id;
    const[allOrders,totalOrders,completedOrders,ordersperday,revenueResult] = await Promise.all([
    getallOrders(orgid),
    gettotalOrders(orgid),
@@ -34,14 +36,21 @@ router.get("/:organizationId",verifyTokenAndAuthorization,asyncHandler(async(req
 
 /** 
    * @desc create an order
-   * @route /api/orders/:organizationId
+   * @route /api/orders/:id
    * @method POST
    * @access private
    */  
-router.post("/:organizationId", verifyTokenAndAuthorization, asyncHandler(async (req, res) => {
+router.post("/:id", verifyTokenAndAuthorization, asyncHandler(async (req, res) => {
+  const orgid = req.params.id;
   const { products, totalPrice , customer} = req.body;
   const decremented = [];
-
+let found = await Customer.findOne({organization: orgid,$or:[{email: customer.email},{phone: customer.phone}]});
+if (!found){
+found = await Customer.create({
+    organization: orgid,
+    ...customer
+});
+}
   for (const item of products) {
     const updated = await Product.findOneAndUpdate(
       { _id: item.product, stock: { $gte: item.quantity } },
@@ -60,28 +69,27 @@ router.post("/:organizationId", verifyTokenAndAuthorization, asyncHandler(async 
 
     decremented.push(item);
   }
-
   const order = new Order({
-    organization: req.params.organizationId,
-    customer,
+    organization: orgid,
+    customer: found._id,
     products,
     totalPrice,
     status : "pending"
   });
-
-  return res.status(201).json({ message: "Order created", order });
+  await order.save();
+  return res.status(201).json({ message: "Order and customer created", order });
 }));
 
  
 /** 
    * @desc check the order
-   * @route /api/orders/:orderId/complete
+   * @route /api/orders/:id/:orderId/complete
    * @method PUT
    * @access private
    */  
-router.put("/:orderId/complete",verifyTokenAndAuthorization,asyncHandler(async(req,res)=>{
+router.put("/:id/:orderId/complete",verifyTokenAndAuthorization,asyncHandler(async(req,res)=>{
    const orderId = req.params.orderId;
-   const order = await Order.findByIdAndUpdate(orderId,{
+   const order = await Order.findOneAndUpdate(orderId,{
       $set:{status: "completed"}
    },{new : true});
    await order.save();
@@ -91,13 +99,13 @@ router.put("/:orderId/complete",verifyTokenAndAuthorization,asyncHandler(async(r
  
 /** 
    * @desc deliver order
-   * @route /api/orders/:orderId/cancel
+   * @route /api/orders/:id/:orderId/cancel
    * @method POST
    * @access private
    */  
-  router.put("/:orderId/cancel",verifyTokenAndAuthorization,asyncHandler(async(req,res)=>{
+  router.put("/:id/:orderId/cancel",verifyTokenAndAuthorization,asyncHandler(async(req,res)=>{
    const orderId = req.params.orderId;
-   const order = await Order.findByIdAndUpdate({ _id: req.params.orderId, 
+   const order = await Order.findOneAndUpdate({ _id: req.params.orderId, 
       status: { $ne: "canceled" }},{
       $set:{status: "canceled",}
    },{new : true});
@@ -116,3 +124,15 @@ router.put("/:orderId/complete",verifyTokenAndAuthorization,asyncHandler(async(r
 
    return res.json({ message: "updated to canceled", order });
 }))
+
+/** 
+   * @desc create from exel
+   * @route /api/orders/:id
+   * @method POST
+   * @access private
+   */  
+  router.post("/:id",verifyTokenAndAuthorization,asyncHandler(async(req,res)=>{
+   const orgid = req.params.id;
+  
+  
+  }));
