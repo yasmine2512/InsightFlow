@@ -1,13 +1,13 @@
 import express from "express";
 import Order from "../Models/Order.js";
-import Product from "../Models/Product";
+import Product from "../Models/Product.js";
 import Customer from "../Models/Customer.js"
 import asyncHandler from "express-async-handler";
 import { verifyTokenAndAdmin, verifyTokenAndAuthorization } from "../Middlewares/JWTauth.js";
 import {getallOrders,gettotalOrders,getcompletedOrders,getordersperday} 
 from "../Queries/ordersQueries.js";
 import { getrevenueResult } from "../Queries/dashboardQueries.js";
-import { forEachPrimitiveInScene } from "gltf-pipeline/lib/NodeHelpers.js";
+// import { forEachPrimitiveInScene } from "gltf-pipeline/lib/NodeHelpers.js";
 const router = express.Router();
 export default router; 
 

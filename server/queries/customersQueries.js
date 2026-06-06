@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
-import Order from "../Models/Order";
-import Customer from "../Models/Customer";
-import {getnorders,getrevenueResult} from "./dashboardQueries"
+import Order from "../Models/Order.js";
+import Customer from "../Models/Customer.js";
+import {getnorders,getrevenueResult} from "./dashboardQueries.js"
 const toObjectId = (id) =>
   new mongoose.Types.ObjectId(id);
 

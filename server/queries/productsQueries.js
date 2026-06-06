@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
-import Product from "../Models/Product";
-import Order from "../Models/Order";
+import Product from "../Models/Product.js";
+import Order from "../Models/Order.js";
 
 const toObjectId = (id) =>
   new mongoose.Types.ObjectId(id);

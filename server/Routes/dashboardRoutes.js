@@ -10,7 +10,7 @@ import {
   verifyTokenAndAuthorization,
   verifyTokenAndAdmin
 } from '../Middlewares/JWTauth.js'
-import{getrevenueResult, getnorders,getnproducts,gettotalcustomers,getrevenuel7m,getordersthisweek,getBSP,getstockalert,getTC,getrecentorders} from "../Queries/dashboardQueries.js"
+import{getrevenueResult,getMGR, getnorders,getnproducts,gettotalcustomers,getrevenuel7m,getordersthisweek,getBSP,getstockalert,getTC,getrecentorders} from "../Queries/dashboardQueries.js"
 
 /** 
  * @desc revenu,norders,nproducts,ncustomers,revenu in last 7 months(month),n ordersin week (day),5 best sellers products,stock alert,monthly recurring revenue (MRR),top 5 customers,recent orders,Monthly Growth Rate
@@ -21,8 +21,9 @@ import{getrevenueResult, getnorders,getnproducts,gettotalcustomers,getrevenuel7m
 router.get("/:id",verifyTokenAndAdmin,asyncHandler(async(req,res)=>{
   const orgid= req.params.id;
 
-const [ revenueResult, norders,nproducts,ncustomers,revenuel7m,ordersthisweek,BSP,stockalert,TC,recentorders] = await Promise.all([
+const [ revenueResult,MGR, norders,nproducts,ncustomers,revenuel7m,ordersthisweek,BSP,stockalert,TC,recentorders] = await Promise.all([
 getrevenueResult(orgid),
+getMGR(orgid),
 getnorders(orgid),
 getnproducts(orgid),
 gettotalcustomers(orgid),
@@ -34,21 +35,11 @@ getTC(orgid),
 getrecentorders(orgid)
 ]);
 const revenue = revenueResult[0]?.revenue || 0;
-//Monthly Growth Rate
-const currentMonth = revenuel7m[revenuel7m.length - 1];
-const previousMonth = revenuel7m[revenuel7m.length - 2];
-let monthlyGrowthRate = 0;
-if (previousMonth) {
-  if (previousMonth.revenue === 0) {
-    monthlyGrowthRate =
-      currentMonth.revenue > 0 ? 100 : 0;
-  } else {
-    monthlyGrowthRate =
-      ((currentMonth.revenue - previousMonth.revenue) /
-        previousMonth.revenue) * 100;
-  }
-}
-return res.status(200).json({totalOrders: norders ,totalProducts:nproducts ,revenue:revenue,totalcustomers:ncustomers,revenuL7M:revenuel7m,ordersThisWeek:ordersthisweek,bestSellerProducts:BSP,stockAlert:stockalert,topCustomers:TC,recentOrders:recentorders,MGR:monthlyGrowthRate});
+const current = MGR[0]?.currentRevenue || 0;
+const previous = MGR[0]?.previousRevenue || 0;
+
+const growth = previous === 0 ? 0 : ((current - previous) / previous) * 100;
+return res.status(200).json({totalOrders: norders ,totalProducts:nproducts ,revenue:revenue,totalcustomers:ncustomers,revenuL7M:revenuel7m,ordersThisWeek:ordersthisweek,bestSellerProducts:BSP,stockAlert:stockalert,topCustomers:TC,recentOrders:recentorders,MGR:growth});
 
   }))
 

@@ -10,11 +10,30 @@ const toObjectId = (id) =>
 export const getrevenueResult =async (orgId) => {
   return Order.aggregate([{$match:{organization : toObjectId(orgId),status: "completed"}},{$group: {_id: null,revenue: { $sum: "$totalPrice" } }}]);};
 
+//monthly growth rate
+export const getMGR =async(orgId) =>{
+const now = new Date();
+// current month
+const startCurrent = new Date(now.getFullYear(), now.getMonth(), 1);
+const endCurrent = new Date(now);
+// previous month same day range
+const startPrevious = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+const endPrevious = new Date(  now.getFullYear(),  now.getMonth() - 1, now.getDate());
+  return Order.aggregate([{$match:{organization : toObjectId(orgId),status: "completed"}},
+    {$group: {_id: null,
+    currentRevenue: {$sum:{$cond:[{$and: [
+    {$gte:["$createdAt", startCurrent] },{ $lte: ["$createdAt", endCurrent] }]},"$totalPrice",0]
+        }},
+    previousRevenue: {$sum:{$cond: [{ $and: [
+    {$gte: ["$createdAt", startPrevious] },{$lte:["$createdAt",endPrevious]}]},"$totalPrice",0]
+        }}}
+  }]);};
+
 //number of orders and products
 export const getnorders = async (orgId) => {
-  return Order.countDocuments({ organization: orgid });};
+  return Order.countDocuments({ organization: orgId });};
 export const getnproducts =async (orgId) => {
-  return Product.countDocuments({ organization: orgid });};
+  return Product.countDocuments({ organization: orgId });};
 //number of customers
 export const gettotalcustomers= async (orgId) => {
   return Customer.countDocuments({organization: toObjectId(orgId)})};
