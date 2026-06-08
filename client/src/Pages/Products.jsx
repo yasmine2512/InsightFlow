@@ -39,7 +39,7 @@ export default function Orders() {
     }
       try {
       
-        const res = await axios.get(`${API_URL}/api/orders/${id}`, {
+        const res = await axios.get(`${API_URL}/api/products/${id}`, {
           headers: { Authorization: `Bearer ${token}` },
            params: { page: 1,limit: 10}
         })
@@ -51,11 +51,11 @@ export default function Orders() {
         // navigate("/login");
       }
     }
-
-const { data, isLoading, error } = useQuery({ queryKey: ["orders", id], queryFn: fetchProfile, staleTime: 1000 * 60 * 5 });
+const { data, isLoading, error } = useQuery({ queryKey: ["products", id], queryFn: fetchProfile, staleTime: 1000 * 60 * 5 });
 
   if (isLoading) return <div>Loading...</div>
   if (error) return <p>Error loading products</p>;
+
   return (
       <div className="space-y-6">
         <div className="flex items-center justify-between">

@@ -6,12 +6,22 @@ const toObjectId = (id) =>
   new mongoose.Types.ObjectId(id);
 
 //get all products
-export const getallproducts = async(orgid)=>{
-return products =await Product.find({organization:toObjectId(orgid)});
+export const getallproducts = async(orgId,query)=>{
+  const page = parseInt(query.page) || 1;
+  const limit = parseInt(query.limit) || 10;
+  const skip = (page - 1) * limit;
+
+return Product.aggregate([{$match:{organization: toObjectId(orgId)}},
+  {$sort:{createdAt: -1}},
+  { $skip: skip },
+  { $limit: limit }
+]);
 }
 
 //getproducttable
 export const getProductsWithStats = async (orgId,query) => {
+  const now = new Date(); 
+  const startMonth = new Date( now.getFullYear(), now.getMonth(), 1 );
   const page = parseInt(query.page) || 1;
   const limit = parseInt(query.limit) || 10;
   const skip = (page - 1) * limit;

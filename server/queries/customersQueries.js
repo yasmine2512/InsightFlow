@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
 import Order from "../Models/Order.js";
 import Customer from "../Models/Customer.js";
-import {getnorders,getrevenueResult} from "./dashboardQueries.js"
+
 const toObjectId = (id) =>
   new mongoose.Types.ObjectId(id);
 
@@ -9,12 +9,21 @@ const toObjectId = (id) =>
 //number of customers
 export const gettotalcustomers= async (orgId) => {
   return Customer.countDocuments({organization: toObjectId(orgId)})};
+
 //get all customers
-export const getallCustomers = async(orgId)=>{
-    return Customer.countDocuments({organization : orgId});
+export const getallCustomers = async(orgId,query)=>{
+  const page = parseInt(query.page) || 1;
+  const limit = parseInt(query.limit) || 10;
+  const skip = (page - 1) * limit;
+  const match = {organization: toObjectId(orgId)};
+    return Customer.aggregate([{$match: match},
+      {$sort:{createdAt: -1}},
+    { $skip: skip },
+    { $limit: limit }]);
 };
+
 //customers retention rate
-export const getCRR = async(orgid)=>{
+export const getCRR = async(orgId)=>{
   const now = new Date();
   const startCurrent = new Date(now.getFullYear(),now.getMonth(),1);
   const endCurrent = now;

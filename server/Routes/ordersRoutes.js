@@ -19,7 +19,7 @@ export default router;
 router.get("/:id",verifyTokenAndAuthorization,asyncHandler(async(req,res)=>{
    const orgid = req.params.id;
    const[allOrders,totalOrders,completedOrders,ordersbystatus,ordersperday,revenu,orders] = await Promise.all([
-   getallOrders(orgid),
+   getallOrders(orgid,req.query),
    gettotalOrders(orgid),
    getCompletedOrders(orgid),
    getOrdersByStatus(orgid),
@@ -33,9 +33,9 @@ router.get("/:id",verifyTokenAndAuthorization,asyncHandler(async(req,res)=>{
   const currentR = revenu[0]?.currentRevenue || 0;
   const previousR = revenu[0]?.previousRevenue || 0;
   const currentCO = completedOrders[0]?.currentCOrders || 0;
-  const previousCO = completedOrders[0]?.perviousCOrders || 0;
-  const CAOV = currentO === 0 ? 0 : (currentR /currentCO);
-  const PAOV= previousO === 0 ?0 : (previousR/ previousCO);
+  const previousCO = completedOrders[0]?.previousCOrders || 0;
+  const CAOV = currentCO === 0 ? 0 : (currentR /currentCO);
+  const PAOV= previousCO === 0 ?0 : (previousR/ previousCO);
   const AOVgrowth = PAOV === 0 ? 0 : ((CAOV - PAOV) / PAOV) * 100;
   const CFR = currentO === 0 ? 0 : (currentCO / currentO) * 100;
   const PFR = previousO === 0 ? 0 : (previousCO / previousO) * 100;

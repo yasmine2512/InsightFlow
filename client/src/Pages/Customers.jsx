@@ -2,6 +2,10 @@ import DashboardLayout from "../components/Layout";
 import { Search, Filter, Download } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/Input";
+import { useParams ,  useNavigate} from "react-router-dom"
+import { useEffect, useState } from "react"
+import axios from "axios"
+import { useQuery } from "@tanstack/react-query";
 
 const orders = [
   {id: 1, username: "Olivia Martin",email: "olivia@example.com",role:"user", subscription: "Pro Plan ",status :"active",createdAt: "2026-04-02" },
@@ -19,9 +23,39 @@ const statusColor = {
   inactive: "bg-warning/10 text-warning",
 };
 
-export default function Orders() {
+export default function Customers() {
+   const { id } = useParams()
+  const [profile, setProfile] = useState(null)
+  const API_URL = import.meta.env.VITE_API_URL;
+  const navigate = useNavigate();
+
+    const fetchProfile = async () => {
+      const token = localStorage.getItem("token");
+        if (!token) {
+      navigate("/login");
+      return;
+    }
+      try {
+      
+        const res = await axios.get(`${API_URL}/api/customers/${id}`, {
+          headers: { Authorization: `Bearer ${token}` },
+           params: { page: 1,limit: 10}
+        })
+        // setProfile(res.data)
+        console.log(res.data);
+        return res.data;
+      } catch (err) {
+        console.error("Unauthorized or token invalid", err)
+        // navigate("/login");
+      }
+    }
+const { data, isLoading, error } = useQuery({ queryKey: ["customers", id], queryFn: fetchProfile, staleTime: 1000 * 60 * 5 });
+
+
+
+  if (isLoading) return <div>Loading...</div>
+  if (error) return <p>Error loading products</p>;
   return (
-    <DashboardLayout>
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
@@ -71,6 +105,5 @@ export default function Orders() {
           </div>
         </div>
       </div>
-    </DashboardLayout>
   );
 }

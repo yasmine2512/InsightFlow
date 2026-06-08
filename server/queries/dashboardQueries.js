@@ -91,29 +91,34 @@ export const getrevenuel7m = async (orgId) => {
 export const getordersthisweek = async (orgId) => {
   const lastweek = new Date();
   lastweek.setDate(lastweek.getDate() - 7);
-  return Order.aggregate([{$match:{organization : toObjectId(orgId), createdAt : {$gte: lastweek},status: "p"}},{$group:{_id :{$dayOfMonth :"$createdAt"},orders: { $sum: 1 } }},{$project:{_id:0,day:"$_id",orders:1}},{$sort:{day: 1}}]);};
+  return Order.aggregate([{$match:{organization : toObjectId(orgId), createdAt : {$gte: lastweek},status: {$ne:"canceled"}}},{$group:{_id :{$dayOfMonth :"$createdAt"},orders: { $sum: 1 } }},{$project:{_id:0,day:"$_id",orders:1}},{$sort:{day: 1}}]);};
 
 //5 best seller products
 export const getBSP =  async (orgId) => {
   return Order.aggregate([{$match:{organization : toObjectId(orgId),status: "completed"}},
-    ,{$unwind:"$products"},
+  {$unwind:"$products"},
   {$group:{_id: "$products.product",totalSold: { $sum: "$products.quantity" }}},
-    { $sort: { totalSold: -1 } },
+  { $sort: { totalSold: -1 } },
   { $limit: 5 },
-    {
+  {
   $lookup: {
     from: "products",
     localField: "_id",
     foreignField: "_id",
     as: "product"
-  }
-},{$unwind:"$products"}
+  }},
+  {$unwind:"$product"}
 ]);};
 
 
 //stock alert
 export const getstockalert = async (orgId) =>{
-  return Product.countDocuments({organization :toObjectId(orgId) ,stock:{$lte:10}});};
+  return Product.aggregate([
+    {$match: {organization: toObjectId(orgId)}},
+    {$group: { _id: null,lowStock: {$sum: { $cond: [{ $lte: ["$stock", 10] }, 1, 0]}},
+        outOfStock: { $sum: {$cond: [{ $eq: ["$stock", 0] }, 1, 0]}}}}
+  ]);
+};
 
 //top 5 customers
 export const getTC = async (orgId) =>{

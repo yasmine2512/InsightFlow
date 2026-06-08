@@ -5,8 +5,17 @@ const toObjectId = (id) =>
   new mongoose.Types.ObjectId(id);
 
 //all orders
-export const getallOrders = async(orgId) =>{
-    return Order.find({organization : orgId});
+export const getallOrders = async(orgId,query) =>{
+  const page = parseInt(query.page) || 1;
+  const limit = parseInt(query.limit) || 10;
+  const skip = (page - 1) * limit;
+  const match = {organization: toObjectId(orgId)};
+  if (query.status) {match.status = query.status;}
+    return Order.aggregate([{$match: match},
+      {$sort:{createdAt: -1}},
+    { $skip: skip },
+    { $limit: limit }
+    ]);
 };
 
 //total orders

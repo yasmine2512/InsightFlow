@@ -33,7 +33,6 @@ export function verifyTokenAndAuthorization(req, res, next) {
 // ================= ADMIN =================
 export function verifyTokenAndAdmin(req, res, next) {
   verifyToken(req, res, () => {
-    console.log(req.user.isadmin);
     if (req.user.isadmin) {
       next();
     } else {

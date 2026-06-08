@@ -4,12 +4,50 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { useParams ,  useNavigate} from "react-router-dom"
 import { useEffect, useState } from "react"
 import axios from "axios"
+import { useQuery } from "@tanstack/react-query";
 
+
+export default function Dashboard() {
+  const { id } = useParams()
+  const [profile, setProfile] = useState(null)
+  const API_URL = import.meta.env.VITE_API_URL;
+  const navigate = useNavigate();
+
+    const fetchProfile = async () => {
+      const token = localStorage.getItem("token");
+        if (!token) {
+      navigate("/login");
+      return;
+    }
+      try {
+      
+        const res = await axios.get(`${API_URL}/api/dashboard/${id}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        })
+        // setProfile(res.data)
+        console.log(res.data);
+        return res.data;
+      } catch (err) {
+        console.error("Unauthorized or token invalid", err)
+        // navigate("/login");
+      }
+    }
+const { data, isLoading, error } = useQuery({ queryKey: ["overview", id], queryFn: fetchProfile, staleTime: 1000 * 60 * 5 });
+  
+ 
+
+  if (isLoading) return <div>Loading...</div>
+  if (error) return <p>Error loading products</p>;
+  const Rgrowth = `${data.revenugrowth>= 0 ? "+" : ""}${data.revenugrowth.toFixed(1)}% from last month`;
+  const Ogrowth = `${data.ordersgrowth>= 0 ? "+" : ""}${data.ordersgrowth.toFixed(1)}% from last month`;
+  const lowstock = data.stockAlert[0].lowStock;
+  const outofstock = data.stockAlert[0].outOfStock;
+  const Cgrowth = `${data.customersgrowth>= 0 ? "+" : ""}${data.customersgrowth.toFixed(1)}% from last month`;
 const stats = [
-  { label: "Revenue", value: "$48,250", change: "+12.5%", up: true, icon: DollarSign },
-  { label: "Orders", value: "1,245", change: "+8.2%", up: true, icon: ShoppingCart },
-  { label: "Products", value: "356", change: "+3.1%", up: true, icon: Package },
-  { label: "Customers", value: "8,420", change: "-2.4%", up: false, icon: Users },
+  { label: "Revenue", value: "$"+ data.revenue,change: Rgrowth, up: data.revenugrowth>= 0, icon: DollarSign },
+  { label: "Orders", value: data.orders, change: Ogrowth, up: data.ordersgrowth>= 0, icon: ShoppingCart },
+  { label: "Stock Alert", value: lowstock, change:outofstock +" are out of stock", up: true, icon: Package },
+  { label: "Customers", value: data.customers, change: Cgrowth, up: data.customersgrowth>= 0 , icon: Users },
 ];
 
 const revenueData = [
@@ -38,39 +76,7 @@ const recentOrders = [
   { id: "#3207", customer: "Sofia Davis", product: "Pro Plan", amount: "$49.00", status: "Pending" },
   { id: "#3206", customer: "Lucas Brown", product: "Starter Kit", amount: "$29.00", status: "Completed" },
 ];
-
-export default function Dashboard() {
-  const { id } = useParams()
-  const [profile, setProfile] = useState(null)
-  const API_URL = import.meta.env.VITE_API_URL;
-  const navigate = useNavigate();
-  useEffect(() => {
-    const fetchProfile = async () => {
-      const token = localStorage.getItem("token");
-        if (!token) {
-      navigate("/login");
-      return;
-    }
-      try {
-      
-        const res = await axios.get(`${API_URL}/api/users/${id}`, {
-          headers: { Authorization: `Bearer ${token}` }
-        })
-        setProfile(res.data)
-        console.log(res.data);
-      } catch (err) {
-        console.error("Unauthorized or token invalid", err)
-        navigate("/login");
-      }
-    }
-
-    fetchProfile()
-  }, [id])
-
-  if (!profile) return <div>Loading...</div>
-
   return (
-    <DashboardLayout>
       <div className="space-y-6">
         <div>
           <h1 className="font-heading text-2xl font-bold">Dashboard</h1>
@@ -90,7 +96,7 @@ export default function Dashboard() {
               <div className="font-heading text-2xl font-bold">{s.value}</div>
               <div className={`flex items-center gap-1 text-xs mt-1 ${s.up ? "text-success" : "text-destructive"}`}>
                 {s.up ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
-                {s.change} from last month
+                {s.change} 
               </div>
             </div>
           ))}
@@ -207,6 +213,5 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
-    </DashboardLayout>
   );
 }

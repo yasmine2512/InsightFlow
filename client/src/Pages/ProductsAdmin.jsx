@@ -8,16 +8,17 @@ import { useParams ,useNavigate } from "react-router-dom";
 import axios from "axios";
 import { useAuth } from "../context/AuthContext";
 import AddProductPopup from "./AddProduct";
+import { useQuery } from "@tanstack/react-query";
 
 export default function Products() {
   const { id } = useParams()
   const{user}= useAuth();
   const isAdmin = user?.isAdmin;
    const [open, setOpen] = useState(false)
-   const [products, setProducts] = useState(null)
+  //  const [products, setProducts] = useState(null)
     const API_URL = import.meta.env.VITE_API_URL;
     const navigate = useNavigate();
-     useEffect(() => {
+  
        const fetchProducts = async () => {
          const token = localStorage.getItem("token");
            if (!token) {
@@ -25,23 +26,26 @@ export default function Products() {
          return;
        }
          try {
-           const res = await axios.get(`${API_URL}/api/products/${id}`, {
-             headers: { Authorization: `Bearer ${token}` }
+           const res = await axios.get(`${API_URL}/api/products/${id}/cataloge`, {
+             headers: { Authorization: `Bearer ${token}` },
+             params: { page: 1,limit: 10}
            })
-           setProducts(res.data.products);
+          //  setProducts(res.data.products);
+          return res.data;
          } catch (err) {
            console.error("Unauthorized or token invalid", err)
-           navigate("/login");
+          //  navigate("/login");
          }
        }
    
-       fetchProducts()
-     }, [id])
-   
-     if (!products) return <div>Loading...</div>
+  const { data, isLoading, error } = useQuery({ queryKey: ["catalog", id], queryFn: fetchProducts, staleTime: 1000 * 60 * 5 });
+
+  if (isLoading) return <div>Loading...</div>
+  if (error) return <p>Error loading products</p>;
+   const products = data.products;
+
 
   return (
-    <DashboardLayout>
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
@@ -83,6 +87,5 @@ export default function Products() {
           ))}
         </div>
       </div>
-    </DashboardLayout>
   );
 }

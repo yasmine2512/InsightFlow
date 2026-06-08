@@ -7,7 +7,7 @@ import {
   verifyTokenAndAdmin
 } from '../Middlewares/JWTauth.js'
 import { getUpload, cloudinary } from "../Middlewares/Multer.js";
-import {getProductsWithStats,getActiveProductsGrowth,getProductKPIs,gettopproducts}
+import {getProductsWithStats,getActiveProductsGrowth,getProductKPIs,gettopproducts, getallproducts}
  from "../Queries/productsQueries.js"
 const router = express.Router();
 
@@ -23,16 +23,29 @@ const router = express.Router();
 router.get("/:id",verifyTokenAndAuthorization,asyncHandler(async(req,res)=>{
     const orgid = req.params.id;
     const [products,activeproducts,productKPI,topproducts] =await Promise.all([
-    getProductKPIs(orgid,req.query),
+    getProductsWithStats(orgid,req.query),
     getActiveProductsGrowth(orgid),
     getProductKPIs(orgid),
     gettopproducts(orgid)
     ]);
-    const ATM =  activeproducts[0]?.activeThisMonth || 0;
-    const ALM =  activeproducts[0]?.activeLastMonth || 0;
+    const ATM = activeproducts?.activeThisMonth || 0; 
+    const ALM = activeproducts?.activeLastMonth || 0;
     const growth = ALM === 0? 0: ((ATM - ALM) / ALM) * 100;
-    return res.status(200).json({productslist:products,activeproducts:ATM,growth:growth,productsKPI:productsKPI});
+    return res.status(200).json({productslist:products,activeproducts:ATM,growth:growth,productsKPI:productKPI});
 }))
+
+/** 
+   * @desc get all product , top selling products with revenu chart
+   * @route /api/products/:organizationId
+   * @method GET
+   * @access private
+   */ 
+
+router.get("/:id/cataloge",verifyTokenAndAuthorization,asyncHandler(async(req,res)=>{
+    const orgid = req.params.id;
+  const products = await getallproducts(orgid,req.query);
+  res.status(200).json({products});
+  }));
 
 /** 
    * @desc get product ,its revenu ,unit sold, conversion rate,stock level 

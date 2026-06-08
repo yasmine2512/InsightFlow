@@ -1,10 +1,10 @@
-import { Link, useLocation } from "react-router-dom";
-import { LayoutDashboard, Package, ShoppingCart, CreditCard, Settings,Users, LogOut, Menu, X } from "lucide-react";
+import { Link, useLocation,Outlet } from "react-router-dom";
+import { LayoutDashboard, Package,GalleryVertical , ShoppingCart, CreditCard, Settings,Users, LogOut, Menu, X } from "lucide-react";
 import { useState ,useEffect} from "react";
 import { cn } from "../lib/utils";
 import { useAuth } from "../context/AuthContext";
 
-export default function DashboardLayout({ children }) {
+export default function DashboardLayout() {
 
   const location = useLocation();
   const [open, setOpen] = useState(false);
@@ -14,9 +14,10 @@ const userId =localStorage.getItem("userId");
 const navItems = [
   { label: "Dashboard", icon: LayoutDashboard, to: `/${userId}/dashboard`, adminOnly: true  },
   { label: "Products", icon: Package, to: `/${userId}/products`},
-  { label: "Orders", icon: ShoppingCart, to: "/orders", adminOnly: true  },
+  { label: "Catalog", icon: GalleryVertical , to: `/${userId}/cataloge`},
+  { label: "Orders", icon: ShoppingCart, to: `/${userId}/orders`, adminOnly: true  },
   { label: "Cart", icon: ShoppingCart, to: `/${userId}/cart`, userOnly: true},
-  { label: "Users", icon: Users, to: "/users", adminOnly: true },
+  { label: "Customers", icon: Users, to: `/${userId}/customers`, adminOnly: true },
   { label: "Subscriptions", icon: CreditCard, to: "/subscriptions" , adminOnly: true },
   { label: "Settings", icon: Settings, to: "/settings"},
 ];
@@ -79,7 +80,10 @@ const navItems = [
           <div className="flex-1" />
           <div className="w-8 h-8 rounded-full gradient-primary flex items-center justify-center text-xs font-bold text-primary-foreground">JD</div>
         </header>
-        <main className="flex-1 p-6 animate-fade-in">{children}</main>
+        <main className="flex-1 p-6 animate-fade-in">
+          <Outlet />
+          </main>
+        
       </div>
     </div>
   );

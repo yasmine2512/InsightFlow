@@ -7,7 +7,6 @@ import { Separator } from "../components/ui/separator";
 
 export default function SettingsPage() {
   return (
-    <DashboardLayout>
       <div className="space-y-6 max-w-2xl">
         <div>
           <h1 className="font-heading text-2xl font-bold">Settings</h1>
@@ -72,6 +71,5 @@ export default function SettingsPage() {
           </Button>
         </div>
       </div>
-    </DashboardLayout>
   );
 }

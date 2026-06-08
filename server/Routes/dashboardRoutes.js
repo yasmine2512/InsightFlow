@@ -23,9 +23,8 @@ router.get("/:id",verifyTokenAndAdmin,asyncHandler(async(req,res)=>{
 
 const [MGR,orders,customers,revenuel7m,ordersthisweek,BSP,stockalert,TC,recentorders] = await Promise.all([
 getMGR(orgid),
-getorders(orgid),
-getcustomers(orgid),
-gettotalcustomers(orgid),
+getOrders(orgid),
+getCustomers(orgid),
 getrevenuel7m(orgid),
 getordersthisweek(orgid),
 getBSP(orgid),

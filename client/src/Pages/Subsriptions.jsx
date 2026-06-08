@@ -32,7 +32,6 @@ const statusColor = {
 
 export default function Subscriptions() {
   return (
-    <DashboardLayout>
       <div className="space-y-6">
         <div>
           <h1 className="font-heading text-2xl font-bold">Subscriptions</h1>
@@ -108,6 +107,5 @@ export default function Subscriptions() {
           </div>
         </div>
       </div>
-    </DashboardLayout>
   );
 }
