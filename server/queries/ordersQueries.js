@@ -4,11 +4,6 @@ import Order from "../models/Order.js";
 const toObjectId = (id) =>
   new mongoose.Types.ObjectId(id);
 
-
-//number of orders
-export const getOrderscoumnt = async(orgId) =>{
-    return Order.countDocuments({organization : orgId});
-};
 //all orders
 export const getallOrders = async(orgId) =>{
     return Order.find({organization : orgId});
@@ -18,21 +13,34 @@ export const getallOrders = async(orgId) =>{
 export const gettotalOrders = async(orgId)=>{
     return Order.countDocuments({organization : orgId});
 };
-//pending orders
-export const getpendingOrders = async(orgId)=>{
-    return Order.countDocuments({organization : orgId,status : "pending"});
-}
-//completed orders
-export const getcompletedOrders = async(orgId)=>{
-    return Order.countDocuments({organization : orgId,status : "completed"});
-}
-// canceled orders 
-export const getcanceledOrders = async(orgId)=>{
-    return Order.countDocuments({organization : orgId,status : "canceled"});
-}
+//completed orders 
+export const getCompletedOrders =async(orgId) =>{
+const now = new Date();
+const startCurrent = new Date(now.getFullYear(), now.getMonth(), 1);
+const endCurrent = new Date(now);
+const startPrevious = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+const endPrevious = new Date(  now.getFullYear(),  now.getMonth() - 1, now.getDate());
+  return Order.aggregate([{$match:{organization : toObjectId(orgId),status:"completed"}},
+    {$group: {_id: null,
+    currentCOrders: {$sum:{$cond:[{$and: [
+    {$gte:["$createdAt", startCurrent] },{ $lte: ["$createdAt", endCurrent] }]},1,0]
+        }},
+    previousCOrders: {$sum:{$cond: [{ $and: [
+    {$gte: ["$createdAt", startPrevious] },{$lte:["$createdAt",endPrevious]}]},1,0]
+        }}}
+  }]);};
+
+//orders by status
+export const getOrdersByStatus = async (orgId) => {
+  const now = new Date();
+  const startMonth = new Date( now.getFullYear(), now.getMonth(),1);
+return Order.aggregate([{$match:{organization:toObjectId(orgId),createdAt: { $gte: startMonth }}},
+ { $group: {_id: "$status",count: { $sum: 1 }}}]);};
+
 //orders per day (7 days)
 export const getordersperday = async(orgId)=>{
     const last7days = new Date();
     last7days.setDate(last7days.getDate() - 7);
-    return Order.aggregate([{$match:{organization: toObjectId(orgId),createdAt:{$gte : last7days} }},{$group:{_id : {$dayOfMonth :"$createdAt"},orders : {$sum: 1}}},{$project:{_id:0,day:"$_id",orders:1}},{$sort:{day: 1}}]);
+    return Order.aggregate([{$match:{organization: toObjectId(orgId),createdAt:{$gte : last7days} }},{$group:{_id : {$dateToString: {format: "%Y-%m-%d",date: "$createdAt"}},
+    orders : {$sum: 1}}},{$project:{_id:0,day:"$_id",orders:1}},{$sort:{day: 1}}]);
 }

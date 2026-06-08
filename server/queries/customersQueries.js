@@ -6,32 +6,59 @@ const toObjectId = (id) =>
   new mongoose.Types.ObjectId(id);
 
 
-//average order value
-export const getAOV = async(orgid)=>{
-const [ revenueResult, norders] = await Promise.all([
-getrevenueResult(orgid),
-getnorders(orgid)
-]);
-const revenue = revenueResult[0]?.revenue || 0;
-if(norders != 0){return revenue/norders} else {return 0}
-
-}
+//number of customers
+export const gettotalcustomers= async (orgId) => {
+  return Customer.countDocuments({organization: toObjectId(orgId)})};
+//get all customers
+export const getallCustomers = async(orgId)=>{
+    return Customer.countDocuments({organization : orgId});
+};
 //customers retention rate
 export const getCRR = async(orgid)=>{
- const result = await Order.aggregate([
-    {$match:{organization: toObjectId(orgid),status: "completed" }},
-    {$group: { _id: "$customer", orderCount: { $sum: 1 }}},
-    {$group: {_id: null,totalCustomers: { $sum: 1 },returningCustomers: {
-          $sum: {$cond: [  { $gte: ["$orderCount", 2] },1,0]} }} },
-    {$project: {_id: 0,retentionRate: {$divide: ["$returningCustomers","$totalCustomers"]} }}
-]);
-
-  return result[0] || {
-    retentionRate: 0
-  };
+  const now = new Date();
+  const startCurrent = new Date(now.getFullYear(),now.getMonth(),1);
+  const endCurrent = now;
+  const startPrevious = new Date(now.getFullYear(),now.getMonth() - 1,1);
+  const endPrevious = new Date(now.getFullYear(),now.getMonth() - 1,now.getDate());
+  return Order.aggregate([{$match:{organization: toObjectId(orgId),status: "completed"}},
+    {$facet: {
+    current:[{$match: {createdAt: {$gte: startCurrent,$lte: endCurrent}}},
+    {$group: {_id: "$customer",orders: { $sum: 1 }}},
+    {$group: {_id: null,totalCustomers: { $sum: 1 },
+    returningCustomers: {$sum: {$cond: [{ $gte: ["$orders", 2] },1,0]} }}}],
+    previous: [{$match: {createdAt: {$gte: startPrevious,$lte: endPrevious}}},
+    {$group: {_id: "$customer",orders: { $sum: 1 }}},
+    {$group: {_id: null,totalCustomers: { $sum: 1 },
+    returningCustomers: {$sum: {$cond: [{ $gte: ["$orders", 2] },1,0]}}}}]}} ]);
 }
+
+//active Customers This Month
+export const getActiveCustomers = async (orgId) => {
+  const now = new Date();
+  const startCurrent = new Date(now.getFullYear(),now.getMonth(),1);
+  const endCurrent = now;
+  const startPrevious = new Date(now.getFullYear(),now.getMonth() - 1,1);
+  const endPrevious = new Date(now.getFullYear(),now.getMonth() - 1,now.getDate());
+  const result = await Order.aggregate([
+    {$match:{organization: toObjectId(orgId),status: { $ne: "canceled" }}},
+    {$facet: {
+    current: [{$match: {createdAt: {$gte: startCurrent,$lte: endCurrent}}},
+    {$group: {_id: "$customer"}},{ $count: "value"}],
+    previous: [{$match: {createdAt: {$gte: startPrevious,$lte: endPrevious}}},
+    {$group: {_id: "$customer"}},{ $count: "value"}]}}
+  ]);
+  return result[0];};
+
+
+//Average CLV
+export const getAvgCLV = async (orgId) => {
+  return Order.aggregate([{$match: {organization: toObjectId(orgId),status: "completed"}},
+    {$group: {_id: "$customer",totalSpent: { $sum: "$totalPrice" }}},
+    {$group: {_id: null,avgCLV: { $avg: "$totalSpent" }}}]);
+};
+
 //new customers last 7 months
-export const getgrowth = async(orgid)=>{
+export const getCLM = async(orgid)=>{
 const sevenMonthsAgo = new Date();
 sevenMonthsAgo.setMonth(sevenMonthsAgo.getMonth() - 7);
 return Customer.aggregate([
@@ -48,10 +75,4 @@ return Order.aggregate([{$match:{organization : toObjectId(orgid),status: "compl
     {$bucket: {groupBy: "$totalSpent",boundaries: [0, 100, 500, 1000, 5000],
     default: "5000+",output: { count: { $sum: 1 }}}}
 ])
-}
-
-// revenu per customer ,customer Lifetime Value (CLV)
-export const getCLV = async(orgid)=>{
-return Order.aggregate([{$match:{organization : toObjectId(orgid),status: "completed"}},
-    {$group:{_id: "$customer",totalSpent: { $sum: "$totalPrice" }}}])
 }

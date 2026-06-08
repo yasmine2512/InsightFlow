@@ -7,8 +7,111 @@ const toObjectId = (id) =>
 
 //get all products
 export const getallproducts = async(orgid)=>{
-return products =await Product.find({organization: orgid});
+return products =await Product.find({organization:toObjectId(orgid)});
 }
+
+//getproducttable
+export const getProductsWithStats = async (orgId,query) => {
+  const page = parseInt(query.page) || 1;
+  const limit = parseInt(query.limit) || 10;
+  const skip = (page - 1) * limit;
+  const match = {organization: toObjectId(orgId)};
+  if (query.category) {match.category = query.category;}
+  if (query.stock === "low") {match.stock = { $lte: 10 };}
+  return Product.aggregate([{$match: match },
+    {$lookup: {
+        from: "orders",
+        localField: "_id",
+        foreignField: "products.product",
+        as: "orders"}},
+    {$unwind: {path: "$orders",preserveNullAndEmptyArrays: true}},
+    {$unwind: {path: "$orders.products",preserveNullAndEmptyArrays: true}},
+    {$match: {$expr: {$or: [
+             { $eq: ["$orders.products.product", "$_id"] },
+             { $eq: ["$orders", null] }] }}},
+    {$group: { _id: "$_id",
+        name: { $first: "$name" },
+        price: { $first: "$price" },
+        stock: { $first: "$stock" },
+        category: { $first: "$category" },
+        sold: {$sum: {$ifNull: ["$orders.products.quantity", 0]}},
+        revenue: {$sum: {$multiply: [
+              { $ifNull: ["$orders.products.quantity", 0] },
+              { $ifNull: ["$orders.products.priceAtPurchase", 0] }]}},
+        soldThisMonth: {$sum: {$cond: [
+              { $gte: ["$orders.createdAt", startMonth] },
+              { $ifNull: ["$orders.products.quantity", 0] },0]}},
+         }},
+    {$addFields: {isActive: { $gt: ["$soldThisMonth", 0] }}}, 
+    ...(query.active === "true"? [{ $match: { isActiveThisMonth: true } }]: []),         
+    {$sort: (() => {
+        switch (query.sort) {
+          case "price_asc":
+            return { price: 1 };
+          case "price_desc":
+            return { price: -1 };
+          case "sold_desc":
+            return { sold: -1 };
+          case "revenue_desc":
+          default:
+            return { revenue: -1 };}})()},
+    { $skip: skip },
+    { $limit: limit }        
+  ]);
+};
+
+
+//1 product
+// export const getproductdetails = async(orgid,prodid)=>{
+// return Product.findOne({_id:prodid,organization:orgid});
+// }
+
+//revenu of a product,unit sold
+// export const getproductrevenu = async(orgid,prodid)=>{
+// return Order.aggregate([{$match:{organization:toObjectId(orgid),status:{$ne:"canceled"}}},{$unwind:"$products"},
+//     {$match:{"products.product" : toObjectId(prodid)}},
+//     {$group:{_id: "$products.product", revenue: {$sum: {$multiply: [
+//           "$products.quantity", "$products.priceAtPurchase"]  }},totalSold:{$sum:"$products.quantity"}}},
+//       {$project:{_id: 0,revenue: 1,totalSold:1}}
+// ])
+// }
+
+//active products number
+export const getActiveProductsGrowth = async (orgId) => {
+  const now = new Date();
+  const startCurrent = new Date(now.getFullYear(), now.getMonth(), 1);
+  const startPrevious = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  const endPrevious = new Date(now.getFullYear(), now.getMonth(), 0);
+  const result = await Order.aggregate([
+    {$match: {organization: toObjectId(orgId),status: "completed"} },
+    {$unwind: "$products"},{$group: {
+        _id: "$products.product",
+        current: {$sum: {$cond: [{ $gte: ["$createdAt", startCurrent] },1,0 ]}},
+        previous: { $sum: {$cond: [{$and: [{ $gte: ["$createdAt", startPrevious] },
+                  { $lte: ["$createdAt", endPrevious] }]},1,0]}}
+      }},
+    {$project:{isActiveCurrent:{ $gt:["$current",0] },isActivePrevious:{ $gt: ["$previous", 0]}}},
+    {$group: {
+        _id: null,
+        activeThisMonth: { $sum: { $cond: ["$isActiveCurrent", 1, 0] }},
+        activeLastMonth: {$sum: { $cond: ["$isActivePrevious", 1, 0] }}
+      }}]);
+  return result[0] || {activeThisMonth: 0,activeLastMonth: 0 };
+};
+
+//inventory value,low stock , out of stock
+export const getProductKPIs = async (orgId) => {
+  return Product.aggregate([
+    {$match: {organization: toObjectId(orgId)}},
+    {$facet: 
+     {totalProducts: [{ $count: "count"}],
+      lowStock: [{$match: { stock: { $lte: 10 }}},{ $count: "count"}],
+      outOfStock: [{$match: { stock: 0}},{$count: "count" } ],
+      inventoryValue: [{ $project: {value: {$multiply: ["$stock", "$price"]} }},
+    {$group: {_id: null,total: { $sum: "$value" }}}]}
+    }]);
+};
+
 
 //top 5 products with it revenu (id,name ,revenu)
 export const gettopproducts = async(orgid)=>{
@@ -25,23 +128,6 @@ return Order.aggregate([{$match:{organization : toObjectId(orgid),status:"comple
       { $unwind: "$product"},
 {$project:{_id: 0,totalSold: 1, productId: "$product._id",name: "$product.name",revenue: 1}}]);
 };
-
-//1 product
-export const getproductdetails = async(orgid,prodid)=>{
-return Product.findOne({_id:prodid,organization:orgid});
-}
-
-//revenu of a product,unit sold
-export const getproductrevenu = async(orgid,prodid)=>{
-return Order.aggregate([{$match:{organization:toObjectId(orgid),status:{$ne:"canceled"}}},{$unwind:"$products"},
-    {$match:{"products.product" : toObjectId(prodid)}},
-    {$group:{_id: "$products.product", revenue: {$sum: {$multiply: [
-          "$products.quantity", "$products.priceAtPurchase"]  }},totalSold:{$sum:"$products.quantity"}}},
-      {$project:{_id: 0,revenue: 1,totalSold:1}}
-])
-}
-
-
 
 //green → >20 enough stock
 //yellow → 10-20low stock

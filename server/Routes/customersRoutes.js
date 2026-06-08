@@ -9,35 +9,27 @@ import {
   verifyTokenAndAuthorization,
   verifyTokenAndAdmin
 } from '../Middlewares/JWTauth.js'
-import {gettotalcustomers,getTC} from "../Queries/dashboardQueries.js"
-import{getAOV,getCRR,getgrowth,getCSD,getCLV} from "../Queries/customersQueries.js"
+import {getCustomers,getTC} from "../Queries/dashboardQueries.js"
+import{gettotalcustomers,getallCustomers,getCRR,getActiveCustomers,getCLM,getAvgCLV,getCSD,getCLV} from "../Queries/customersQueries.js"
 
 /** 
-   * @desc total customers, average order value, customers retention rate,growth chart,Customer Spending Distribution , top customers,Customer Lifetime Value (CLV)
+   * @desc total customers,customers retention rate,growth chart,Customer Spending Distribution , top customers,Customer Lifetime Value (CLV)
    * @route /api/customers/:id
    * @method GET
    * @access private
    */  
 router.get("/:id",verifyTokenAndAuthorization,asyncHandler(async(req,res)=>{
 const orgid = req.params.id;
-const[totalcustomers,AOV,CRR,GC,CSD,TC,CLV] = await Promise.all([
-gettotalcustomers(orgid),
-getAOV(orgid),
+const[customers,CRR,AC,CLV,CSD,CLM,TC] = await Promise.all([
+getCustomers(orgid),
 getCRR(orgid),
-getgrowth(orgid),
+getActiveCustomers(orgid),
+getCLV(orgid),
 getCSD(orgid),
+getCLM(orgid),
 getTC(orgid),
-getCLV(orgid)
-])
-return res.status(200).json({totalcustomers:totalcustomers,averageOrderValue:AOV,customerRetentionRate:CRR,grouth:GC,customersSpendingDistribution:CSD,topCustomers:TC,customerLiftimeValue:CLV})
-}))
-
-
-
-
-
-
-
-  
+]);
+return res.status(200).json({totalcustomers:totalcustomers,customerRetentionRate:CRR,activecustomers:AC,customerLiftimeValue:CLV,customersSpendingDistribution:CSD,newClast7month:CLM,topCustomers:TC})
+}));
 
 export default router; 

@@ -4,10 +4,9 @@ import Product from "../Models/Product.js";
 import Customer from "../Models/Customer.js"
 import asyncHandler from "express-async-handler";
 import { verifyTokenAndAdmin, verifyTokenAndAuthorization } from "../Middlewares/JWTauth.js";
-import {getallOrders,gettotalOrders,getcompletedOrders,getordersperday} 
+import {getallOrders,gettotalOrders,getCompletedOrders,getOrdersByStatus,getordersperday} 
 from "../Queries/ordersQueries.js";
-import { getrevenueResult } from "../Queries/dashboardQueries.js";
-// import { forEachPrimitiveInScene } from "gltf-pipeline/lib/NodeHelpers.js";
+import { getMGR,getOrders } from "../Queries/dashboardQueries.js";
 const router = express.Router();
 export default router; 
 
@@ -19,18 +18,30 @@ export default router;
    */  
 router.get("/:id",verifyTokenAndAuthorization,asyncHandler(async(req,res)=>{
    const orgid = req.params.id;
-   const[allOrders,totalOrders,completedOrders,ordersperday,revenueResult] = await Promise.all([
+   const[allOrders,totalOrders,completedOrders,ordersbystatus,ordersperday,revenu,orders] = await Promise.all([
    getallOrders(orgid),
    gettotalOrders(orgid),
-   getcompletedOrders(orgid),
+   getCompletedOrders(orgid),
+   getOrdersByStatus(orgid),
    getordersperday(orgid),
-   getrevenueResult(orgid)
+   getMGR(orgid),
+   getOrders(orgid)
    ]);
-
-   const revenue = revenueResult[0]?.revenue || 0;
-   const AOV =
-  completedOrders === 0 ? 0 : revenue / completedOrders;
-   return res.status(200).json({ orders :allOrders ,totalOrders :totalOrders,ordersperday:ordersperday,AverageOrderValue:AOV});
+  const currentO = orders[0]?.currentOrders || 0;
+  const previousO = orders[0]?.previousOrders || 0;
+  const growthO = previousO === 0 ? 0 : ((currentO - previousO) / previousO) * 100;
+  const currentR = revenu[0]?.currentRevenue || 0;
+  const previousR = revenu[0]?.previousRevenue || 0;
+  const currentCO = completedOrders[0]?.currentCOrders || 0;
+  const previousCO = completedOrders[0]?.perviousCOrders || 0;
+  const CAOV = currentO === 0 ? 0 : (currentR /currentCO);
+  const PAOV= previousO === 0 ?0 : (previousR/ previousCO);
+  const AOVgrowth = PAOV === 0 ? 0 : ((CAOV - PAOV) / PAOV) * 100;
+  const CFR = currentO === 0 ? 0 : (currentCO / currentO) * 100;
+  const PFR = previousO === 0 ? 0 : (previousCO / previousO) * 100;
+  const FRgrowth = PFR === 0 ? 0 : ((CFR - PFR) / PFR) * 100;
+  
+   return res.status(200).json({ orders :allOrders ,totalOrders :totalOrders,ordersTM:currentO,ordersgrowth:growthO,averageordervalue:CAOV,AOVgrowth:AOVgrowth,fulfillmentrate:CFR,FRgrowth:FRgrowth,ordersperday:ordersperday,ordersbystatus:ordersbystatus});
 }));
 
 

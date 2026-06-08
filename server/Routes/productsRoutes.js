@@ -7,6 +7,8 @@ import {
   verifyTokenAndAdmin
 } from '../Middlewares/JWTauth.js'
 import { getUpload, cloudinary } from "../Middlewares/Multer.js";
+import {getProductsWithStats,getActiveProductsGrowth,getProductKPIs,gettopproducts}
+ from "../Queries/productsQueries.js"
 const router = express.Router();
 
 
@@ -20,10 +22,16 @@ const router = express.Router();
 
 router.get("/:id",verifyTokenAndAuthorization,asyncHandler(async(req,res)=>{
     const orgid = req.params.id;
-    const products =await Product.find({organization: orgid});
-    // const count = await Product.countDocuments(); //for pagination
-
-    return res.json({products});
+    const [products,activeproducts,productKPI,topproducts] =await Promise.all([
+    getProductKPIs(orgid,req.query),
+    getActiveProductsGrowth(orgid),
+    getProductKPIs(orgid),
+    gettopproducts(orgid)
+    ]);
+    const ATM =  activeproducts[0]?.activeThisMonth || 0;
+    const ALM =  activeproducts[0]?.activeLastMonth || 0;
+    const growth = ALM === 0? 0: ((ATM - ALM) / ALM) * 100;
+    return res.status(200).json({productslist:products,activeproducts:ATM,growth:growth,productsKPI:productsKPI});
 }))
 
 /** 

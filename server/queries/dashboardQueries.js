@@ -6,11 +6,11 @@ import Customer from "../Models/Customer.js";
 const toObjectId = (id) =>
   new mongoose.Types.ObjectId(id);
 
-//revenu
+//revenu of all time 
 export const getrevenueResult =async (orgId) => {
   return Order.aggregate([{$match:{organization : toObjectId(orgId),status: "completed"}},{$group: {_id: null,revenue: { $sum: "$totalPrice" } }}]);};
 
-//monthly growth rate
+//revenu growth
 export const getMGR =async(orgId) =>{
 const now = new Date();
 // current month
@@ -29,14 +29,46 @@ const endPrevious = new Date(  now.getFullYear(),  now.getMonth() - 1, now.getDa
         }}}
   }]);};
 
-//number of orders and products
-export const getnorders = async (orgId) => {
-  return Order.countDocuments({ organization: orgId });};
-export const getnproducts =async (orgId) => {
-  return Product.countDocuments({ organization: orgId });};
-//number of customers
-export const gettotalcustomers= async (orgId) => {
-  return Customer.countDocuments({organization: toObjectId(orgId)})};
+//orders this month + last month
+export const getOrders =async(orgId) =>{
+const now = new Date();
+// current month
+const startCurrent = new Date(now.getFullYear(), now.getMonth(), 1);
+const endCurrent = new Date(now);
+// previous month same day range
+const startPrevious = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+const endPrevious = new Date(  now.getFullYear(),  now.getMonth() - 1, now.getDate());
+  return Order.aggregate([{$match:{organization : toObjectId(orgId),status: { $ne: "canceled" }}},
+    {$group: {_id: null,
+    currentOrders: {$sum:{$cond:[{$and: [
+    {$gte:["$createdAt", startCurrent] },{ $lte: ["$createdAt", endCurrent] }]},1,0]
+        }},
+    previousOrders: {$sum:{$cond: [{ $and: [
+    {$gte: ["$createdAt", startPrevious] },{$lte:["$createdAt",endPrevious]}]},1,0]
+        }}}
+  }]);};
+
+
+  //customers this month + growth
+export const getCustomers =async(orgId) =>{
+const now = new Date();
+// current month
+const startCurrent = new Date(now.getFullYear(), now.getMonth(), 1);
+const endCurrent = new Date(now);
+// previous month same day range
+const startPrevious = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+const endPrevious = new Date(  now.getFullYear(),  now.getMonth() - 1, now.getDate());
+  return Customer.aggregate([{$match:{organization : toObjectId(orgId)}},
+    {$group: {_id: null,
+    currentCustomers: {$sum:{$cond:[{$and: [
+    {$gte:["$createdAt", startCurrent] },{ $lte: ["$createdAt", endCurrent] }]},1,0]
+        }},
+    previousCustomers: {$sum:{$cond: [{ $and: [
+    {$gte: ["$createdAt", startPrevious] },{$lte:["$createdAt",endPrevious]}]},1,0]
+        }}}
+  }]);};
+
+
 
 //revenu last 7 months
 export const getrevenuel7m = async (orgId) => {    
@@ -81,7 +113,7 @@ export const getBSP =  async (orgId) => {
 
 //stock alert
 export const getstockalert = async (orgId) =>{
-  return Product.find({organization :toObjectId(orgId) ,stock:{$lte:10}});};
+  return Product.countDocuments({organization :toObjectId(orgId) ,stock:{$lte:10}});};
 
 //top 5 customers
 export const getTC = async (orgId) =>{
