@@ -140,4 +140,5 @@ export const getTC = async (orgId) =>{
 
 //recent orders
 export const getrecentorders = async (orgId) =>{
-  return Order.find({organization : toObjectId(orgId)}).sort({ createdAt: -1 }).limit(5);};
+  return Order.find({organization : toObjectId(orgId)}).populate("customer", "name")
+    .populate("products.product", "name").sort({ createdAt: -1 }).limit(5);};

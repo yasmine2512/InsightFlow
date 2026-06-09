@@ -7,6 +7,7 @@ import { verifyTokenAndAdmin, verifyTokenAndAuthorization } from "../Middlewares
 import {getallOrders,gettotalOrders,getCompletedOrders,getOrdersByStatus,getordersperday} 
 from "../Queries/ordersQueries.js";
 import { getMGR,getOrders } from "../Queries/dashboardQueries.js";
+import { getNextOrderNumber } from "../Models/Counter.js"
 const router = express.Router();
 export default router; 
 
@@ -82,6 +83,7 @@ found = await Customer.create({
   }
   const order = new Order({
     organization: orgid,
+    orderNumber:getNextOrderNumber(),
     customer: found._id,
     products,
     totalPrice,

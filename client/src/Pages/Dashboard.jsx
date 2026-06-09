@@ -1,23 +1,51 @@
 import DashboardLayout from "../components/Layout";
-import { TrendingUp, TrendingDown, DollarSign, Package, ShoppingCart, Users } from "lucide-react";
+import { TrendingUp, TrendingDown, DollarSign, Package, ShoppingCart, Users} from "lucide-react";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from "recharts";
 import { useParams ,  useNavigate} from "react-router-dom"
 import { useEffect, useState } from "react"
 import axios from "axios"
 import { useQuery } from "@tanstack/react-query";
 
+const fillMissingMonths = (data) => {
+  const now = new Date();
+  const result = [];
+  const monthNames = [
+    "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+  ];
+  for (let i = 6; i >= 0; i--) {
+    const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const year = date.getFullYear();
+    const month = date.getMonth() + 1;
+    const existing = data.find((item) => item.year === year && item.month === month );
+    result.push({name: monthNames[month - 1],value: existing ? existing.revenue : 0,});
+  }
+  return result;
+};
+const fillMissingDays = (data) => {
+  const result = [];
+  const dayNames = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+for (let day = 1; day <= 7; day++) {
+const existing = data.find((item) => item.day === day);
+    result.push({name: dayNames[day - 1],value: existing ? existing.orders : 0});
+  }
+  return result;
+};
 
 export default function Dashboard() {
   const { id } = useParams()
   const [profile, setProfile] = useState(null)
   const API_URL = import.meta.env.VITE_API_URL;
   const navigate = useNavigate();
-
+  useEffect(() => {
+  if (!localStorage.getItem("token")) {
+    navigate("/login");
+  }
+}, []);
     const fetchProfile = async () => {
       const token = localStorage.getItem("token");
         if (!token) {
-      navigate("/login");
-      return;
+      throw new Error("No token");
     }
       try {
       
@@ -29,7 +57,7 @@ export default function Dashboard() {
         return res.data;
       } catch (err) {
         console.error("Unauthorized or token invalid", err)
-        // navigate("/login");
+        throw err;
       }
     }
 const { data, isLoading, error } = useQuery({ queryKey: ["overview", id], queryFn: fetchProfile, staleTime: 1000 * 60 * 5 });
@@ -46,15 +74,11 @@ const { data, isLoading, error } = useQuery({ queryKey: ["overview", id], queryF
 const stats = [
   { label: "Revenue", value: "$"+ data.revenue,change: Rgrowth, up: data.revenugrowth>= 0, icon: DollarSign },
   { label: "Orders", value: data.orders, change: Ogrowth, up: data.ordersgrowth>= 0, icon: ShoppingCart },
-  { label: "Stock Alert", value: lowstock, change:outofstock +" are out of stock", up: true, icon: Package },
+  { label: "Stock Alert", value: lowstock, change:outofstock +" are out of stock",stock:outofstock > 0, icon: Package },
   { label: "Customers", value: data.customers, change: Cgrowth, up: data.customersgrowth>= 0 , icon: Users },
 ];
 
-const revenueData = [
-  { name: "Jan", value: 4000 }, { name: "Feb", value: 3800 }, { name: "Mar", value: 5200 },
-  { name: "Apr", value: 4800 }, { name: "May", value: 6100 }, { name: "Jun", value: 5400 },
-  { name: "Jul", value: 7200 },
-];
+const revenueData = fillMissingMonths(data.revenuL7M);
 
 const newSingups = [
 {id: 1, username: "Olivia Martin",email: "olivia@example.com",role:"user", subscription: "Pro Plan ",status :"active",createdAt: "2026-04-02" },
@@ -64,18 +88,10 @@ const newSingups = [
   {id:5 ,username: "Lucas Brown", email: "lucas@example.com", role: "user",  subscription: "Starter Kit",status: "active" , createdAt: "2026-04-01"},
 ];
 
-const ordersData = [
-  { name: "Mon", value: 44 }, { name: "Tue", value: 55 }, { name: "Wed", value: 41 },
-  { name: "Thu", value: 67 }, { name: "Fri", value: 52 }, { name: "Sat", value: 38 }, { name: "Sun", value: 29 },
-];
-
-const recentOrders = [
-  { id: "#3210", customer: "Olivia Martin", product: "Pro Plan", amount: "$49.00", status: "Completed" },
-  { id: "#3209", customer: "Ava Johnson", product: "Starter Kit", amount: "$29.00", status: "Processing" },
-  { id: "#3208", customer: "Michael Chen", product: "Enterprise", amount: "$199.00", status: "Completed" },
-  { id: "#3207", customer: "Sofia Davis", product: "Pro Plan", amount: "$49.00", status: "Pending" },
-  { id: "#3206", customer: "Lucas Brown", product: "Starter Kit", amount: "$29.00", status: "Completed" },
-];
+const ordersData = fillMissingDays(data.ordersThisWeek);
+const recentOrders = data.recentOrders;
+const bestProducts = data.bestSellerProducts;
+const topCustomers = data.topCustomers;
   return (
       <div className="space-y-6">
         <div>
@@ -94,9 +110,9 @@ const recentOrders = [
                 </div>
               </div>
               <div className="font-heading text-2xl font-bold">{s.value}</div>
-              <div className={`flex items-center gap-1 text-xs mt-1 ${s.up ? "text-success" : "text-destructive"}`}>
-                {s.up ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
-                {s.change} 
+              <div className={`flex items-center gap-1 text-xs mt-1 ${s.up && s.label != "Stock Alert" ? "text-success" : "text-destructive"} ${!s.stock && s.label == "Stock Alert" ? "text-success" : "text-destructive"}`}>
+                {s.label != "Stock Alert"? (s.up ? <TrendingUp className="w-3 h-3 " />: <TrendingDown className="w-3 h-3" /> ):(<div/>)}
+                {s.change}
               </div>
             </div>
           ))}
@@ -139,7 +155,7 @@ const recentOrders = [
         {/* Recent Orders */}
         <div className="bg-card rounded-xl border border-border shadow-soft">
           <div className="p-5 border-b border-border">
-            <h3 className="font-heading font-semibold">Recent Orders</h3>
+            <h3 className="font-heading font-semibold ">Recent Orders</h3>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -153,16 +169,27 @@ const recentOrders = [
                 </tr>
               </thead>
               <tbody>
+              
                 {recentOrders.map((o) => (
-                  <tr key={o.id} className="border-b border-border last:border-0 hover:bg-muted/50 transition-colors">
-                    <td className="p-4 font-medium">{o.id}</td>
-                    <td className="p-4">{o.customer}</td>
-                    <td className="p-4">{o.product}</td>
-                    <td className="p-4">{o.amount}</td>
+                  <tr key={o._id} className="border-b border-border last:border-0 hover:bg-muted/50 transition-colors">
+                    <td className="p-4 font-medium">#{o.orderNumber}</td>
+                    <td className="p-4">{o.customer.name}</td>
+                    <td className="p-4"
+                  title={o.products.map((p) =>`${p.product?.name} ×${p.quantity || 1}`).join(", ")}
+                    >{o.products.slice(0, 1).map((p) => (<span key={p.product?._id}>
+                     {p.product?.name}
+                     {p.quantity > 1 && `×${p.quantity}`}
+                      </span>) )} 
+                      {o.products.length > 1 && (
+                      <span className="more">
+                      {"  "}+{o.products.length - 1} more
+                    </span>
+                        )}</td>
+                    <td className="p-4">${o.totalPrice}</td>
                     <td className="p-4">
                       <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        o.status === "Completed" ? "bg-success/10 text-success" :
-                        o.status === "Processing" ? "bg-primary/10 text-primary" :
+                        o.status === "completed" ? "bg-success/10 text-success" :
+                        o.status === "pending" ? "bg-primary/10 text-primary" :
                         "bg-warning/10 text-warning"
                       }`}>{o.status}</span>
                     </td>
@@ -174,7 +201,7 @@ const recentOrders = [
         </div>
 
         {/* Recent Singups */}
-        <div className="bg-card rounded-xl border border-border shadow-soft">
+        {/* <div className="bg-card rounded-xl border border-border shadow-soft">
           <div className="p-5 border-b border-border">
             <h3 className="font-heading font-semibold">New Signups</h3>
           </div>
@@ -211,6 +238,70 @@ const recentOrders = [
               </tbody>
             </table>
           </div>
+        </div> */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+<div className="bg-card rounded-xl border border-border shadow-soft overflow-hidden">
+  <div className="p-5 border-b border-border">
+    <h3 className="font-heading font-semibold flex items-center justify-center gap-2">
+      <Users size={18} className=" text-success"/> Top Customers</h3>
+  </div>
+
+  <div className="overflow-x-auto">
+    <table className="w-full text-sm">
+      <thead>
+        <tr className="border-b border-border">
+          <th className=" p-4 font-medium text-muted-foreground">Name</th>
+          <th className=" p-4 font-medium text-muted-foreground">Email</th>
+          <th className=" p-4 font-medium text-muted-foreground">Spent</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        {topCustomers?.slice(0, 5).map((c) => (
+          <tr
+            key={c._id}
+            className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors"
+          >
+            <td className="p-4 font-medium">{c.name}</td>
+            <td className="p-4 text-muted-foreground">{c.email}</td>
+            <td className="p-4 font-medium">${c.totalSpent}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+</div>
+<div className="bg-card rounded-xl border border-border shadow-soft overflow-hidden">
+  <div className="p-5 border-b border-border">
+    <h3 className="font-heading font-semibold flex items-center justify-center gap-2"><TrendingUp size={18} className="text-success"/> Best Selling Products</h3>
+  </div>
+
+  <div className="overflow-x-auto">
+    <table className="w-full text-sm">
+      <thead>
+        <tr className="border-b border-border">
+          <th className=" p-4 font-medium text-muted-foreground">Name</th>
+          <th className=" p-4 font-medium text-muted-foreground">Price</th>
+          <th className=" p-4 font-medium text-muted-foreground">Total Sold</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        {bestProducts?.slice(0, 5).map((p) => (
+          <tr
+            key={p._id}
+            className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors"
+          >
+            <td className="p-4 font-medium">{p.product?.name}</td>
+            <td className="p-4">${p.product?.price}</td>
+            <td className="p-4 font-medium">{p.totalSold}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+</div>
+
         </div>
       </div>
   );
