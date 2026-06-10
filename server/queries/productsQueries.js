@@ -115,11 +115,17 @@ export const getProductKPIs = async (orgId) => {
     {$match: {organization: toObjectId(orgId)}},
     {$facet: 
      {totalProducts: [{ $count: "count"}],
-      lowStock: [{$match: { stock: { $lte: 10 }}},{ $count: "count"}],
+      lowStock: [{$match: { stock: { $lte: 10 , $gt: 0}}},{ $count: "count"}],
       outOfStock: [{$match: { stock: 0}},{$count: "count" } ],
       inventoryValue: [{ $project: {value: {$multiply: ["$stock", "$price"]} }},
-    {$group: {_id: null,total: { $sum: "$value" }}}]}
-    }]);
+    {$group: {_id: null,total: { $sum: "$value" }}}
+  ]}},
+    { $project: {_id: 0,
+        totalProducts: {$ifNull: [{ $arrayElemAt: ["$totalProducts.count", 0] },0]},
+        lowStock: {$ifNull: [{ $arrayElemAt: ["$lowStock.count", 0] },0]},
+        outOfStock: {$ifNull: [{ $arrayElemAt: ["$outOfStock.count", 0] },0]},
+        inventoryValue: {$ifNull: [{ $arrayElemAt: ["$inventoryValue.total", 0] },0]}}}
+  ]);
 };
 
 

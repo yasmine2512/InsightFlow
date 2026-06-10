@@ -23,11 +23,20 @@ const fillMissingMonths = (data) => {
   return result;
 };
 const fillMissingDays = (data) => {
-  const result = [];
-  const dayNames = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
-for (let day = 1; day <= 7; day++) {
-const existing = data.find((item) => item.day === day);
-    result.push({name: dayNames[day - 1],value: existing ? existing.orders : 0});
+const result = [];
+  for (let i = 6; i >= 0; i--) {
+    const date = new Date();
+    date.setDate(date.getDate() - i);
+    const formattedDate = date.toISOString().split("T")[0];
+    const existing = data.find(
+      (item) => item.day === formattedDate
+    );
+    result.push({
+      name: date.toLocaleDateString("en-US", {
+        weekday: "short"
+      }),
+      value: existing ? existing.orders : 0
+    });
   }
   return result;
 };
@@ -52,7 +61,6 @@ export default function Dashboard() {
         const res = await axios.get(`${API_URL}/api/dashboard/${id}`, {
           headers: { Authorization: `Bearer ${token}` }
         })
-        // setProfile(res.data)
         console.log(res.data);
         return res.data;
       } catch (err) {
@@ -79,14 +87,6 @@ const stats = [
 ];
 
 const revenueData = fillMissingMonths(data.revenuL7M);
-
-const newSingups = [
-{id: 1, username: "Olivia Martin",email: "olivia@example.com",role:"user", subscription: "Pro Plan ",status :"active",createdAt: "2026-04-02" },
-  { id:2, username: "Ava Johnson", email: "ava@example.com",role:"user" , subscription: "Starter Kit", status: "inactive",createdAt: "2026-04-03"},
-  { id:3,username: "Michael Chen", email: "michael@example.com", role :"user", subscription: "Enterprise",status: "active", createdAt: "2026-04-02" },
-  { id:4, username: "Sofia Davis", email: "sofia@example.com",role: "admin", subscription: "Pro Plan",status: "inactive" , createdAt: "2026-04-02"},
-  {id:5 ,username: "Lucas Brown", email: "lucas@example.com", role: "user",  subscription: "Starter Kit",status: "active" , createdAt: "2026-04-01"},
-];
 
 const ordersData = fillMissingDays(data.ordersThisWeek);
 const recentOrders = data.recentOrders;
@@ -199,46 +199,6 @@ const topCustomers = data.topCustomers;
             </table>
           </div>
         </div>
-
-        {/* Recent Singups */}
-        {/* <div className="bg-card rounded-xl border border-border shadow-soft">
-          <div className="p-5 border-b border-border">
-            <h3 className="font-heading font-semibold">New Signups</h3>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-border">
-                  <th className=" p-4 font-medium text-muted-foreground">Users</th>
-                  <th className=" p-4 font-medium text-muted-foreground">CreatedAt</th>
-                  <th className=" p-4 font-medium text-muted-foreground">Subsecription</th>
-                  <th className=" p-4 font-medium text-muted-foreground">Role</th>
-                  <th className=" p-4 font-medium text-muted-foreground">Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {newSingups.map((o) => (
-                  <tr key={o.id} className="border-b border-border last:border-0 hover:bg-muted/50 transition-colors">
-                    <td className="p-4 font-medium ">
-                       <div>{o.username}</div>
-                      <div className="text-xs text-muted-foreground">{o.email}</div>
-                    </td>
-                    <td className="p-4">{o.createdAt}</td>
-                    <td className="p-4">{o.subscription}</td>
-                    <td className="p-4">{o.role}</td>
-                    <td className="p-4">
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        o.status === "active" ? "bg-success/10 text-success" :
-                        o.status === "inactive" ? "bg-primary/10 text-primary" :
-                        "bg-warning/10 text-warning"
-                      }`}>{o.status}</span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div> */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 <div className="bg-card rounded-xl border border-border shadow-soft overflow-hidden">
   <div className="p-5 border-b border-border">
@@ -259,7 +219,7 @@ const topCustomers = data.topCustomers;
       <tbody>
         {topCustomers?.slice(0, 5).map((c) => (
           <tr
-            key={c._id}
+            key={c.customerId}
             className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors"
           >
             <td className="p-4 font-medium">{c.name}</td>

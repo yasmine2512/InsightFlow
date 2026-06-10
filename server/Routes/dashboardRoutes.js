@@ -10,7 +10,8 @@ import {
   verifyTokenAndAuthorization,
   verifyTokenAndAdmin
 } from '../Middlewares/JWTauth.js'
-import{getMGR,getOrders,getCustomers,getrevenuel7m,getordersthisweek,getBSP,getstockalert,getTC,getrecentorders} from "../Queries/dashboardQueries.js"
+import{getMGR,getOrders,getCustomers,getrevenuel7m,getBSP,getstockalert,getTC,getrecentorders} from "../Queries/dashboardQueries.js"
+import{getordersperday} from "../Queries/ordersQueries.js"
 
 /** 
  * @desc revenu,norders,nproducts,ncustomers,revenu in last 7 months(month),n ordersin week (day),5 best sellers products,stock alert,monthly recurring revenue (MRR),top 5 customers,recent orders,Monthly Growth Rate
@@ -26,7 +27,7 @@ getMGR(orgid),
 getOrders(orgid),
 getCustomers(orgid),
 getrevenuel7m(orgid),
-getordersthisweek(orgid),
+getordersperday(orgid),
 getBSP(orgid),
 getstockalert(orgid),
 getTC(orgid),

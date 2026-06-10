@@ -87,11 +87,6 @@ export const getrevenuel7m = async (orgId) => {
       revenue: 1  }},
   {$sort: { year: 1, month: 1}}]);};
 
- // number of orders this week
-export const getordersthisweek = async (orgId) => {
-  const lastweek = new Date();
-  lastweek.setDate(lastweek.getDate() - 7);
-  return Order.aggregate([{$match:{organization : toObjectId(orgId), createdAt : {$gte: lastweek},status: {$ne:"canceled"}}},{$group:{_id :{$dayOfMonth :"$createdAt"},orders: { $sum: 1 } }},{$project:{_id:0,day:"$_id",orders:1}},{$sort:{day: 1}}]);};
 
 //5 best seller products
 export const getBSP =  async (orgId) => {

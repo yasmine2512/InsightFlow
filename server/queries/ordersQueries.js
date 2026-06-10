@@ -14,7 +14,44 @@ export const getallOrders = async(orgId,query) =>{
     return Order.aggregate([{$match: match},
       {$sort:{createdAt: -1}},
     { $skip: skip },
-    { $limit: limit }
+    { $limit: limit },
+    {$lookup: {
+        from: "customers",
+        localField: "customer",
+        foreignField: "_id",
+        as: "customer"}},
+    {$unwind: {
+        path: "$customer",
+        preserveNullAndEmptyArrays: true}},
+    {$lookup: {
+        from: "products",
+        localField: "products.product",
+        foreignField: "_id",
+        as: "productDetails"}},
+    {$addFields: {
+        products: { $map: {
+            input: "$products",
+            as: "p",in: {
+              quantity: "$$p.quantity",
+              priceAtPurchase: "$$p.priceAtPurchase",
+              product: {
+              $arrayElemAt: [{$filter: {
+                      input: "$productDetails",
+                      as: "pd",
+                      cond: {$eq: ["$$pd._id", "$$p.product"]}}},0]}}}}}
+    },{$project: {
+        orderNumber: 1,
+        totalPrice: 1,
+        status: 1,
+        createdAt: 1,
+        customerName: "$customer.name",
+        products: {$map: {
+            input: "$products",
+            as: "p",
+            in: {
+              name: "$$p.product.name",
+              quantity: "$$p.quantity",
+              priceAtPurchase: "$$p.priceAtPurchase"}}}}}
     ]);
 };
 
@@ -49,7 +86,7 @@ return Order.aggregate([{$match:{organization:toObjectId(orgId),createdAt: { $gt
 //orders per day (7 days)
 export const getordersperday = async(orgId)=>{
     const last7days = new Date();
-    last7days.setDate(last7days.getDate() - 7);
-    return Order.aggregate([{$match:{organization: toObjectId(orgId),createdAt:{$gte : last7days} }},{$group:{_id : {$dateToString: {format: "%Y-%m-%d",date: "$createdAt"}},
+    last7days.setDate(last7days.getDate() - 6);
+    return Order.aggregate([{$match:{organization: toObjectId(orgId),createdAt:{$gte : last7days},status: {$ne:"canceled"} }},{$group:{_id : {$dateToString: {format: "%Y-%m-%d",date: "$createdAt"}},
     orders : {$sum: 1}}},{$project:{_id:0,day:"$_id",orders:1}},{$sort:{day: 1}}]);
 }

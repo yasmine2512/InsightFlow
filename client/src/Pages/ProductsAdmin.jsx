@@ -28,13 +28,11 @@ export default function Products() {
          try {
            const res = await axios.get(`${API_URL}/api/products/${id}/cataloge`, {
              headers: { Authorization: `Bearer ${token}` },
-             params: { page: 1,limit: 10}
+             params: { page: 1,limit: 12}
            })
-          //  setProducts(res.data.products);
           return res.data;
          } catch (err) {
            console.error("Unauthorized or token invalid", err)
-          //  navigate("/login");
          }
        }
    
