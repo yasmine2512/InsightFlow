@@ -32,7 +32,7 @@ export default function Orders() {
         throw err;
       }
     }
-    const fetchProducts = async ({page}) => {
+    const fetchProducts = async ({page,search}) => {
       const token = localStorage.getItem("token");
         if (!token) {
       navigate("/login");
@@ -41,7 +41,7 @@ export default function Orders() {
       try {
         const res = await axios.get(`${API_URL}/api/products/${id}`, {
           headers: { Authorization: `Bearer ${token}` },
-           params: { page,limit: 10}
+           params: { page,limit: 10,search}
         })
         console.log(res.data);
         return res.data;
@@ -50,10 +50,21 @@ export default function Orders() {
         throw err;
       }
     }
+const [search, setSearch] = useState("");
+const [debouncedSearch, setDebouncedSearch] = useState(search);
+useEffect(() => {
+  const timer = setTimeout(() => {
+    setDebouncedSearch(search);
+  }, 400);
+  return () => clearTimeout(timer);
+}, [search]);
+useEffect(() => {
+  setCurrentPage(1);
+}, [debouncedSearch]);
 const { data, isLoadingstats, errorstats } = useQuery({ queryKey: ["productsStats", id], queryFn: fetchStats, staleTime: 1000 * 60 * 5 });
 const [currentPage, setCurrentPage] = useState(1);
-const {  data: productlist, isLoading, error } = useQuery({ queryKey: ["productlist", id,currentPage],
-   queryFn: () => fetchProducts({page:currentPage}),keepPreviousData: true,staleTime: 1000 * 60 * 5});
+const {  data: productlist, isLoading, error } = useQuery({ queryKey: ["productlist", id,currentPage,debouncedSearch],
+   queryFn: () => fetchProducts({page:currentPage,search:debouncedSearch}),keepPreviousData: true,staleTime: 1000 * 60 * 5});
 
   if (isLoading || isLoadingstats) return <div>Loading...</div>
   
@@ -68,9 +79,9 @@ const {  data: productlist, isLoading, error } = useQuery({ queryKey: ["productl
   { label: "Out Of Stock", value: OS,stock:OS > 0,growth:false, stock:OS > 0, icon: XCircle },
   { label: "Inventory Value", value: "$"+IV ,growth:false,stock: false, icon: DollarSign },
 ];
-  const products = productlist.productslist;
+  const products = productlist.productslist.products;
   const rowsPerPage = 10;
-  const totalproducts = data.productsKPI[0]?.totalProducts;
+  const totalproducts = productlist.productslist.total;
   const totalPages = Math.ceil(totalproducts / rowsPerPage);
   const start = (currentPage - 1) * rowsPerPage + 1;
 const end = Math.min(currentPage * rowsPerPage,totalproducts);
@@ -112,7 +123,7 @@ const end = Math.min(currentPage * rowsPerPage,totalproducts);
             <div className="flex items-center gap-3 flex-1">
               <div className="relative flex-1 max-w-sm">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input placeholder="Search products..." className="pl-10" />
+                <Input placeholder="Search products..." className="pl-10" value={search} onChange={(e) => setSearch(e.target.value)}  />
               </div>
             </div>
             <Button><Download className="w-4 h-4 mr-2" />Export</Button>

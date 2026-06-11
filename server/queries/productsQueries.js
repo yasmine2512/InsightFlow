@@ -19,56 +19,92 @@ return Product.aggregate([{$match:{organization: toObjectId(orgId)}},
 }
 
 //getproducttable
-export const getProductsWithStats = async (orgId,query) => {
-  const now = new Date(); 
-  const startMonth = new Date( now.getFullYear(), now.getMonth(), 1 );
+export const getProductsWithStats = async (orgId, query) => {
+  const now = new Date();
+  const startMonth = new Date(now.getFullYear(),now.getMonth(),1);
   const page = parseInt(query.page) || 1;
   const limit = parseInt(query.limit) || 10;
   const skip = (page - 1) * limit;
   const match = {organization: toObjectId(orgId)};
   if (query.category) {match.category = query.category;}
   if (query.stock === "low") {match.stock = { $lte: 10 };}
-  return Product.aggregate([{$match: match },
+  if (query.search) {
+    match.$or = [
+      {name: {
+          $regex: query.search,
+          $options: "i"
+        }},
+      {category: {
+          $regex: `^${query.search}`,
+          $options: "i"
+        }}
+    ];
+}
+const pipeline =[
+{$match: match},
     {$lookup: {
         from: "orders",
         localField: "_id",
         foreignField: "products.product",
-        as: "orders"}},
-    {$unwind: {path: "$orders",preserveNullAndEmptyArrays: true}},
-    {$unwind: {path: "$orders.products",preserveNullAndEmptyArrays: true}},
-    {$match: {$expr: {$or: [
-             { $eq: ["$orders.products.product", "$_id"] },
-             { $eq: ["$orders", null] }] }}},
-    {$group: { _id: "$_id",
-        name: { $first: "$name" },
-        price: { $first: "$price" },
-        stock: { $first: "$stock" },
-        category: { $first: "$category" },
-        sold: {$sum: {$ifNull: ["$orders.products.quantity", 0]}},
-        revenue: {$sum: {$multiply: [
-              { $ifNull: ["$orders.products.quantity", 0] },
-              { $ifNull: ["$orders.products.priceAtPurchase", 0] }]}},
-        soldThisMonth: {$sum: {$cond: [
-              { $gte: ["$orders.createdAt", startMonth] },
-              { $ifNull: ["$orders.products.quantity", 0] },0]}},
-         }},
-    {$addFields: {isActive: { $gt: ["$soldThisMonth", 0] }}},        
-    {$sort: (() => {
-        switch (query.sort) {
-          case "price_asc":
-            return { price: 1 };
-          case "price_desc":
-            return { price: -1 };
-          case "sold_desc":
-            return { sold: -1 };
-          case "revenue_desc":
-          default:
-            return { revenue: -1 };}})()},
-    { $skip: skip },
-    { $limit: limit }        
-  ]);
+        as: "orders"
+      }},
+    {$unwind: {
+        path: "$orders",
+        preserveNullAndEmptyArrays: true
+      }},
+    {$unwind: {
+        path: "$orders.products",
+        preserveNullAndEmptyArrays: true
+      }},
+    {$match: {
+        $expr: {
+          $or: [
+            {$eq: [
+                "$orders.products.product",
+                "$_id"
+              ]},
+            {$eq: [
+                "$orders",
+                null
+              ]}]}
+    }},
+    {$group: {_id: "$_id",
+        name: {$first: "$name"},
+        price: {$first: "$price"},
+        stock: {$first: "$stock"},
+        category: {$first: "$category"},
+        sold: {$sum: {$ifNull: ["$orders.products.quantity",  0]}},
+        revenue: {$sum: {
+            $multiply: [
+              {$ifNull: ["$orders.products.quantity",0]},
+              {$ifNull: ["$orders.products.priceAtPurchase",0]}]
+          }
+        },
+        soldThisMonth: {$sum: {
+            $cond: [{$gte: ["$orders.createdAt",startMonth]},
+              {$ifNull: ["$orders.products.quantity",0]},0 ]
+          }
+        }
+      }},
+    {$addFields: {isActive: {$gt: ["$soldThisMonth",0]}}},
+    {$facet: {
+    products: [{$sort: (() => {
+          switch (query.sort) {
+            case "price_asc":return { price: 1 };
+            case "price_desc":return { price: -1 };
+            case "sold_desc":return { sold: -1 };
+            case "revenue_desc":
+            default:return { revenue: -1 };
+          }})()
+      },
+      {$skip: skip},
+      {$limit: limit}],
+    totalCount: [{$count: "count"}]
+  }
+}];
+const result = await Product.aggregate(pipeline);
+return { products: result[0].products, total: result[0].totalCount[0]?.count || 0};
 };
-
 
 //1 product
 // export const getproductdetails = async(orgid,prodid)=>{

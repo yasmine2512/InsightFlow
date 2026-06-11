@@ -51,7 +51,7 @@ export default function Orders() {
         throw err;
       }
     }
-const fetchOrders= async ({page}) => {
+const fetchOrders= async ({page,search}) => {
       const token = localStorage.getItem("token");
         if (!token) {
       navigate("/login");
@@ -60,7 +60,7 @@ const fetchOrders= async ({page}) => {
       try {
         const res = await axios.get(`${API_URL}/api/orders/${id}`, {
           headers: { Authorization: `Bearer ${token}` },
-           params: { page,limit: 10}
+           params: { page,limit: 10,search}
         })
         console.log(res.data);
         return res.data;
@@ -71,12 +71,22 @@ const fetchOrders= async ({page}) => {
       }
     }
 
-
+const [search, setSearch] = useState("");
+const [debouncedSearch, setDebouncedSearch] = useState(search);
+useEffect(() => {
+  const timer = setTimeout(() => {
+    setDebouncedSearch(search);
+  }, 400);
+  return () => clearTimeout(timer);
+}, [search]);
+useEffect(() => {
+  setCurrentPage(1);
+}, [debouncedSearch]);
 const { data, isLoadingstats, errorstats } = useQuery({ queryKey: ["orders", id], queryFn: fetchStats, staleTime: 1000 * 60 * 5 });
 const [currentPage, setCurrentPage] = useState(1);
-const {  data: orderslist, isLoading, error } = useQuery({ queryKey: ["orderslist", id,currentPage],
-   queryFn: () => fetchOrders({page:currentPage}),keepPreviousData: true,staleTime: 1000 * 60 * 5});
-
+const {  data: orderslist, isLoading, error } = useQuery({
+   queryKey: ["orderslist", id,currentPage,debouncedSearch],
+   queryFn: () => fetchOrders({page:currentPage,search:debouncedSearch}),keepPreviousData: true,staleTime: 1000 * 60 * 5});
   if (isLoading || isLoadingstats) return <div>Loading...</div>
   if (error || errorstats) return <p>Error loading orders</p>;
 const OG = data.ordersgrowth.toFixed(1);
@@ -98,10 +108,10 @@ const colors = [
     "hsl(172 66% 50%)" ,"hsl(243 75% 59%)" ,"hsl(280 72% 55%)","hsl(38 92% 50%)"
 ];
 const ordersperday = fillMissingDays(data.ordersperday);
-const orders = orderslist.orders;
+const orders = orderslist.orders.orders;
 
   const rowsPerPage = 10;
-  const totalorders = data.totalOrders;
+  const totalorders = orderslist.orders.total;
   const totalPages = Math.ceil(totalorders / rowsPerPage);
   const start = (currentPage - 1) * rowsPerPage + 1;
 const end = Math.min(currentPage * rowsPerPage,totalorders);
@@ -130,7 +140,7 @@ const end = Math.min(currentPage * rowsPerPage,totalorders);
               <div className={"font-heading text-2xl font-bold "}>{s.value}</div>
               <div className={`flex items-center gap-1 text-xs mt-1 ${s.up && s.growth ? "text-success" : "text-destructive"}`}>
                 {s.growth? (s.up ? <TrendingUp className="w-3 h-3 " /> : <TrendingDown className="w-3 h-3" /> ):(<div/>)}
-                { s.change } {s.growth && "From last month"}
+                { s.change } {s.growth && "% From last month"}
               </div>
             </div>
           ))}
@@ -174,8 +184,8 @@ const end = Math.min(currentPage * rowsPerPage,totalorders);
         <div className="flex items-center gap-3">
             <div className="flex items-center gap-3 flex-1">
               <div className="relative flex-1 max-w-sm">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input placeholder="Search orders..." className="pl-10" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground"/>
+                <Input placeholder="Search orders..." className="pl-10" value={search} onChange={(e) => setSearch(e.target.value)} />
               </div>
               <Button variant="outline" size="sm"><Filter className="w-4 h-4 mr-1" />Filter</Button>
             </div>
@@ -201,14 +211,14 @@ const end = Math.min(currentPage * rowsPerPage,totalorders);
                     <td className="p-4 font-medium">#{o.orderNumber}</td>
                     <td className="p-4">{o.customerName}</td>
                     <td className="p-4"
-                  title={o.products.map((p) =>`${p.name} ×${p.quantity || 1}`).join(", ")}
-                    >{o.products.slice(0, 1).map((p) => (<span key={p.name}>
+                  title={(o.products || []).map((p) =>`${p.name} ×${p.quantity || 1}`).join(", ")}
+                    >{(o.products || []).slice(0, 1).map((p) => (<span key={p.name}>
                      {p.name}
                      {p.quantity > 1 && `×${p.quantity}`}
                       </span>) )} 
-                      {o.products.length > 1 && (
+                      {(o.products || []).length > 1 && (
                       <span className="more">
-                      {"  "}+{o.products.length - 1} more
+                      {"  "}+{(o.products || []).length - 1} more
                     </span>
                         )}</td>
                     <td className="p-4">${o.totalPrice}</td>
@@ -227,7 +237,7 @@ const end = Math.min(currentPage * rowsPerPage,totalorders);
           {/* Pagination Controls */}
   <div className="flex items-center justify-between px-4 py-3 border-t border-border">
     <p className="text-sm text-muted-foreground">
-      Showing {start}–{end} of {totalorders} products
+      Showing {start}–{end} of {totalorders} orders
     </p>
     <div className="flex items-center gap-1">
       {/* Previous */}
