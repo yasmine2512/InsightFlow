@@ -1,5 +1,5 @@
 import DashboardLayout from "../components/Layout";
-import { Search, Filter, Download ,Package,ShoppingCart,DollarSign,TrendingDown,TrendingUp} from "lucide-react";
+import { Search, Filter, Download ,Package,ShoppingCart,DollarSign,TrendingDown,TrendingUp,CheckCircle2} from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/Input";
 import { useParams ,  useNavigate} from "react-router-dom"
@@ -90,8 +90,8 @@ const ordersData = data.ordersbystatus;
   { label: "Orders", value: data.ordersTM,change:OG,growth:true, up:OG>= 0, icon: Package },
   { label: "Pending Orders", value:0,growth:false, stock: 0, icon: ShoppingCart },
   { label: "Average Order Value", value:AOV,change:AOVG,up:AOVG>0
-,growth:true, stock:0, icon: Package },
-  { label: "Fulfillment Rate", value:FR ,change:FRG,growth:true,up:FRG>0, icon: DollarSign },
+,growth:true, stock:0, icon: DollarSign },
+  { label: "Fulfillment Rate", value:FR ,change:FRG,growth:true,up:FRG>0, icon: CheckCircle2 },
 ];
 
 const colors = [

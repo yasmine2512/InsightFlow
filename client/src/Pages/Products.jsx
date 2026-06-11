@@ -1,5 +1,5 @@
 import DashboardLayout from "../components/Layout";
-import { Search,Filter,Download,DollarSign,TrendingUp,TrendingDown, Package, ShoppingCart, Users} from "lucide-react";
+import { Search,Filter,Download,DollarSign,TrendingUp,TrendingDown, Package, ShoppingCart, Users,PackageCheck,AlertTriangle,XCircle} from "lucide-react";
 
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/Input";
@@ -60,12 +60,12 @@ const {  data: productlist, isLoading, error } = useQuery({ queryKey: ["productl
   if (error || errorstats) return <p>Error loading products</p>;
   const LS = data.productsKPI[0].lowStock;
   const OS = data.productsKPI[0].outOfStock;
-  const IV = data.productsKPI[0].inventoryValue;
+  const IV = data.productsKPI[0].inventoryValue.toFixed(1);
 
   const stats = [
-  { label: "Active Products", value: "$"+ data.activeproducts,change: data.growth,growth:true, up: data.growth>= 0, icon: Package },
-  { label: "Low Stock", value: LS, up: LS> 0,growth:false, stock:LS > 0, icon: ShoppingCart },
-  { label: "Out Of Stock", value: OS,stock:OS > 0,growth:false, stock:OS > 0, icon: Package },
+  { label: "Active Products", value: "$"+ data.activeproducts,change: data.growth.toFixed(1),growth:true, up: data.growth>= 0, icon: PackageCheck },
+  { label: "Low Stock", value: LS, up: LS> 0,growth:false, stock:LS > 0, icon:AlertTriangle},
+  { label: "Out Of Stock", value: OS,stock:OS > 0,growth:false, stock:OS > 0, icon: XCircle },
   { label: "Inventory Value", value: "$"+IV ,growth:false,stock: false, icon: DollarSign },
 ];
   const products = productlist.productslist;
@@ -102,7 +102,7 @@ const end = Math.min(currentPage * rowsPerPage,totalproducts);
               <div className={`font-heading text-2xl font-bold ${ !s.stock ? "text" : "text-destructive"}`}>{s.value}</div>
               <div className={`flex items-center gap-1 text-xs mt-1 ${s.up && s.growth ? "text-success" : "text-destructive"}`}>
                 {s.growth? (s.up ? <TrendingUp className="w-3 h-3 " /> : <TrendingDown className="w-3 h-3" /> ):(<div/>)}
-                {s.change && s.growth} 
+                {s.growth && s.change + "% From last month"} 
               </div>
             </div>
           ))}

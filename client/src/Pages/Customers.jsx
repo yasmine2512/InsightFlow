@@ -1,5 +1,5 @@
 import DashboardLayout from "../components/Layout";
-import { Search, Filter, Download ,DollarSign,TrendingUp, TrendingDown,Package, ShoppingCart, Users} from "lucide-react";
+import { Search, Filter, Download ,DollarSign,TrendingUp, TrendingDown,Package, ShoppingCart, Users,RefreshCw,UserCheck} from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/Input";
 import { useParams ,  useNavigate} from "react-router-dom"
@@ -98,11 +98,12 @@ queryFn: () => fetchCustomers({page:currentPage}),keepPreviousData: true,staleTi
 const spendingChartData =spendingDistribution(data?.customersSpendingDistribution || []);
 const CLV = data.customerLiftimeValue.toFixed(1);
 const stats = [
-  { label: "Total Customers", value: data.totalcustomers,growth:false,icon: DollarSign },
-  { label: "Active Customers", value: data.activecustomers, change: data.ACgrowth, 
-    up: data.ACgrowth>= 0,growth:true, icon: ShoppingCart },
-  { label: "Customer Retention Rate", value:data.customerRetentionRate, change:data.CRRgrowth,up:data.CRRgrowth,growth:true, icon: Package },
-  { label: "Customer Avg Liftime Value", value:"$"+CLV,growth:false, icon: Users },
+  { label: "Total Customers", value: data.totalcustomers,growth:false,icon:Users },
+  { label: "Active Customers", value: data.activecustomers, change: data.ACgrowth.toFixed(1), 
+    up: data.ACgrowth>= 0,growth:true, icon:  UserCheck },
+  { label: "Customer Retention Rate", value:data.customerRetentionRate, 
+    change:data.CRRgrowth.toFixed(1),up:data.CRRgrowth,growth:true, icon: RefreshCw },
+  { label: "Customer Avg Liftime Value", value:"$"+CLV,growth:false, icon:DollarSign },
 ];
 const customers =customerslist.customers;
 const rowsPerPage = 10;
@@ -133,7 +134,7 @@ const end = Math.min(currentPage * rowsPerPage,totalcustomers);
               <div className="font-heading text-2xl font-bold">{s.value}</div>
               <div className={`flex items-center gap-1 text-xs mt-1 ${s.up? "text-success" : "text-destructive"}`}>
                 {s.growth? (s.up ? <TrendingUp className="w-3 h-3 " />: <TrendingDown className="w-3 h-3" /> ):(<div/>)}
-                {s.growth && s.change + " From last month"}
+                {s.growth && s.change + "% From last month"}
               </div>
             </div>
           ))}

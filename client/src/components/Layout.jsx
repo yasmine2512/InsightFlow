@@ -34,7 +34,7 @@ const navItems = [
       )}>
         <div className="p-6 flex items-center justify-between mb-8">
           <Link to="/" className="font-heading text-xl font-bold text-sidebar-primary-foreground">
-            <span className="text-sidebar-primary">Insight</span>Flow
+            <span className="text-primary">Insight</span>Flow
           </Link>
           <button className="lg:hidden text-sidebar-foreground" onClick={() => setOpen(false)}><X className="w-5 h-5" /></button>
         </div>

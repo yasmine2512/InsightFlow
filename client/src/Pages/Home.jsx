@@ -39,7 +39,7 @@ export default function Index() {
       <nav className="border-b border-border/50 backdrop-blur-sm sticky top-0 z-50 bg-background/80">
         <div className="container flex items-center justify-between h-16">
           <Link to="/" className="font-heading text-xl font-bold tracking-tight text-foreground">
-            <span className="gradient-primary bg-clip-text text-transparent">Apex</span>SaaS
+            <span className="text-primary">Insight</span>Flow
           </Link>
           <div className="hidden md:flex items-center gap-8">
             <a href="#features" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Features</a>
@@ -122,7 +122,7 @@ export default function Index() {
       <section className="py-24 gradient-hero text-primary-foreground">
         <div className="container text-center">
           <h2 className="font-heading text-3xl md:text-4xl font-bold mb-4">Ready to get started?</h2>
-          <p className="text-primary-foreground/70 mb-8 max-w-md mx-auto">Join thousands of teams already using ApexSaaS to scale their operations.</p>
+          <p className="text-primary-foreground/70 mb-8 max-w-md mx-auto">Join thousands of teams already using InsightFlow to scale their operations.</p>
           <Link to="/register">
             <Button size="lg" className="gradient-accent border-0 text-accent-foreground font-semibold hover:opacity-90">
               Start Free Trial <ArrowRight className="ml-2 w-4 h-4" />
@@ -134,8 +134,8 @@ export default function Index() {
       {/* Footer */}
       <footer className="py-12 border-t border-border">
         <div className="container flex flex-col md:flex-row items-center justify-between gap-4">
-          <span className="font-heading font-bold"><span className="gradient-primary bg-clip-text text-transparent">Apex</span>SaaS</span>
-          <p className="text-sm text-muted-foreground">© 2026 ApexSaaS. All rights reserved.</p>
+          <span className="font-heading font-bold"><span className="text-primary">Insight</span>Flow</span>
+          <p className="text-sm text-muted-foreground">© 2026 InsightFlow. All rights reserved.</p>
         </div>
       </footer>
     </div>

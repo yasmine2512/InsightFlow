@@ -19,7 +19,7 @@ export default function Register() {
       <div className="flex-1 flex items-center justify-center p-8">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-sm">
           <Link to="/" className="font-heading text-xl font-bold tracking-tight mb-8 block">
-            <span className="gradient-primary bg-clip-text text-transparent">Apex</span>SaaS
+            <span className="text-primary">Insight</span>Flow
           </Link>
           <h2 className="font-heading text-2xl font-bold mb-1">Create account</h2>
           <p className="text-sm text-muted-foreground mb-8">

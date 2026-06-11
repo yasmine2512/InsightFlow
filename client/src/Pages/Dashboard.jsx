@@ -1,6 +1,6 @@
 import DashboardLayout from "../components/Layout";
-import { TrendingUp, TrendingDown, DollarSign, Package, ShoppingCart, Users} from "lucide-react";
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from "recharts";
+import { TrendingUp, TrendingDown, DollarSign, Package, ShoppingCart, Users,AlertTriangle} from "lucide-react";
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar ,} from "recharts";
 import { useParams ,  useNavigate} from "react-router-dom"
 import { useEffect, useState } from "react"
 import axios from "axios"
@@ -82,7 +82,7 @@ const { data, isLoading, error } = useQuery({ queryKey: ["overview", id], queryF
 const stats = [
   { label: "Revenue", value: "$"+ data.revenue,change: Rgrowth, up: data.revenugrowth>= 0, icon: DollarSign },
   { label: "Orders", value: data.orders, change: Ogrowth, up: data.ordersgrowth>= 0, icon: ShoppingCart },
-  { label: "Stock Alert", value: lowstock, change:outofstock +" are out of stock",stock:outofstock > 0, icon: Package },
+  { label: "Stock Alert", value: lowstock, change:outofstock +" are out of stock",stock:outofstock > 0, icon: AlertTriangle },
   { label: "Customers", value: data.customers, change: Cgrowth, up: data.customersgrowth>= 0 , icon: Users },
 ];
 
