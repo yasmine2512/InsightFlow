@@ -17,10 +17,9 @@ export default router;
    * @method GET
    * @access private
    */  
-router.get("/:id",verifyTokenAndAuthorization,asyncHandler(async(req,res)=>{
+router.get("/:id/stats",verifyTokenAndAuthorization,asyncHandler(async(req,res)=>{
    const orgid = req.params.id;
-   const[allOrders,totalOrders,completedOrders,ordersbystatus,ordersperday,revenu,orders] = await Promise.all([
-   getallOrders(orgid,req.query),
+   const[totalOrders,completedOrders,ordersbystatus,ordersperday,revenu,orders] = await Promise.all([
    gettotalOrders(orgid),
    getCompletedOrders(orgid),
    getOrdersByStatus(orgid),
@@ -42,9 +41,15 @@ router.get("/:id",verifyTokenAndAuthorization,asyncHandler(async(req,res)=>{
   const PFR = previousO === 0 ? 0 : (previousCO / previousO) * 100;
   const FRgrowth = PFR === 0 ? 0 : ((CFR - PFR) / PFR) * 100;
   
-   return res.status(200).json({ orders :allOrders ,totalOrders :totalOrders,ordersTM:currentO,ordersgrowth:growthO,averageordervalue:CAOV,AOVgrowth:AOVgrowth,fulfillmentrate:CFR,FRgrowth:FRgrowth,ordersperday:ordersperday,ordersbystatus:ordersbystatus});
+   return res.status(200).json({totalOrders :totalOrders,ordersTM:currentO,ordersgrowth:growthO,averageordervalue:CAOV,AOVgrowth:AOVgrowth,fulfillmentrate:CFR,FRgrowth:FRgrowth,ordersperday:ordersperday,ordersbystatus:ordersbystatus});
 }));
 
+
+router.get("/:id",verifyTokenAndAuthorization,asyncHandler(async(req,res)=>{
+   const orgid = req.params.id;
+   const allOrders = await getallOrders(orgid,req.query);
+   return res.status(200).json({ orders :allOrders});
+  }));
 
 /** 
    * @desc create an order

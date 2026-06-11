@@ -20,10 +20,9 @@ const router = express.Router();
    * @access private
    */ 
 
-router.get("/:id",verifyTokenAndAuthorization,asyncHandler(async(req,res)=>{
+router.get("/:id/stats",verifyTokenAndAuthorization,asyncHandler(async(req,res)=>{
     const orgid = req.params.id;
-    const [products,activeproducts,productKPI,topproducts] =await Promise.all([
-    getProductsWithStats(orgid,req.query),
+    const [activeproducts,productKPI,topproducts] =await Promise.all([
     getActiveProductsGrowth(orgid),
     getProductKPIs(orgid),
     gettopproducts(orgid)
@@ -31,8 +30,16 @@ router.get("/:id",verifyTokenAndAuthorization,asyncHandler(async(req,res)=>{
     const ATM = activeproducts?.activeThisMonth || 0; 
     const ALM = activeproducts?.activeLastMonth || 0;
     const growth = ALM === 0? 0: ((ATM - ALM) / ALM) * 100;
-    return res.status(200).json({productslist:products,activeproducts:ATM,growth:growth,productsKPI:productKPI});
+    return res.status(200).json({activeproducts:ATM,growth:growth,productsKPI:productKPI});
 }))
+
+
+router.get("/:id",verifyTokenAndAuthorization,asyncHandler(async(req,res)=>{
+    const orgid = req.params.id;
+    const products = await getProductsWithStats(orgid,req.query);
+    return res.status(200).json({productslist:products});
+}))
+
 
 /** 
    * @desc get all product , top selling products with revenu chart

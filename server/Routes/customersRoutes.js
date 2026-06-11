@@ -18,10 +18,9 @@ import{gettotalcustomers,getallCustomers,getCRR,getActiveCustomers,getCLM,getAvg
    * @method GET
    * @access private
    */  
-router.get("/:id",verifyTokenAndAuthorization,asyncHandler(async(req,res)=>{
+router.get("/:id/stats",verifyTokenAndAuthorization,asyncHandler(async(req,res)=>{
 const orgid = req.params.id;
-const[customers,customerscount,CRR,AC,CLV,CSD,CLM,TC] = await Promise.all([
-getallCustomers(orgid,req.query),  
+const[customerscount,CRR,AC,CLV,CSD,CLM,TC] = await Promise.all([
 getCustomers(orgid),
 getCRR(orgid),
 getActiveCustomers(orgid),
@@ -37,8 +36,16 @@ const ALV = CLV[0]?.avgCLV || 0;
 const currentCRR = CRR[0]?.current[0]?.returningCustomers || 0;
 const previousCRR = CRR[0]?.previous[0]?.returningCustomers || 0;
 const CRRgrowth = previousCRR === 0 ? 0 : ((currentCRR - previousCRR) / previousCRR) * 100;
+const CAC = AC.current[0]?.value;
+const PAC = AC.previous[0]?.value;
+const GAC = PAC === 0 ? 0 : ((CAC - PAC) / PAC) * 100;
 
-return res.status(200).json({customers:customers,totalcustomers:currentC,customerRetentionRate:currentCRR,CRRgrowth:CRRgrowth,activecustomers:AC,customerLiftimeValue:ALV,customersSpendingDistribution:CSD,newClast7month:CLM,topCustomers:TC});
+return res.status(200).json({totalcustomers:currentC,customerRetentionRate:currentCRR,CRRgrowth:CRRgrowth,activecustomers:CAC,ACgrowth:GAC,customerLiftimeValue:ALV,customersSpendingDistribution:CSD,newClast7month:CLM,topCustomers:TC});
 }));
 
+router.get("/:id",verifyTokenAndAuthorization,asyncHandler(async(req,res)=>{
+const orgid = req.params.id;
+const customers = await getallCustomers(orgid,req.query);
+return res.status(200).json({customers});
+}))
 export default router; 

@@ -73,7 +73,7 @@ const { data, isLoading, error } = useQuery({ queryKey: ["overview", id], queryF
  
 
   if (isLoading) return <div>Loading...</div>
-  if (error) return <p>Error loading products</p>;
+  if (error) return <p>Error loading dashboard</p>;
   const Rgrowth = `${data.revenugrowth>= 0 ? "+" : ""}${data.revenugrowth.toFixed(1)}% from last month`;
   const Ogrowth = `${data.ordersgrowth>= 0 ? "+" : ""}${data.ordersgrowth.toFixed(1)}% from last month`;
   const lowstock = data.stockAlert[0].lowStock;

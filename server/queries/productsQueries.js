@@ -52,8 +52,7 @@ export const getProductsWithStats = async (orgId,query) => {
               { $gte: ["$orders.createdAt", startMonth] },
               { $ifNull: ["$orders.products.quantity", 0] },0]}},
          }},
-    {$addFields: {isActive: { $gt: ["$soldThisMonth", 0] }}}, 
-    ...(query.active === "true"? [{ $match: { isActiveThisMonth: true } }]: []),         
+    {$addFields: {isActive: { $gt: ["$soldThisMonth", 0] }}},        
     {$sort: (() => {
         switch (query.sort) {
           case "price_asc":

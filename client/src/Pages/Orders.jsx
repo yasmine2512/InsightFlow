@@ -33,7 +33,25 @@ export default function Orders() {
   const API_URL = import.meta.env.VITE_API_URL;
   const navigate = useNavigate();
 
-    const fetchProfile = async () => {
+    const fetchStats= async () => {
+      const token = localStorage.getItem("token");
+        if (!token) {
+      navigate("/login");
+      return;
+    }
+      try {
+        const res = await axios.get(`${API_URL}/api/orders/${id}/stats`, {
+          headers: { Authorization: `Bearer ${token}` }
+        })
+        console.log(res.data);
+        return res.data;
+      } catch (err) {
+        console.error("Unauthorized or token invalid", err)
+        // navigate("/login");
+        throw err;
+      }
+    }
+const fetchOrders= async ({page}) => {
       const token = localStorage.getItem("token");
         if (!token) {
       navigate("/login");
@@ -42,7 +60,7 @@ export default function Orders() {
       try {
         const res = await axios.get(`${API_URL}/api/orders/${id}`, {
           headers: { Authorization: `Bearer ${token}` },
-           params: { page: 1,limit: 10}
+           params: { page,limit: 10}
         })
         console.log(res.data);
         return res.data;
@@ -53,10 +71,14 @@ export default function Orders() {
       }
     }
 
-const { data, isLoading, error } = useQuery({ queryKey: ["orders", id], queryFn: fetchProfile, staleTime: 1000 * 60 * 5 });
 
-  if (isLoading) return <div>Loading...</div>
-  if (error) return <p>Error loading products</p>;
+const { data, isLoadingstats, errorstats } = useQuery({ queryKey: ["orders", id], queryFn: fetchStats, staleTime: 1000 * 60 * 5 });
+const [currentPage, setCurrentPage] = useState(1);
+const {  data: orderslist, isLoading, error } = useQuery({ queryKey: ["orderslist", id,currentPage],
+   queryFn: () => fetchOrders({page:currentPage}),keepPreviousData: true,staleTime: 1000 * 60 * 5});
+
+  if (isLoading || isLoadingstats) return <div>Loading...</div>
+  if (error || errorstats) return <p>Error loading orders</p>;
 const OG = data.ordersgrowth.toFixed(1);
 const AOV = data.averageordervalue.toFixed(1);
 const AOVG = data.averageordervalue.toFixed(1);
@@ -72,21 +94,30 @@ const ordersData = data.ordersbystatus;
   { label: "Fulfillment Rate", value:FR ,change:FRG,growth:true,up:FRG>0, icon: DollarSign },
 ];
 
-
 const colors = [
     "hsl(172 66% 50%)" ,"hsl(243 75% 59%)" ,"hsl(280 72% 55%)","hsl(38 92% 50%)"
 ];
-const orders = data.orders;
 const ordersperday = fillMissingDays(data.ordersperday);
+const orders = orderslist.orders;
+
+  const rowsPerPage = 10;
+  const totalorders = data.totalOrders;
+  const totalPages = Math.ceil(totalorders / rowsPerPage);
+  const start = (currentPage - 1) * rowsPerPage + 1;
+const end = Math.min(currentPage * rowsPerPage,totalorders);
   return (
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="font-heading text-2xl font-bold">Orders</h1>
-            <p className="text-sm text-muted-foreground">Track and manage all orders</p>
-          </div>
-          <Button variant="outline"><Download className="w-4 h-4 mr-2" /> Export</Button>
+
+        <div className="relative">
+        <div className="text-center">
+          <h1 className="font-heading text-2xl font-bold">
+            Orders
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            Track and manage all orders
+          </p>
         </div>
+      </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {stats.map((s) => (
             <div key={s.label} className="bg-card rounded-xl border border-border p-5 shadow-soft">
@@ -138,14 +169,17 @@ const ordersperday = fillMissingDays(data.ordersperday);
                         </BarChart>
                       </ResponsiveContainer>
                     </div>
-                    
                     </div>
+
         <div className="flex items-center gap-3">
-          <div className="relative flex-1 max-w-sm">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input placeholder="Search orders..." className="pl-10" />
-          </div>
-          <Button variant="outline" size="sm"><Filter className="w-4 h-4 mr-1" /> Filter</Button>
+            <div className="flex items-center gap-3 flex-1">
+              <div className="relative flex-1 max-w-sm">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input placeholder="Search orders..." className="pl-10" />
+              </div>
+              <Button variant="outline" size="sm"><Filter className="w-4 h-4 mr-1" />Filter</Button>
+            </div>
+            <Button><Download className="w-4 h-4 mr-2" />Export</Button>
         </div>
 
         <div className="bg-card rounded-xl border border-border shadow-soft overflow-hidden">
@@ -190,6 +224,57 @@ const ordersperday = fillMissingDays(data.ordersperday);
               </tbody>
             </table>
           </div>
+          {/* Pagination Controls */}
+  <div className="flex items-center justify-between px-4 py-3 border-t border-border">
+    <p className="text-sm text-muted-foreground">
+      Showing {start}–{end} of {totalorders} products
+    </p>
+    <div className="flex items-center gap-1">
+      {/* Previous */}
+      <button
+        onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+        disabled={currentPage === 1}
+        className="p-2 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+      >
+        ‹
+      </button>
+
+      {/* Page Numbers */}
+      {Array.from({ length: totalPages }, (_, i) => i + 1)
+        .filter((page) => page === 1 || page === totalPages || Math.abs(page - currentPage) <= 1)
+        .reduce((acc, page, idx, arr) => {
+          if (idx > 0 && page - arr[idx - 1] > 1) acc.push("...");
+          acc.push(page);
+          return acc;
+        }, [])
+        .map((item, idx) =>
+          item === "..." ? (
+            <span key={`ellipsis-${idx}`} className="px-2 text-muted-foreground text-sm">…</span>
+          ) : (
+            <button
+              key={item}
+              onClick={() => setCurrentPage(item)}
+              className={`min-w-[2rem] h-8 px-2 rounded-lg text-sm font-medium transition-colors
+                ${currentPage === item
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                }`}
+            >
+              {item}
+            </button>
+          )
+        )}
+
+      {/* Next */}
+      <button
+        onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
+        disabled={currentPage === totalPages}
+        className="p-2 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+      >
+        ›
+      </button>
+    </div>
+  </div>
         </div>
       </div>
   );
