@@ -9,7 +9,7 @@ import axios from "axios"
 import { useQuery } from "@tanstack/react-query";
 
 
-export default function Orders() {
+export default function Products() {
   const { id } = useParams()
   const [profile, setProfile] = useState(null)
   const API_URL = import.meta.env.VITE_API_URL;
@@ -74,7 +74,7 @@ const {  data: productlist, isLoading, error } = useQuery({ queryKey: ["productl
   const IV = data.productsKPI[0].inventoryValue.toFixed(1);
 
   const stats = [
-  { label: "Active Products", value: "$"+ data.activeproducts,change: data.growth.toFixed(1),growth:true, up: data.growth>= 0, icon: PackageCheck },
+  { label: "Active Products", value: data.activeproducts,change: data.growth.toFixed(1),growth:true, up: data.growth>= 0, icon: PackageCheck },
   { label: "Low Stock", value: LS, up: LS> 0,growth:false, stock:LS > 0, icon:AlertTriangle},
   { label: "Out Of Stock", value: OS,stock:OS > 0,growth:false, stock:OS > 0, icon: XCircle },
   { label: "Inventory Value", value: "$"+IV ,growth:false,stock: false, icon: DollarSign },
@@ -154,7 +154,7 @@ const end = Math.min(currentPage * rowsPerPage,totalproducts);
             <td className="text-left p-4">{o.revenue}</td>
             <td className="text-left p-4">
               <span className={`px-2 py-1 rounded-full text-xs font-medium ${o.isActive ? "bg-success/10 text-success" : "bg-warning/10 text-warning"}`}>
-                {o.isActive ? "Active" : "inactive"}
+                {o.isActive ? "Active" : "Inactive"}
               </span>
             </td>
           </tr>

@@ -19,8 +19,7 @@ export default router;
    */  
 router.get("/:id/stats",verifyTokenAndAuthorization,asyncHandler(async(req,res)=>{
    const orgid = req.params.id;
-   const[totalOrders,completedOrders,ordersbystatus,ordersperday,revenu,orders] = await Promise.all([
-   gettotalOrders(orgid),
+   const[completedOrders,ordersbystatus,ordersperday,revenu,orders] = await Promise.all([
    getCompletedOrders(orgid),
    getOrdersByStatus(orgid),
    getordersperday(orgid),
@@ -41,7 +40,7 @@ router.get("/:id/stats",verifyTokenAndAuthorization,asyncHandler(async(req,res)=
   const PFR = previousO === 0 ? 0 : (previousCO / previousO) * 100;
   const FRgrowth = PFR === 0 ? 0 : ((CFR - PFR) / PFR) * 100;
   
-   return res.status(200).json({totalOrders :totalOrders,ordersTM:currentO,ordersgrowth:growthO,averageordervalue:CAOV,AOVgrowth:AOVgrowth,fulfillmentrate:CFR,FRgrowth:FRgrowth,ordersperday:ordersperday,ordersbystatus:ordersbystatus});
+   return res.status(200).json({ordersTM:currentO,ordersgrowth:growthO,averageordervalue:CAOV,AOVgrowth:AOVgrowth,fulfillmentrate:CFR,FRgrowth:FRgrowth,ordersperday:ordersperday,ordersbystatus:ordersbystatus});
 }));
 
 

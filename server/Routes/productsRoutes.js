@@ -66,9 +66,6 @@ router.get("/:id/cataloge",verifyTokenAndAuthorization,asyncHandler(async(req,re
   const product = await Product.findOne({_id:productid,organization:orgid});
   if (!product) return res.status(404).json({ message: "Product not found" });
   return res.json({ product });
-  //Conversion Rate=Number of PurchasesNumber of Visitors or Views×100
-//Conversion Rate=Number of Visitors or ViewsNumber of Purchases​×100
-
 }));
 
 /** 

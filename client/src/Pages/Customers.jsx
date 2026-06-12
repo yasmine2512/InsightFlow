@@ -65,7 +65,7 @@ export default function Customers() {
         throw err;
       }
     }
-    const fetchCustomers = async ({page}) => {
+    const fetchCustomers = async ({page,search}) => {
       const token = localStorage.getItem("token");
         if (!token) {
       navigate("/login");
@@ -75,7 +75,7 @@ export default function Customers() {
       
         const res = await axios.get(`${API_URL}/api/customers/${id}`, {
           headers: { Authorization: `Bearer ${token}` },
-           params: { page,limit: 10}
+           params: { page,limit: 10,search}
         })
         // setProfile(res.data)
         console.log(res.data);
@@ -85,11 +85,22 @@ export default function Customers() {
         throw err;
       }
     }
+    const [search, setSearch] = useState("");
+const [debouncedSearch, setDebouncedSearch] = useState(search);
+useEffect(() => {
+  const timer = setTimeout(() => {
+    setDebouncedSearch(search);
+  }, 400);
+  return () => clearTimeout(timer);
+}, [search]);
+useEffect(() => {
+  setCurrentPage(1);
+}, [debouncedSearch]);
 const { data, isLoadingstats, errorstats } = useQuery({ queryKey: ["customers", id], queryFn: fetchStats, staleTime: 1000 * 60 * 5 });
 const [currentPage, setCurrentPage] = useState(1);
 const {  data: customerslist, isLoading, error } = useQuery({
-queryKey: ["customerslist", id,currentPage],
-queryFn: () => fetchCustomers({page:currentPage}),keepPreviousData: true,staleTime: 1000 * 60 * 5});
+queryKey: ["customerslist", id,currentPage,debouncedSearch],
+queryFn: () => fetchCustomers({page:currentPage,search:debouncedSearch}),keepPreviousData: true,staleTime: 1000 * 60 * 5});
 
   if (isLoading || isLoadingstats) return <div>Loading...</div>
   if (error || errorstats) return <p>Error loading customers</p>;
@@ -105,21 +116,24 @@ const stats = [
     change:data.CRRgrowth.toFixed(1),up:data.CRRgrowth,growth:true, icon: RefreshCw },
   { label: "Customer Avg Liftime Value", value:"$"+CLV,growth:false, icon:DollarSign },
 ];
-const customers =customerslist.customers;
+const customers =customerslist.customers.customers;
 const rowsPerPage = 10;
-const totalcustomers = data.totalcustomers;
+const totalcustomers = customerslist.customers.total;
 const totalPages = Math.ceil(totalcustomers / rowsPerPage);
 const start = (currentPage - 1) * rowsPerPage + 1;
 const end = Math.min(currentPage * rowsPerPage,totalcustomers);
   return (
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="font-heading text-2xl font-bold">Users</h1>
-            <p className="text-sm text-muted-foreground">Track and manage all users</p>
-          </div>
-          <Button variant="outline"><Download className="w-4 h-4 mr-2" /> Export</Button>
+        <div className="relative">
+        <div className="text-center">
+          <h1 className="font-heading text-2xl font-bold">
+            Customers
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            Track and manage all customers
+          </p>
         </div>
+      </div>
 
         {/* Stat Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -169,7 +183,7 @@ const end = Math.min(currentPage * rowsPerPage,totalcustomers);
         <div className="flex items-center gap-3">
           <div className="relative flex-1 max-w-sm">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input placeholder="Search customers..." className="pl-10" />
+            <Input placeholder="Search customers..." className="pl-10" value={search} onChange={(e) => setSearch(e.target.value)}/>
           </div>
           <Button variant="outline" size="sm"><Filter className="w-4 h-4 mr-1" /> Filter</Button>
         </div>
@@ -206,7 +220,7 @@ const end = Math.min(currentPage * rowsPerPage,totalcustomers);
           {/* Pagination Controls */}
   <div className="flex items-center justify-between px-4 py-3 border-t border-border">
     <p className="text-sm text-muted-foreground">
-      Showing {start}–{end} of {totalcustomers} products
+      Showing {start}–{end} of {totalcustomers} customers
     </p>
     <div className="flex items-center gap-1">
       {/* Previous */}

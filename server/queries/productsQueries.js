@@ -73,18 +73,18 @@ const pipeline =[
         price: {$first: "$price"},
         stock: {$first: "$stock"},
         category: {$first: "$category"},
-        sold: {$sum: {$ifNull: ["$orders.products.quantity",  0]}},
-        revenue: {$sum: {
-            $multiply: [
-              {$ifNull: ["$orders.products.quantity",0]},
-              {$ifNull: ["$orders.products.priceAtPurchase",0]}]
-          }
-        },
+        sold: {$sum: {$cond: [{ $eq: ["$orders.status", "completed"] },
+        { $ifNull: ["$orders.products.quantity", 0] }, 0]}},
+        revenue: {$sum: {$cond: [{ $eq: ["$orders.status", "completed"] },
+        {$multiply: [
+          { $ifNull: ["$orders.products.quantity", 0] },
+          { $ifNull: ["$orders.products.priceAtPurchase", 0] }]},0]}},
         soldThisMonth: {$sum: {
-            $cond: [{$gte: ["$orders.createdAt",startMonth]},
-              {$ifNull: ["$orders.products.quantity",0]},0 ]
-          }
-        }
+            $cond: [ {$and: [
+          { $gte: ["$orders.createdAt", startMonth] },
+          { $eq: ["$orders.status", "completed"] }]},
+          { $ifNull: ["$orders.products.quantity", 0] },0]
+          }}
       }},
     {$addFields: {isActive: {$gt: ["$soldThisMonth",0]}}},
     {$facet: {

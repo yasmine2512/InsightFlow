@@ -32,7 +32,7 @@ if (!validPassword) return res.status(401).json({message :"Wrong password"});
 const token = jwt.sign(
   { id: user._id, isadmin: user.isadmin },
   process.env.JWT_SECRET_KEY,
-  { expiresIn: "30m" }
+  { expiresIn: "1d" }
 );
 const { password, ...other } = user._doc;
 res.status(200).json({ user :other, token });

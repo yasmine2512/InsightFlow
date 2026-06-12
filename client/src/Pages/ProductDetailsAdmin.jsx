@@ -32,7 +32,10 @@ export default function ProductDetail() {
            return;
          }
            try {
-             const res = await axios.get(`${API_URL}/api/products/detail/${productid}`)
+             const res = await axios.get(`${API_URL}/api/products/${userId}/detail/${productid}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+
              setProduct(res.data.product);
            } catch (err) {
              console.error("Product not Found", err);

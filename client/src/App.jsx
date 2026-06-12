@@ -28,11 +28,11 @@ function App() {
 <Route element={<DashboardLayout />}>
 <Route path="/:id/dashboard" element={<Dashboard/>} />
 <Route path="/:id/customers" element={<Customers/>} />
-<Route path="/products/:productid" element={<ProductsDetailsAdmin />} />
 {/* <Route path="/products/:id" element={<ProductsDetailsuser />} /> */}
 <Route path="/:id/cataloge" element={<ProductsCataloge />} />
 <Route path="/:id/products" element={<Products/>} />
-<Route path="/products/dashboard" element={<Products />} />
+<Route path="/:id/products/:productid" element={<ProductsDetailsAdmin />} />
+{/* <Route path="/products/dashboard" element={<Products />} /> */}
 <Route path="/:id/orders" element={<Orders/>} />
 <Route path="/settings" element={<Settings/>} />
 <Route path="/subscriptions" element={<Subscriptions/>} />

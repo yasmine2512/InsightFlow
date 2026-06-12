@@ -11,15 +11,23 @@ export const gettotalcustomers= async (orgId) => {
   return Customer.countDocuments({organization: toObjectId(orgId)})};
 
 //get all customers
-export const getallCustomers = async(orgId,query)=>{
+export const getallCustomers = async (orgId, query) => {
   const page = parseInt(query.page) || 1;
   const limit = parseInt(query.limit) || 10;
   const skip = (page - 1) * limit;
   const match = {organization: toObjectId(orgId)};
-    return Customer.aggregate([{$match: match},
-      {$sort:{createdAt: -1}},
-    { $skip: skip },
-    { $limit: limit }]);
+  if (query.search) {match.$or = [{name: {$regex: query.search,$options: "i"}},
+      {email: {$regex: query.search,$options: "i"}}]; }
+  const pipeline = [
+    {$match: match},
+    {$sort: {createdAt: -1}},
+    {$facet: {
+        customers: [{ $skip: skip },{ $limit: limit }],
+        totalCount: [{ $count: "count" }]
+      } }
+  ];
+  const result = await Customer.aggregate(pipeline);
+  return {customers: result[0].customers,total: result[0].totalCount[0]?.count || 0};
 };
 
 //customers retention rate

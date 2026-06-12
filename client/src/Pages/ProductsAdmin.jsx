@@ -10,7 +10,7 @@ import { useAuth } from "../context/AuthContext";
 import AddProductPopup from "./AddProduct";
 import { useQuery } from "@tanstack/react-query";
 
-export default function Products() {
+export default function ProductsCatalog() {
   const { id } = useParams()
   const{user}= useAuth();
   const isAdmin = user?.isAdmin;
@@ -45,18 +45,18 @@ export default function Products() {
 
   return (
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between align-center">
           <div>
-            <h1 className="font-heading text-2xl font-bold">Products</h1>
-            {isAdmin &&<p className="text-sm text-muted-foreground">Manage your product catalog</p>}
+            <h1 className="font-heading text-2xl font-bold mb-3">Products</h1>
+            <p className="text-sm text-muted-foreground ">Manage your product catalog</p>
           </div>
-         {isAdmin && <><Button className="gradient-primary border-0 text-primary-foreground" onClick={() => setOpen(true)}>
+        <><Button className="gradient-primary border-0 text-primary-foreground" onClick={() => setOpen(true)}>
             <Plus className="w-4 h-4 mr-2" /> Add Product
           </Button>
           <AddProductPopup
         open={open}
         setOpen={setOpen}
-      /></>}
+      /></>
         </div>
 
         <div className="flex items-center gap-3">
@@ -68,7 +68,7 @@ export default function Products() {
 
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {products.map((p) => (
-            <Link key={p._id} to={`/products/${p._id}`} className="group">
+            <Link key={p._id} to={`/${id}/products/${p._id}`} className="group">
               <div className="bg-card rounded-xl border border-border p-5 shadow-soft hover:shadow-elevated transition-all">
                 <div className="flex items-start justify-between mb-4 ">
                   {/* <div className="w-12 h-12 rounded-xl bg-muted flex items-center justify-center text-2xl">{p.image}</div> */}
