@@ -1,12 +1,13 @@
 import DashboardLayout from "../components/Layout";
-import { Search, Filter, Download ,Package,ShoppingCart,DollarSign,TrendingDown,TrendingUp,CheckCircle2} from "lucide-react";
+import { Search, Filter, Download ,Package,ShoppingCart,DollarSign,TrendingDown,TrendingUp,CheckCircle2,Trash2} from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/Input";
 import { useParams ,  useNavigate} from "react-router-dom"
-import { useEffect, useState } from "react"
+import { useEffect, useState, useRef} from "react"
 import axios from "axios"
 import { useQuery } from "@tanstack/react-query";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip,BarChart ,CartesianGrid,XAxis, YAxis,Bar} from "recharts";
+import { useQueryClient } from "@tanstack/react-query";
 
 const fillMissingDays = (data) => {
 const result = [];
@@ -26,14 +27,106 @@ const result = [];
   }
   return result;
 };
+const STATUS_OPTIONS = ["pending", "canceled", "completed"];
 
+function StatusPopover({ currentStatus, onSelect }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+
+  // Close on outside click
+  useEffect(() => {
+    const handler = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  const styles = {
+    completed: "bg-success/10 text-success",
+    pending:   "bg-primary/10 text-primary",
+    canceled:"bg-warning/10 text-warning",
+  };
+
+  return (
+    <div className="relative inline-block" ref={ref}>
+      <button onClick={() => setOpen((v) => !v)}>
+        <span className={`px-2 py-1 rounded-full text-xs font-medium cursor-pointer ${styles[currentStatus]}`}>
+          {currentStatus}
+        </span>
+      </button>
+      {open && (
+        <div className="absolute z-50 mt-2 w-36 bg-card border border-border rounded-xl shadow-lg overflow-hidden">
+          <p className="text-xs text-muted-foreground px-3 pt-2 pb-1">Change status</p>
+          {STATUS_OPTIONS.filter((s) => s !== currentStatus).map((s) => (
+            <button
+              key={s}
+              onClick={() => { onSelect(s); setOpen(false); }}
+              className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-muted transition-colors"
+            >
+              <span className={`w-2 h-2 rounded-full ${
+                s === "completed" ? "bg-success" :
+                s === "pending" ? "bg-primary":
+                "bg-warning"
+              }`} />
+              <span className="capitalize">{s}</span>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function DeleteDialog({ open, onConfirm, onCancel }) {
+  if (!open) return null;
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onCancel} />
+      <div className="relative bg-card border border-border rounded-2xl shadow-xl p-6 w-full max-w-sm mx-4">
+        <div className="flex items-center justify-center w-12 h-12 rounded-full bg-destructive/10 mx-auto mb-4">
+          <Trash2 size={22} className="text-destructive" />
+        </div>
+        <h2 className="text-base font-semibold text-center mb-1">Delete Order</h2>
+        <p className="text-sm text-muted-foreground text-center mb-6">
+          This action cannot be undone. The order will be permanently removed.
+        </p>
+        <div className="flex gap-3">
+          <button
+            onClick={onCancel}
+            className="flex-1 px-4 py-2 rounded-xl border border-border text-sm font-medium hover:bg-muted transition-colors"
+          > Cancel</button>
+          <button
+            onClick={onConfirm}
+            className="flex-1 px-4 py-2 rounded-xl bg-destructive text-white text-sm font-medium hover:bg-destructive/90 transition-colors"
+          >
+            Delete
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
 export default function Orders() {
   const { id } = useParams()
   const [profile, setProfile] = useState(null)
   const API_URL = import.meta.env.VITE_API_URL;
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const handleDeleteConfirm = async () => {
+const token = localStorage.getItem("token");
+  try {
+    await axios.delete(`${API_URL}/api/orders/${id}/${deleteTarget}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    queryClient.invalidateQueries(["orderslist", id]);
+    queryClient.invalidateQueries(["orders", id]);
+    setDeleteTarget(null);
+  } catch (err) {
+    console.error("Failed to delete order", err);
+  }
+  }
 
-    const fetchStats= async () => {
+  const fetchStats= async () => {
       const token = localStorage.getItem("token");
         if (!token) {
       navigate("/login");
@@ -51,7 +144,7 @@ export default function Orders() {
         throw err;
       }
     }
-const fetchOrders= async ({page,search}) => {
+const fetchOrders= async ({page,search,status}) => {
       const token = localStorage.getItem("token");
         if (!token) {
       navigate("/login");
@@ -60,7 +153,7 @@ const fetchOrders= async ({page,search}) => {
       try {
         const res = await axios.get(`${API_URL}/api/orders/${id}`, {
           headers: { Authorization: `Bearer ${token}` },
-           params: { page,limit: 10,search}
+           params: { page,limit: 10,search,status}
         })
         console.log(res.data);
         return res.data;
@@ -73,6 +166,9 @@ const fetchOrders= async ({page,search}) => {
 
 const [search, setSearch] = useState("");
 const [debouncedSearch, setDebouncedSearch] = useState(search);
+const STATUS_OPTIONS = ["all", "pending", "completed", "canceled"];
+const [open, setOpen] = useState(false);
+const [filter, setFilter] = useState("all");
 useEffect(() => {
   const timer = setTimeout(() => {
     setDebouncedSearch(search);
@@ -85,8 +181,8 @@ useEffect(() => {
 const { data, isLoadingstats, errorstats } = useQuery({ queryKey: ["orders", id], queryFn: fetchStats, staleTime: 1000 * 60 * 5 });
 const [currentPage, setCurrentPage] = useState(1);
 const {  data: orderslist, isLoading, error } = useQuery({
-   queryKey: ["orderslist", id,currentPage,debouncedSearch],
-   queryFn: () => fetchOrders({page:currentPage,search:debouncedSearch}),keepPreviousData: true,staleTime: 1000 * 60 * 5});
+   queryKey: ["orderslist", id,currentPage,debouncedSearch,filter],
+   queryFn: () => fetchOrders({page:currentPage,search:debouncedSearch,status:filter}),keepPreviousData: true,staleTime: 1000 * 60 * 5});
   if (isLoading || isLoadingstats) return <div>Loading...</div>
   if (error || errorstats) return <p>Error loading orders</p>;
 const OG = data.ordersgrowth.toFixed(1);
@@ -95,7 +191,6 @@ const AOVG = data.averageordervalue.toFixed(1);
 const FR= data.fulfillmentrate.toFixed(1);
 const FRG=data.FRgrowth.toFixed(1);
 const ordersData = data.ordersbystatus;
-  
    const stats = [
   { label: "Orders", value: data.ordersTM,change:OG,growth:true, up:OG>= 0, icon: Package },
   { label: "Pending Orders", value:0,growth:false, stock: 0, icon: ShoppingCart },
@@ -105,7 +200,7 @@ const ordersData = data.ordersbystatus;
 ];
 
 const colors = [
-    "hsl(172 66% 50%)" ,"hsl(243 75% 59%)" ,"hsl(280 72% 55%)","hsl(38 92% 50%)"
+   "hsl(243 75% 59%)" , "hsl(172 66% 50%)" ,"hsl(38 92% 50%)","hsl(280 72% 55%)"
 ];
 const ordersperday = fillMissingDays(data.ordersperday);
 const orders = orderslist.orders.orders;
@@ -117,7 +212,6 @@ const orders = orderslist.orders.orders;
 const end = Math.min(currentPage * rowsPerPage,totalorders);
   return (
       <div className="space-y-6">
-
         <div className="relative">
         <div className="text-center">
           <h1 className="font-heading text-2xl font-bold">
@@ -187,7 +281,39 @@ const end = Math.min(currentPage * rowsPerPage,totalorders);
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground"/>
                 <Input placeholder="Search orders..." className="pl-10" value={search} onChange={(e) => setSearch(e.target.value)} />
               </div>
-              <Button variant="outline" size="sm"><Filter className="w-4 h-4 mr-1" />Filter</Button>
+                {/* <Button variant="outline" size="sm"><Filter className="w-4 h-4 mr-1" />Filter
+                <StatusPopover
+                          onSelect={ (Status) => {
+                            setFilter(Status)
+                          }}
+                        />
+                </Button> */}
+                <div className="relative inline-block">
+                <Button
+    variant="outline"
+    size="sm"
+    onClick={() => setOpen((v) => !v)}
+  >
+    <Filter className="w-4 h-4 mr-1" />
+    Filter
+  </Button>
+
+  {open && (
+    <div className="absolute mt-2 w-40 bg-white border rounded-xl shadow-lg z-50">
+      {STATUS_OPTIONS.map((status) => (
+        <button
+          key={status}
+          onClick={() => {
+            setFilter(status === "all" ? "" :status);
+            setOpen(false);
+          }}
+          className="w-full text-left px-3 py-2 hover:bg-gray-100"
+        >
+          {status}
+        </button>
+      ))}
+    </div>
+  )}</div>
             </div>
             <Button><Download className="w-4 h-4 mr-2" />Export</Button>
         </div>
@@ -199,9 +325,11 @@ const end = Math.min(currentPage * rowsPerPage,totalorders);
                 <tr className="border-b border-border">
                   <th className=" p-4 font-medium text-muted-foreground">Order</th>
                   <th className=" p-4 font-medium text-muted-foreground">Customer</th>
+                  <th className=" p-4 font-medium text-muted-foreground">Created At</th>
                   <th className=" p-4 font-medium text-muted-foreground">Product</th>
                   <th className=" p-4 font-medium text-muted-foreground">Amount</th>
                   <th className=" p-4 font-medium text-muted-foreground">Status</th>
+                  <th className=" p-4 font-medium text-muted-foreground"></th>
                 </tr>
               </thead>
               <tbody>
@@ -210,6 +338,7 @@ const end = Math.min(currentPage * rowsPerPage,totalorders);
                   <tr key={o._id} className="border-b border-border last:border-0 hover:bg-muted/50 transition-colors">
                     <td className="p-4 font-medium">#{o.orderNumber}</td>
                     <td className="p-4">{o.customerName}</td>
+                    <td className="p-4 text-muted-foreground">{o.createdAt.split("T")[0]}</td>
                     <td className="p-4"
                   title={(o.products || []).map((p) =>`${p.name} ×${p.quantity || 1}`).join(", ")}
                     >{(o.products || []).slice(0, 1).map((p) => (<span key={p.name}>
@@ -223,12 +352,31 @@ const end = Math.min(currentPage * rowsPerPage,totalorders);
                         )}</td>
                     <td className="p-4">${o.totalPrice}</td>
                     <td className="p-4">
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        o.status === "completed" ? "bg-success/10 text-success" :
-                        o.status === "pending" ? "bg-primary/10 text-primary" :
-                        "bg-warning/10 text-warning"
-                      }`}>{o.status}</span>
+                     {o.status === "pending" ?( <StatusPopover
+                        disabled={o.status !== "pending"}
+                        currentStatus={o.status}
+                        onSelect={async (newStatus) => {
+                          const token = localStorage.getItem("token");
+                          try {
+                            await axios.patch(`${API_URL}/api/orders/${id}/${o._id}/status`,
+                              { status: newStatus },
+                              { headers: { Authorization: `Bearer ${token}` } }
+                            );
+                            queryClient.invalidateQueries(["orderslist", id]);
+                            queryClient.invalidateQueries(["orders", id]);
+                          } catch (err) {
+                            console.error("Failed to update status", err);
+                          }
+                        }}
+                      />):(<span
+      className={`px-2 py-1 rounded-full text-xs font-medium ${ o.status === "completed"
+          ? "bg-success/10 text-success"
+          : "bg-warning/10 text-warning" }`} >{o.status}</span>)}
                     </td>
+                    <td>
+    {o.status != "completed" && <button  onClick={() => setDeleteTarget(o._id)}
+     className=" text-destructive p-2 hover:bg-destructive/10 rounded-lg transition-colors">
+    <Trash2 size={15}/></button>}</td>
                   </tr>
                 ))}
               </tbody>
@@ -286,6 +434,11 @@ const end = Math.min(currentPage * rowsPerPage,totalorders);
     </div>
   </div>
         </div>
+        <DeleteDialog
+      open={deleteTarget !== null}
+      onConfirm={handleDeleteConfirm}
+      onCancel={() => setDeleteTarget(null)}
+    />
       </div>
   );
 }

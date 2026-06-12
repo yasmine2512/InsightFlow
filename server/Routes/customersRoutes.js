@@ -1,6 +1,7 @@
 import express from "express";
 const router = express.Router();
 import Order from "../Models/Order.js";
+import Customer from "../Models/Customer.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import asyncHandler from "express-async-handler";
@@ -47,5 +48,34 @@ router.get("/:id",verifyTokenAndAuthorization,asyncHandler(async(req,res)=>{
 const orgid = req.params.id;
 const customers = await getallCustomers(orgid,req.query);
 return res.status(200).json({customers});
-}))
+}));
+
+
+/**
+ * @desc Create customer
+ * @route POST /api/customers/:id
+ * @access Private
+ */
+router.post("/:id",verifyTokenAndAuthorization,asyncHandler(async (req, res) => {
+    const orgid = req.params.id;
+    const {name,email,phone,address,} = req.body;
+    if (!name) {
+      return res.status(400).json({ message: "Name is required" });
+    }
+    if (!email && !phone) {
+      return res.status(400).json({message: "Email or phone is required",});
+    }
+    const existing = await Customer.findOne({
+      organization: orgid,
+      $or: [...(email ? [{ email }] : []),...(phone ? [{ phone }] : []),],
+    });
+    if (existing) {
+      return res.status(400).json({message:"Customer with this email or phone already exists",});
+    }
+  const customer = await Customer.create({organization: orgid,name,email,phone,address, });
+    return res.status(201).json({message: "Customer created successfully",customer,});
+  })
+);
+
 export default router; 
+

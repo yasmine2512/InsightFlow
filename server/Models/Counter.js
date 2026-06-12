@@ -12,14 +12,4 @@ const counterSchema = new mongoose.Schema({
   },
 });
 
-export const getNextOrderNumber = async () => {
-  const counter = await Counter.findOneAndUpdate(
-    { _id: "orderNumber" },
-    { $inc: { seq: 1 } },
-    { new: true, upsert: true }
-  );
-
-  return counter.seq;
-};
-
 export default mongoose.model("Counter", counterSchema);

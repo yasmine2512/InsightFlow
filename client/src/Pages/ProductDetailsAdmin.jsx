@@ -8,21 +8,19 @@ import { useState,useEffect } from "react";
 import axios from "axios"; 
 import { useAuth } from "../context/AuthContext";
 import { useQuery } from "@tanstack/react-query";
-const metrics = [
-  { label: "Active Users", value: "1,234", icon: Users },
-  { label: "Monthly Revenue", value: "$12,450", icon: DollarSign },
-  { label: "Conversion Rate", value: "24.5%", icon: BarChart3 },
-];
+import AddOrderPopup from "./CreateOrder";
 
 export default function ProductDetail() {
     const { user } = useAuth();
   const isAdmin = user?.isAdmin;
   const {productid} = useParams();
   const navigate = useNavigate();
+  const [open, setOpen] = useState(false);
 
    const userId = localStorage.getItem("userId");
 
-     const [product, setProduct] = useState(null)
+     const [product, setProduct] = useState(null);
+     const [stats,setstats] = useState(null);
       const API_URL = import.meta.env.VITE_API_URL;
        useEffect(() => {
          const fetchProduct = async () => {
@@ -35,8 +33,9 @@ export default function ProductDetail() {
              const res = await axios.get(`${API_URL}/api/products/${userId}/detail/${productid}`, {
           headers: { Authorization: `Bearer ${token}` },
         })
-
-             setProduct(res.data.product);
+             console.log(res.data);
+             setProduct(res.data.result.product);
+             setstats(res.data.result.analytics);
            } catch (err) {
              console.error("Product not Found", err);
              navigate(-1);
@@ -47,6 +46,11 @@ export default function ProductDetail() {
      
        if (!product) return <div>Loading...</div>
 
+  const metrics = [
+  { label: "Month Revenu", value: "$"+stats.revenueThisMonth, icon: DollarSign },
+  { label: "Unit Sold", value: stats.unitsSold, icon: BarChart3 },
+  { label: "Stock", value: product.stock, icon: Package },
+];
   return (
       <div className="space-y-6">
         <div className="flex items-center gap-3">
@@ -93,7 +97,15 @@ export default function ProductDetail() {
               </ul>
             </div>
 
-            {/* {!isAdmin && <Button  size="sm" className="gradient-primary text-primary-foreground p-4  ><ShoppingBag className="w-3 h-3 mr-1 text-primary-foreground" /> Order</Button>} */}
+        <Button  size="sm" className="gradient-primary text-primary-foreground p-4 " onClick={() => setOpen(true)}>
+        <ShoppingBag className="w-3 h-3 mr-1 text-primary-foreground" />Create Order</Button>
+        <AddOrderPopup
+        open={open}
+        setOpen={setOpen}
+        organizationId={userId}
+        productId={product._id}
+        productPrice={product.price}
+        />
           </div>
 
       { isAdmin && <div className="space-y-4">

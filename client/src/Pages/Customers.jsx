@@ -1,5 +1,5 @@
 import DashboardLayout from "../components/Layout";
-import { Search, Filter, Download ,DollarSign,TrendingUp, TrendingDown,Package, ShoppingCart, Users,RefreshCw,UserCheck} from "lucide-react";
+import { Search, Filter, Download ,DollarSign,TrendingUp, TrendingDown,Package, ShoppingCart, Users,RefreshCw,UserCheck,Plus} from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/Input";
 import { useParams ,  useNavigate} from "react-router-dom"
@@ -7,6 +7,7 @@ import { useEffect, useState } from "react"
 import axios from "axios"
 import { useQuery } from "@tanstack/react-query";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from "recharts";
+import AddCustomerPopup from "./AddCustomer"
 
 const fillCustomerMonths = (data) => {
   const result = [];
@@ -44,6 +45,7 @@ export default function Customers() {
   const [profile, setProfile] = useState(null)
   const API_URL = import.meta.env.VITE_API_URL;
   const navigate = useNavigate();
+  const [open, setOpen] = useState(false);
 
     const fetchStats = async () => {
       const token = localStorage.getItem("token");
@@ -181,11 +183,17 @@ const end = Math.min(currentPage * rowsPerPage,totalcustomers);
           </div>
           </div>
         <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 flex-1">
           <div className="relative flex-1 max-w-sm">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input placeholder="Search customers..." className="pl-10" value={search} onChange={(e) => setSearch(e.target.value)}/>
           </div>
           <Button variant="outline" size="sm"><Filter className="w-4 h-4 mr-1" /> Filter</Button>
+         </div>
+          <Button onClick={() => setOpen(true)}><Plus/>Add Customer</Button>
+          <AddCustomerPopup open={open}
+        setOpen={setOpen}
+        organizationId={id}/>
         </div>
 
         <div className="bg-card rounded-xl border border-border shadow-soft overflow-hroleden">

@@ -107,19 +107,42 @@ return { products: result[0].products, total: result[0].totalCount[0]?.count || 
 };
 
 //1 product
-// export const getproductdetails = async(orgid,prodid)=>{
-// return Product.findOne({_id:prodid,organization:orgid});
-// }
+export const getproductdetails = async(orgid,prodid)=>{
+const now = new Date();
+const startOfThisMonth = new Date(now.getFullYear(),now.getMonth(),1);
+const startOfLastMonth = new Date( now.getFullYear(), now.getMonth() - 1,1);
+const endOfLastMonth = new Date(now.getFullYear(),now.getMonth(),0);
+const stats = await Order.aggregate([
+  {$match: {organization:toObjectId(orgid),status: "completed"}},
+  {$unwind: "$products"},
+  {$match: {"products.product": toObjectId(prodid)}},
+  {$group: {_id: null,
+      revenueThisMonth: {$sum: {$cond: [{$gte: ["$createdAt",startOfThisMonth]},
+            {$multiply: ["$products.quantity","$products.priceAtPurchase"]},  0]}},
+      revenueLastMonth: {$sum: {$cond: [{$and: [
+                {$gte: ["$createdAt",startOfLastMonth]},
+                {$lte: ["$createdAt",endOfLastMonth]}  ]},
+            {$multiply: ["$products.quantity","$products.priceAtPurchase"]},0]} },
+      unitsSold: {$sum: "$products.quantity"}
+    }}
+]);
+const product = await Product.findById(prodid);
+if (!product) return res.status(404).json({ message: "Product not found" });
+const result = stats[0] || {revenueThisMonth: 0,revenueLastMonth: 0,unitsSold: 0};
+const growth =result.revenueLastMonth === 0? 100: (
+((result.revenueThisMonth -result.revenueLastMonth) /result.revenueLastMonth) * 100).toFixed(1);
+const finalData = {
+  product,
+  analytics: {
+    revenueThisMonth: result.revenueThisMonth,
+    revenueLastMonth: result.revenueLastMonth,
+    growthPercentage: growth,
+    unitsSold: result.unitsSold,
+  }
+};
+return finalData;
+}
 
-//revenu of a product,unit sold
-// export const getproductrevenu = async(orgid,prodid)=>{
-// return Order.aggregate([{$match:{organization:toObjectId(orgid),status:{$ne:"canceled"}}},{$unwind:"$products"},
-//     {$match:{"products.product" : toObjectId(prodid)}},
-//     {$group:{_id: "$products.product", revenue: {$sum: {$multiply: [
-//           "$products.quantity", "$products.priceAtPurchase"]  }},totalSold:{$sum:"$products.quantity"}}},
-//       {$project:{_id: 0,revenue: 1,totalSold:1}}
-// ])
-// }
 
 //active products number
 export const getActiveProductsGrowth = async (orgId) => {

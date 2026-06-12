@@ -2,14 +2,23 @@ import express from "express";
 import Order from "../Models/Order.js";
 import Product from "../Models/Product.js";
 import Customer from "../Models/Customer.js"
+import Counter from "../Models/Counter.js";
 import asyncHandler from "express-async-handler";
 import { verifyTokenAndAdmin, verifyTokenAndAuthorization } from "../Middlewares/JWTauth.js";
 import {getallOrders,gettotalOrders,getCompletedOrders,getOrdersByStatus,getordersperday} 
 from "../Queries/ordersQueries.js";
 import { getMGR,getOrders } from "../Queries/dashboardQueries.js";
-import { getNextOrderNumber } from "../Models/Counter.js"
 const router = express.Router();
 export default router; 
+
+  const getNextOrderNumber = async () => {
+    const counter = await Counter.findOneAndUpdate(
+      { _id: "orderNumber" },
+      { $inc: { seq: 1 } },
+      { new: true, upsert: true }
+    );
+    return counter.seq;
+  };
 
 /** 
    * @desc show all orders ,total orders,pending orders,completed orders,canceled orders per day 7,orders by status,Average Order Value (AOV)
@@ -87,7 +96,7 @@ found = await Customer.create({
   }
   const order = new Order({
     organization: orgid,
-    orderNumber:getNextOrderNumber(),
+    orderNumber: await getNextOrderNumber(),
     customer: found._id,
     products,
     totalPrice,
@@ -97,50 +106,59 @@ found = await Customer.create({
   return res.status(201).json({ message: "Order and customer created", order });
 }));
 
- 
-/** 
-   * @desc check the order
-   * @route /api/orders/:id/:orderId/complete
-   * @method PUT
-   * @access private
-   */  
-router.put("/:id/:orderId/complete",verifyTokenAndAuthorization,asyncHandler(async(req,res)=>{
-   const orderId = req.params.orderId;
-   const order = await Order.findOneAndUpdate(orderId,{
-      $set:{status: "completed"}
-   },{new : true});
-   await order.save();
-   if (!order) return res.status(404).json({ message: "Order not found" });
-   return res.json({ message: "updated to completed", order });
-}))
- 
-/** 
+ /** 
    * @desc deliver order
-   * @route /api/orders/:id/:orderId/cancel
+   * @route /api/orders/:id/:orderId/status
    * @method POST
    * @access private
    */  
-  router.put("/:id/:orderId/cancel",verifyTokenAndAuthorization,asyncHandler(async(req,res)=>{
-   const orderId = req.params.orderId;
-   const order = await Order.findOneAndUpdate({ _id: req.params.orderId, 
-      status: { $ne: "canceled" }},{
-      $set:{status: "canceled",}
-   },{new : true});
-     if (!order) {
-      return res.status(404).json({
-        message:
-          "Order not found or already canceled"
-      });
-    }
-   await Promise.all(
+router.patch("/:id/:orderId/status",verifyTokenAndAuthorization,asyncHandler(async (req, res) => {
+    const { id, orderId } = req.params;
+    const { status } = req.body;
+    const order = await Order.findOne({_id: orderId,organization: id,});
+    if (!order) { return res.status(404).json({ message: "Order not found" });}
+    if (order.status !== "pending") {
+      return res.status(400).json({message: "Only pending orders can be updated",}); }
+    if (status === "canceled") {
+      await Promise.all(
       order.products.map(item => {
         return Product.findByIdAndUpdate(item.product,{
             $inc: {
               stock: item.quantity
             }}); }) );
+    }
+    order.status = status;
+    await order.save();
+    res.json({message: "Status updated",order,});
+  })
+);
 
-   return res.json({ message: "updated to canceled", order });
-}))
+
+/** 
+   * @desc delete order
+   * @route /api/orders/:id/orderId
+   * @method DELETE
+   * @access private
+   */  
+router.delete("/:id/:orderId", asyncHandler(async (req, res) => {
+  const { id, orderId } = req.params;
+  const order = await Order.findOne({_id: orderId,organization: id, });
+  if (!order) {return res.status(404).json({ message: "Order not found" });}
+
+  if (order.status === "completed") {
+    return res.status(400).json({message: "Completed orders cannot be deleted"});
+  }
+  if (order.status === "pending") {
+    for (const item of order.products) {
+      await Product.findByIdAndUpdate(item.product, {
+        $inc: { stock: item.quantity },
+      });}
+  }
+  await Order.deleteOne({ _id: orderId });
+  res.json({ message: "Order deleted successfully" });
+}));
+
+
 
 /** 
    * @desc create from exel

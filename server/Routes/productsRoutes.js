@@ -1,4 +1,5 @@
 import express from "express";
+import mongoose from "mongoose";
 import Product from "../Models/Product.js"
 import asyncHandler from "express-async-handler";
 import {
@@ -7,11 +8,12 @@ import {
   verifyTokenAndAdmin
 } from '../Middlewares/JWTauth.js'
 import { getUpload, cloudinary } from "../Middlewares/Multer.js";
-import {getProductsWithStats,getActiveProductsGrowth,getProductKPIs,gettopproducts, getallproducts}
+import {getProductsWithStats,getActiveProductsGrowth,getProductKPIs,gettopproducts, getallproducts,getproductdetails}
  from "../Queries/productsQueries.js"
 const router = express.Router();
 
-
+const toObjectId = (id) =>
+  new mongoose.Types.ObjectId(id);
 
 /** 
    * @desc get all product , top selling products with revenu chart
@@ -63,9 +65,9 @@ router.get("/:id/cataloge",verifyTokenAndAuthorization,asyncHandler(async(req,re
   router.get("/:id/detail/:productid",verifyTokenAndAuthorization, asyncHandler(async (req, res) => {
   const orgid= req.params.id;
   const productid = req.params.productid;  
-  const product = await Product.findOne({_id:productid,organization:orgid});
-  if (!product) return res.status(404).json({ message: "Product not found" });
-  return res.json({ product });
+  const result = await getproductdetails(orgid,productid);
+
+  return res.status(200).json({result});
 }));
 
 /** 
