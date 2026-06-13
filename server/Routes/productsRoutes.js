@@ -1,6 +1,7 @@
 import express from "express";
 import mongoose from "mongoose";
 import Product from "../Models/Product.js"
+import Order from "../Models/Order.js";
 import asyncHandler from "express-async-handler";
 import {
   verifyToken,
@@ -52,8 +53,9 @@ router.get("/:id",verifyTokenAndAuthorization,asyncHandler(async(req,res)=>{
 
 router.get("/:id/cataloge",verifyTokenAndAuthorization,asyncHandler(async(req,res)=>{
     const orgid = req.params.id;
-  const products = await getallproducts(orgid,req.query);
-  res.status(200).json({products});
+  const result = await getallproducts(orgid,req.query);
+  res.status(200).json({products: result[0].products,
+  total: result[0].total[0]?.count || 0,});
   }));
 
 /** 
@@ -114,10 +116,14 @@ return res.status(201).json({message: "Product added successfully"});
    * @access private
    */ 
   router.delete("/:id/product/:productid",verifyTokenAndAuthorization,asyncHandler(async(req,res)=>{
-    const orgid = req.params.id;
-    const product = await Product.findOne({_id: req.params.productid,organization: orgid});
+    const orgid = toObjectId(req.params.id);
+    const prodid = toObjectId(req.params.productid);
+    const product = await Product.findOne({_id: prodid,organization: orgid});
   if (!product) return res.status(404).json({ message: "Product not found" });
-
+    const usedInOrders = await Order.exists({organization: orgid,"products.product": prodid});
+    if (usedInOrders) {return res.status(400).json({message:
+          "Cannot delete product because it exists in orders",});
+    }
   // URL looks like: https://res.cloudinary.com/yourcloud/image/upload/v123/products/abc123.jpg
   const urlParts = product.image.split("/");
   const publicId = `products/${urlParts[urlParts.length - 1].split(".")[0]}`;

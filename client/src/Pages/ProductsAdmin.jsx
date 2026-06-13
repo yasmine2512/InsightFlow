@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import DashboardLayout from "../components/Layout";
-import { Plus, Search, MoreHorizontal } from "lucide-react";
+import { Plus, Search, MoreHorizontal, Currency } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/Input";
 import { useState ,useEffect} from "react"
@@ -19,29 +19,48 @@ export default function ProductsCatalog() {
     const API_URL = import.meta.env.VITE_API_URL;
     const navigate = useNavigate();
   
-       const fetchProducts = async () => {
+       const fetchProducts = async ({page,search}) => {
          const token = localStorage.getItem("token");
            if (!token) {
          navigate("/login");
          return;
        }
          try {
+          console.log(search)
            const res = await axios.get(`${API_URL}/api/products/${id}/cataloge`, {
              headers: { Authorization: `Bearer ${token}` },
-             params: { page: 1,limit: 12}
+             params: { page,limit: 12,search}
            })
+           console.log(res.data)
           return res.data;
          } catch (err) {
            console.error("Unauthorized or token invalid", err)
          }
        }
-   
-  const { data, isLoading, error } = useQuery({ queryKey: ["catalog", id], queryFn: fetchProducts, staleTime: 1000 * 60 * 5 });
+   const [currentPage, setCurrentPage] = useState(1);
+   const [search, setSearch] = useState("");
+const [debouncedSearch, setDebouncedSearch] = useState(search);
+useEffect(() => {
+  const timer = setTimeout(() => {
+    setDebouncedSearch(search);
+  }, 400);
+  return () => clearTimeout(timer);
+}, [search]);
+useEffect(() => {
+  setCurrentPage(1);
+}, [debouncedSearch]); 
+  const { data, isLoading, error } = useQuery({ queryKey: ["catalog", id,Currency,debouncedSearch], queryFn:() =>
+    fetchProducts({page:currentPage, search:debouncedSearch}),staleTime: 1000 * 60 * 5 });
 
   if (isLoading) return <div>Loading...</div>
   if (error) return <p>Error loading products</p>;
-   const products = data.products;
 
+   const products = data?.products;
+   const rowsPerPage = 12;
+   const totalproducts = data?.total;
+   const totalPages = Math.ceil(totalproducts / rowsPerPage);
+   const start = (currentPage - 1) * rowsPerPage + 1;
+   const end = Math.min(currentPage * rowsPerPage,totalproducts);
 
   return (
       <div className="space-y-6">
@@ -56,13 +75,14 @@ export default function ProductsCatalog() {
           <AddProductPopup
         open={open}
         setOpen={setOpen}
+        mode="create"
       /></>
         </div>
 
         <div className="flex items-center gap-3">
           <div className="relative flex-1 max-w-sm">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input placeholder="Search products..." className="pl-10" />
+            <Input placeholder="Search products..." className="pl-10" value={search} onChange={(e) => setSearch(e.target.value)}/>
           </div>
         </div>
 
@@ -83,6 +103,57 @@ export default function ProductsCatalog() {
               </div>
             </Link>
           ))}
+           </div>
+          <div className="flex items-center justify-between px-4 py-3 border-t border-border">
+    <p className="text-sm text-muted-foreground">
+      Showing {start}–{end} of {totalproducts} products
+    </p>
+    <div className="flex items-center gap-1">
+      {/* Previous */}
+      <button
+        onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+        disabled={currentPage === 1}
+        className="p-2 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+      >
+        ‹
+      </button>
+
+      {/* Page Numbers */}
+      {Array.from({ length: totalPages }, (_, i) => i + 1)
+        .filter((page) => page === 1 || page === totalPages || Math.abs(page - currentPage) <= 1)
+        .reduce((acc, page, idx, arr) => {
+          if (idx > 0 && page - arr[idx - 1] > 1) acc.push("...");
+          acc.push(page);
+          return acc;
+        }, [])
+        .map((item, idx) =>
+          item === "..." ? (
+            <span key={`ellipsis-${idx}`} className="px-2 text-muted-foreground text-sm">…</span>
+          ) : (
+            <button
+              key={item}
+              onClick={() => setCurrentPage(item)}
+              className={`min-w-[2rem] h-8 px-2 rounded-lg text-sm font-medium transition-colors
+                ${currentPage === item
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                }`}
+            >
+              {item}
+            </button>
+          )
+        )}
+
+      {/* Next */}
+      <button
+        onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
+        disabled={currentPage === totalPages}
+        className="p-2 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+      >
+        ›
+      </button>
+    </div>
+ 
         </div>
       </div>
   );

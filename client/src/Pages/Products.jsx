@@ -32,7 +32,7 @@ export default function Products() {
         throw err;
       }
     }
-    const fetchProducts = async ({page,search}) => {
+    const fetchProducts = async ({page,search,filter}) => {
       const token = localStorage.getItem("token");
         if (!token) {
       navigate("/login");
@@ -41,7 +41,7 @@ export default function Products() {
       try {
         const res = await axios.get(`${API_URL}/api/products/${id}`, {
           headers: { Authorization: `Bearer ${token}` },
-           params: { page,limit: 10,search}
+           params: { page,limit: 10,search,filter}
         })
         console.log(res.data);
         return res.data;
@@ -52,6 +52,8 @@ export default function Products() {
     }
 const [search, setSearch] = useState("");
 const [debouncedSearch, setDebouncedSearch] = useState(search);
+ const [open,setOpen] = useState(false);
+const [filter,setFilter] = useState("");
 useEffect(() => {
   const timer = setTimeout(() => {
     setDebouncedSearch(search);
@@ -61,17 +63,17 @@ useEffect(() => {
 useEffect(() => {
   setCurrentPage(1);
 }, [debouncedSearch]);
-const { data, isLoadingstats, errorstats } = useQuery({ queryKey: ["productsStats", id], queryFn: fetchStats, staleTime: 1000 * 60 * 5 });
+const { data:data,isLoading: isLoadingstats,error: errorstats } = useQuery({ queryKey: ["productsStats", id], queryFn: fetchStats, staleTime: 1000 * 60 * 5 });
 const [currentPage, setCurrentPage] = useState(1);
-const {  data: productlist, isLoading, error } = useQuery({ queryKey: ["productlist", id,currentPage,debouncedSearch],
-   queryFn: () => fetchProducts({page:currentPage,search:debouncedSearch}),keepPreviousData: true,staleTime: 1000 * 60 * 5});
+const {  data: productlist, isLoading, error } = useQuery({ queryKey: ["productlist", id,currentPage,debouncedSearch,filter],
+   queryFn: () => fetchProducts({page:currentPage,search:debouncedSearch,filter:filter}),keepPreviousData: true,staleTime: 1000 * 60 * 5});
+  if (isLoading) return <div>Loading...</div>
+  if (error) return <p>Error loading products</p>;
 
-  if (isLoading || isLoadingstats) return <div>Loading...</div>
-  
-  if (error || errorstats) return <p>Error loading products</p>;
   const LS = data.productsKPI[0].lowStock;
   const OS = data.productsKPI[0].outOfStock;
   const IV = data.productsKPI[0].inventoryValue.toFixed(1);
+  const STOCK_OPTIONS = ["All","Low Stock","active"];
 
   const stats = [
   { label: "Active Products", value: data.activeproducts,change: data.growth.toFixed(1),growth:true, up: data.growth>= 0, icon: PackageCheck },
@@ -125,9 +127,31 @@ const end = Math.min(currentPage * rowsPerPage,totalproducts);
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input placeholder="Search products..." className="pl-10" value={search} onChange={(e) => setSearch(e.target.value)}  />
               </div>
+              <div className="relative inline-block">
+              <Button variant="outline" size="sm"
+              onClick={() => setOpen((v) => !v)}><Filter className="w-4 h-4 mr-1" /> Filter</Button>
+              {open && (
+    <div className="absolute mt-2 w-40 bg-white border rounded-xl shadow-lg z-50">
+      {STOCK_OPTIONS.map((stock) => (
+        <button
+          key={stock}
+          onClick={() => {
+            setFilter(stock === "All" ? "" :stock);
+            setOpen(false);
+          }}
+          className="w-full text-left px-3 py-2 hover:bg-gray-100"
+        >
+          {stock}
+        </button>
+      ))}
+    </div>
+  )}
+              </div>
             </div>
             <Button><Download className="w-4 h-4 mr-2" />Export</Button>
         </div>
+
+
 
        <div className="bg-card rounded-xl border border-border shadow-soft overflow-hidden">
   <div className="overflow-x-auto">

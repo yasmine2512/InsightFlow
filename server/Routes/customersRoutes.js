@@ -1,4 +1,5 @@
 import express from "express";
+import mongoose from "mongoose";
 const router = express.Router();
 import Order from "../Models/Order.js";
 import Customer from "../Models/Customer.js";
@@ -12,6 +13,9 @@ import {
 } from '../Middlewares/JWTauth.js'
 import {getCustomers,getTC} from "../Queries/dashboardQueries.js"
 import{gettotalcustomers,getallCustomers,getCRR,getActiveCustomers,getCLM,getAvgCLV,getCSD} from "../Queries/customersQueries.js"
+
+const toObjectId = (id) =>
+  new mongoose.Types.ObjectId(id);
 
 /** 
    * @desc total customers,customers retention rate,growth chart,Customer Spending Distribution , top customers,Customer Lifetime Value (CLV)
@@ -51,11 +55,12 @@ return res.status(200).json({customers});
 }));
 
 
-/**
- * @desc Create customer
- * @route POST /api/customers/:id
- * @access Private
- */
+/** 
+   * @desc create customer
+   * @route /api/customers/:id
+   * @method POST
+   * @access private
+   */  
 router.post("/:id",verifyTokenAndAuthorization,asyncHandler(async (req, res) => {
     const orgid = req.params.id;
     const {name,email,phone,address,} = req.body;
@@ -72,8 +77,65 @@ router.post("/:id",verifyTokenAndAuthorization,asyncHandler(async (req, res) => 
     if (existing) {
       return res.status(400).json({message:"Customer with this email or phone already exists",});
     }
-  const customer = await Customer.create({organization: orgid,name,email,phone,address, });
+    const cleanEmail = email.trim().toLowerCase();
+  const customer = await Customer.create({organization: orgid,name,email:cleanEmail,phone,address, });
     return res.status(201).json({message: "Customer created successfully",customer,});
+  })
+);
+/** 
+   * @desc edit customer
+   * @route /api/customers/:id/:customerId
+   * @method PUT
+   * @access private
+   */  
+router.put( "/:id/:customerId", verifyTokenAndAuthorization, asyncHandler(async (req, res) => {
+    const { id, customerId } = req.params;
+    const { name, email, phone, address } = req.body;
+    const customer = await Customer.findOne({_id:toObjectId(customerId) ,
+      organization:toObjectId(id)});
+    if (!customer) {
+      return res.status(404).json({
+        message: "Customer not found",
+      });
+    }
+    if (email) {
+      const existingEmail = await Customer.findOne({
+        organization: toObjectId(id),
+        email,
+        _id: { $ne: toObjectId(customerId) },
+      });
+      if (existingEmail) {
+        return res.status(400).json({
+          message: "Email already exists",
+        });}}
+    customer.name = name || customer.name;
+    customer.email = email.trim().toLowerCase() || customer.email;
+    customer.phone = phone || customer.phone;
+    customer.address = address || customer.address;
+    await customer.save();
+    res.status(200).json({message: "Customer updated successfully"});
+  })
+);
+/** 
+   * @desc delete customer
+   * @route /api/customers/:id/:customerId
+   * @method GET
+   * @access private
+   */  
+router.delete("/:id/:customerId",verifyTokenAndAuthorization,asyncHandler(async (req, res) => {
+    const orgId =toObjectId(req.params.id);
+    const customerId =toObjectId(req.params.customerId);
+    const customer = await Customer.findOne({_id: customerId,organization: orgId,});
+    if (!customer) {
+      return res.status(404).json({message: "Customer not found",});
+    }
+    const usedInOrders = await Order.exists({organization: orgId,customer: customerId,});
+    if (usedInOrders) {
+      return res.status(400).json({
+        message:"Cannot delete customer because they have existing orders"});
+    }
+    await Customer.deleteOne({_id: customerId,organization: orgId,});
+    return res.status(200).json({message: "Customer deleted successfully"});
   })
 );
 

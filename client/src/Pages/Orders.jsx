@@ -8,6 +8,7 @@ import axios from "axios"
 import { useQuery } from "@tanstack/react-query";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip,BarChart ,CartesianGrid,XAxis, YAxis,Bar} from "recharts";
 import { useQueryClient } from "@tanstack/react-query";
+import { DeleteDialog } from "./DeleteDialog";
 
 const fillMissingDays = (data) => {
 const result = [];
@@ -76,35 +77,6 @@ function StatusPopover({ currentStatus, onSelect }) {
   );
 }
 
-function DeleteDialog({ open, onConfirm, onCancel }) {
-  if (!open) return null;
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onCancel} />
-      <div className="relative bg-card border border-border rounded-2xl shadow-xl p-6 w-full max-w-sm mx-4">
-        <div className="flex items-center justify-center w-12 h-12 rounded-full bg-destructive/10 mx-auto mb-4">
-          <Trash2 size={22} className="text-destructive" />
-        </div>
-        <h2 className="text-base font-semibold text-center mb-1">Delete Order</h2>
-        <p className="text-sm text-muted-foreground text-center mb-6">
-          This action cannot be undone. The order will be permanently removed.
-        </p>
-        <div className="flex gap-3">
-          <button
-            onClick={onCancel}
-            className="flex-1 px-4 py-2 rounded-xl border border-border text-sm font-medium hover:bg-muted transition-colors"
-          > Cancel</button>
-          <button
-            onClick={onConfirm}
-            className="flex-1 px-4 py-2 rounded-xl bg-destructive text-white text-sm font-medium hover:bg-destructive/90 transition-colors"
-          >
-            Delete
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
 export default function Orders() {
   const { id } = useParams()
   const [profile, setProfile] = useState(null)
@@ -168,7 +140,7 @@ const [search, setSearch] = useState("");
 const [debouncedSearch, setDebouncedSearch] = useState(search);
 const STATUS_OPTIONS = ["all", "pending", "completed", "canceled"];
 const [open, setOpen] = useState(false);
-const [filter, setFilter] = useState("all");
+const [filter, setFilter] = useState("");
 useEffect(() => {
   const timer = setTimeout(() => {
     setDebouncedSearch(search);
@@ -178,13 +150,13 @@ useEffect(() => {
 useEffect(() => {
   setCurrentPage(1);
 }, [debouncedSearch]);
-const { data, isLoadingstats, errorstats } = useQuery({ queryKey: ["orders", id], queryFn: fetchStats, staleTime: 1000 * 60 * 5 });
+const { data:data,isLoading: isLoadingstats,error: errorstats } = useQuery({ queryKey: ["orders", id], queryFn: fetchStats, staleTime: 1000 * 60 * 5 });
 const [currentPage, setCurrentPage] = useState(1);
 const {  data: orderslist, isLoading, error } = useQuery({
    queryKey: ["orderslist", id,currentPage,debouncedSearch,filter],
    queryFn: () => fetchOrders({page:currentPage,search:debouncedSearch,status:filter}),keepPreviousData: true,staleTime: 1000 * 60 * 5});
-  if (isLoading || isLoadingstats) return <div>Loading...</div>
-  if (error || errorstats) return <p>Error loading orders</p>;
+  if (isLoading) return <div>Loading...</div>
+  if (error) return <p>Error loading orders</p>;
 const OG = data.ordersgrowth.toFixed(1);
 const AOV = data.averageordervalue.toFixed(1);
 const AOVG = data.averageordervalue.toFixed(1);
@@ -281,23 +253,15 @@ const end = Math.min(currentPage * rowsPerPage,totalorders);
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground"/>
                 <Input placeholder="Search orders..." className="pl-10" value={search} onChange={(e) => setSearch(e.target.value)} />
               </div>
-                {/* <Button variant="outline" size="sm"><Filter className="w-4 h-4 mr-1" />Filter
-                <StatusPopover
-                          onSelect={ (Status) => {
-                            setFilter(Status)
-                          }}
-                        />
-                </Button> */}
                 <div className="relative inline-block">
                 <Button
-    variant="outline"
-    size="sm"
-    onClick={() => setOpen((v) => !v)}
-  >
-    <Filter className="w-4 h-4 mr-1" />
-    Filter
-  </Button>
-
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setOpen((v) => !v)}
+                >
+                  <Filter className="w-4 h-4 mr-1" />
+                  Filter
+                </Button>
   {open && (
     <div className="absolute mt-2 w-40 bg-white border rounded-xl shadow-lg z-50">
       {STATUS_OPTIONS.map((status) => (
@@ -434,10 +398,11 @@ const end = Math.min(currentPage * rowsPerPage,totalorders);
     </div>
   </div>
         </div>
-        <DeleteDialog
+        <DeleteDialog 
       open={deleteTarget !== null}
       onConfirm={handleDeleteConfirm}
       onCancel={() => setDeleteTarget(null)}
+      Page = "Order"
     />
       </div>
   );

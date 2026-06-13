@@ -1,5 +1,5 @@
 import DashboardLayout from "../components/Layout";
-import { Search, Filter, Download ,DollarSign,TrendingUp, TrendingDown,Package, ShoppingCart, Users,RefreshCw,UserCheck,Plus} from "lucide-react";
+import { Search, Filter, Download ,DollarSign,TrendingUp, TrendingDown,Package, ShoppingCart, Users,RefreshCw,UserCheck,Plus,Trash2,UserPen,PenLine} from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/Input";
 import { useParams ,  useNavigate} from "react-router-dom"
@@ -8,6 +8,8 @@ import axios from "axios"
 import { useQuery } from "@tanstack/react-query";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from "recharts";
 import AddCustomerPopup from "./AddCustomer"
+import { useQueryClient } from "@tanstack/react-query";
+import { DeleteDialog } from "./DeleteDialog";
 
 const fillCustomerMonths = (data) => {
   const result = [];
@@ -46,7 +48,24 @@ export default function Customers() {
   const API_URL = import.meta.env.VITE_API_URL;
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
-
+  const [mode, setMode] = useState("create");
+  const [selectedCustomer, setSelectedCustomer] = useState(null);
+  const queryClient = useQueryClient();
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const handleDeleteConfirm = async () => {
+const token = localStorage.getItem("token");
+  try {
+    await axios.delete(`${API_URL}/api/customers/${id}/${deleteTarget}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    queryClient.invalidateQueries(["orderslist", id]);
+    queryClient.invalidateQueries(["orders", id]);
+    setDeleteTarget(null);
+  } catch (err) {
+     console.error("Failed to delete customer", err);
+    alert(err.response?.data?.message ||"Failed to delete customer" );
+  }
+  }
     const fetchStats = async () => {
       const token = localStorage.getItem("token");
         if (!token) {
@@ -57,7 +76,6 @@ export default function Customers() {
       
         const res = await axios.get(`${API_URL}/api/customers/${id}/stats`, {
           headers: { Authorization: `Bearer ${token}` },
-           params: { page: 1,limit: 10}
         })
         // setProfile(res.data)
         console.log(res.data);
@@ -98,14 +116,14 @@ useEffect(() => {
 useEffect(() => {
   setCurrentPage(1);
 }, [debouncedSearch]);
-const { data, isLoadingstats, errorstats } = useQuery({ queryKey: ["customers", id], queryFn: fetchStats, staleTime: 1000 * 60 * 5 });
+const { data: data,isLoading: isLoadingStats,error: errorStats } = useQuery({ queryKey: ["customers", id], queryFn: fetchStats, staleTime: 1000 * 60 * 5 });
 const [currentPage, setCurrentPage] = useState(1);
 const {  data: customerslist, isLoading, error } = useQuery({
 queryKey: ["customerslist", id,currentPage,debouncedSearch],
 queryFn: () => fetchCustomers({page:currentPage,search:debouncedSearch}),keepPreviousData: true,staleTime: 1000 * 60 * 5});
 
-  if (isLoading || isLoadingstats) return <div>Loading...</div>
-  if (error || errorstats) return <p>Error loading customers</p>;
+  if (isLoading ) return <div>Loading...</div>
+  if (error) return <p>Error loading customers</p>;
 
   const CL7M =fillCustomerMonths(data?.newClast7month || []);
 const spendingChartData =spendingDistribution(data?.customersSpendingDistribution || []);
@@ -188,12 +206,16 @@ const end = Math.min(currentPage * rowsPerPage,totalcustomers);
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input placeholder="Search customers..." className="pl-10" value={search} onChange={(e) => setSearch(e.target.value)}/>
           </div>
-          <Button variant="outline" size="sm"><Filter className="w-4 h-4 mr-1" /> Filter</Button>
          </div>
-          <Button onClick={() => setOpen(true)}><Plus/>Add Customer</Button>
+          <Button onClick={() => {
+            setMode("create");
+            setSelectedCustomer(null);
+            setOpen(true);}}><Plus/>Add Customer</Button>
           <AddCustomerPopup open={open}
         setOpen={setOpen}
-        organizationId={id}/>
+        organizationId={id}
+        mode = {mode}
+        initialData={selectedCustomer}/>
         </div>
 
         <div className="bg-card rounded-xl border border-border shadow-soft overflow-hroleden">
@@ -206,6 +228,7 @@ const end = Math.min(currentPage * rowsPerPage,totalcustomers);
                   <th className=" p-4 font-medium text-muted-foreground">Email</th>
                   <th className=" p-4 font-medium text-muted-foreground">Phone</th>
                   <th className=" p-4 font-medium text-muted-foreground">Address</th>
+                  <th className=" p-4 font-medium text-muted-foreground"></th>
                 </tr>
               </thead>
               <tbody>
@@ -220,6 +243,15 @@ const end = Math.min(currentPage * rowsPerPage,totalcustomers);
                     <td className="p-4">
                       <span className="px-2 py-1 rounded-full text-xs font-medium">{o.address}</span>
                     </td>
+                    <td>
+                      <button onClick={() =>{ 
+                        setMode("edit");
+                        setSelectedCustomer(o);
+                        setOpen(true);
+                      }}><UserPen size={15}/></button> &nbsp;
+                    <button  onClick={() => setDeleteTarget(o._id)}
+                      className=" text-destructive p-2 hover:bg-destructive/10 rounded-lg transition-colors">
+                      <Trash2 size={15}/></button></td>
                   </tr>
                 ))}
               </tbody>
@@ -277,6 +309,12 @@ const end = Math.min(currentPage * rowsPerPage,totalcustomers);
     </div>
   </div>
         </div>
+        <DeleteDialog 
+              open={deleteTarget !== null}
+              onConfirm={handleDeleteConfirm}
+              onCancel={() => setDeleteTarget(null)}
+              Page = "Customer"
+            />
       </div>
   );
 }

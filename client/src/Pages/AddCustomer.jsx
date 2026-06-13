@@ -1,19 +1,33 @@
-import { useState } from "react";
+import { useState ,useEffect} from "react";
 import axios from "axios";
+import { useQueryClient } from "@tanstack/react-query";
+import { useParams } from "react-router-dom";
 
 const API_URL = import.meta.env.VITE_API_URL;
-export default function AddCustomerPopup({
-  open,
-  setOpen,
-  organizationId,
-  onSave,
-}) {
-  const [form, setForm] = useState({
-    name: "",
-    email: "",
-    phone: "",
-    address: "",
-  });
+export default function AddCustomerPopup({open,setOpen,organizationId,mode, initialData}) {
+const queryClient = useQueryClient();
+const emptyForm = {
+  name: "",
+  email: "",
+  phone: "",
+  address: "",
+};
+  const [error, setError] = useState("");
+  const [form, setForm] = useState(emptyForm);
+  useEffect(() => {
+  if (mode === "edit" && initialData) {
+    setForm({
+      name: initialData.name || "",
+      email: initialData.email || "",
+      phone: initialData.phone || "",
+      address: initialData.address || "",
+    });
+  }
+   if (mode === "create") {
+    setForm(emptyForm);
+  }
+  setError("");
+}, [mode,initialData]);
   const handleChange = (e) => {
     setForm({
       ...form,
@@ -22,9 +36,15 @@ export default function AddCustomerPopup({
   };
   const handleSubmit = async () => {
     try {
+        const cleanedForm = {
+        name: form.name.trim(),
+        email: form.email.trim().toLowerCase(),
+        phone: form.phone.trim(),
+        address: form.address,
+        };
       const res = await axios.post(
         `${API_URL}/api/customers/${organizationId}`,
-        form,
+        cleanedForm,
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -32,26 +52,47 @@ export default function AddCustomerPopup({
         }
       );
       alert("Customer added successfully");
-      if (onSave) {
-        onSave(res.data.customer);
-      }
-
       setOpen(false);
+     queryClient.invalidateQueries(["orderslist", organizationId]);
 
-      setForm({
-        name: "",
-        email: "",
-        phone: "",
-        address: "",
-      });
-
+      setForm({name: "",email: "",phone: "",address: "",});
     } catch (error) {
       console.log(error);
-
       alert(
         error.response?.data?.message ||
           "Failed to add customer"
       );
+    }
+  };
+
+const handleUpdate = async () => {
+    try {
+        const cleanedForm = {
+        name: form.name.trim(),
+        email: form.email.trim().toLowerCase(),
+        phone: form.phone.trim(),
+        address: form.address,
+        };
+      const res = await axios.put(
+        `${API_URL}/api/customers/${organizationId}/${initialData._id}`,
+        cleanedForm,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
+      alert("Customer updated successfully");
+      setOpen(false);
+      queryClient.invalidateQueries(["orderslist", organizationId]);
+      queryClient.invalidateQueries(["orders", organizationId]);
+      setForm({name: "",email: "",phone: "",address: "",});
+    } catch (error) {
+        const msg = error.response?.data?.message;
+       if (msg === "Email already exists") {
+    setError("email");
+  } else{
+      alert(error.response?.data?.message ||"Failed to update customer");}
     }
   };
 
@@ -61,10 +102,18 @@ export default function AddCustomerPopup({
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
       <div className="bg-white w-[650px] rounded-2xl shadow-xl p-6 border">
 
-        <h2 className="text-2xl font-semibold mb-6">
+        {mode === "create"?(<h2 className="text-2xl font-semibold mb-6">
           Add Customer
+        </h2>):(
+            <h2 className="text-2xl font-semibold mb-6">
+          Edit Customer
         </h2>
 
+        )}
+{error === "email" && (
+                <span className="text-red-500 text-sm mt-1">
+                    Email already exists
+                </span>)}
         <div className="grid grid-cols-2 gap-4">
 
           {/* Name */}
@@ -88,7 +137,6 @@ export default function AddCustomerPopup({
             <label className="mb-2">
               Email
             </label>
-
             <input
               type="email"
               name="email"
@@ -140,13 +188,21 @@ export default function AddCustomerPopup({
           >
             Cancel
           </button>
-
+            { mode === "create"?(
           <button
             onClick={handleSubmit}
             className="px-4 py-2 bg-black text-white rounded-lg"
           >
             Add Customer
+          </button>):(
+                <button
+            onClick={handleUpdate}
+            className="px-4 py-2 bg-black text-white rounded-lg"
+          >
+            Update Customer
           </button>
+
+          )}
         </div>
       </div>
     </div>

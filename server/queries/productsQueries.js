@@ -10,11 +10,28 @@ export const getallproducts = async(orgId,query)=>{
   const page = parseInt(query.page) || 1;
   const limit = parseInt(query.limit) || 10;
   const skip = (page - 1) * limit;
-
-return Product.aggregate([{$match:{organization: toObjectId(orgId)}},
-  {$sort:{createdAt: -1}},
-  { $skip: skip },
-  { $limit: limit }
+  const match = {organization: toObjectId(orgId)};
+  if (query.search) {
+    match.$or = [
+      {name: {
+          $regex: query.search,
+          $options: "i"
+        }},
+      {category: {
+          $regex: `^${query.search}`,
+          $options: "i"
+        }}
+    ];
+}
+return Product.aggregate([{$match:match},
+  {$facet: {
+      products: [
+        { $sort: { createdAt: -1 } },
+        { $skip: skip },
+        { $limit: limit }
+      ],
+      total: [{$count: "count"}]
+    }}
 ]);
 }
 
@@ -27,7 +44,7 @@ export const getProductsWithStats = async (orgId, query) => {
   const skip = (page - 1) * limit;
   const match = {organization: toObjectId(orgId)};
   if (query.category) {match.category = query.category;}
-  if (query.stock === "low") {match.stock = { $lte: 10 };}
+  if (query.filter === "Low Stock") {match.stock = { $lte: 10 };}
   if (query.search) {
     match.$or = [
       {name: {
@@ -87,6 +104,7 @@ const pipeline =[
           }}
       }},
     {$addFields: {isActive: {$gt: ["$soldThisMonth",0]}}},
+    {$match: query.filter === "active" ? { isActive: true } : {}},
     {$facet: {
     products: [{$sort: (() => {
           switch (query.sort) {

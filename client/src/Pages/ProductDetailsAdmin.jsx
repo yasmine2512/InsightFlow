@@ -1,14 +1,15 @@
 import { useParams, Link,useNavigate, } from "react-router-dom";
 import DashboardLayout from "../components/Layout";
 import { ArrowLeft, Edit, Trash2, BarChart3, Users, DollarSign ,ShoppingCart,ShoppingBag,Package,
-  PackageCheck,
-  PackageOpen, } from "lucide-react";
+  PackageCheck,TrendingDown,TrendingUp,PackageOpen, } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { useState,useEffect } from "react";
 import axios from "axios"; 
 import { useAuth } from "../context/AuthContext";
 import { useQuery } from "@tanstack/react-query";
 import AddOrderPopup from "./CreateOrder";
+import { DeleteDialog } from "./DeleteDialog";
+import AddProductPopup from "./AddProduct";
 
 export default function ProductDetail() {
     const { user } = useAuth();
@@ -16,12 +17,13 @@ export default function ProductDetail() {
   const {productid} = useParams();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
-
+  const [openE, setOpenE] = useState(false);
    const userId = localStorage.getItem("userId");
 
      const [product, setProduct] = useState(null);
      const [stats,setstats] = useState(null);
       const API_URL = import.meta.env.VITE_API_URL;
+      const [deleteTarget, setDeleteTarget] = useState(null);
        useEffect(() => {
          const fetchProduct = async () => {
            const token = localStorage.getItem("token");
@@ -45,9 +47,22 @@ export default function ProductDetail() {
        }, [productid])
      
        if (!product) return <div>Loading...</div>
-
+    const handleDeleteConfirm = async () => {
+const token = localStorage.getItem("token");
+  try {
+    await axios.delete(`${API_URL}/api/products/${userId}/product/${deleteTarget}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    setDeleteTarget(null);
+    navigate(-1);
+  } catch (err) {
+   console.error("Failed to delete product", err);
+    alert(err.response?.data?.message ||"Failed to delete product" );
+  }
+  }
   const metrics = [
-  { label: "Month Revenu", value: "$"+stats.revenueThisMonth, icon: DollarSign },
+  { label: "Month Revenu", value: "$"+stats.revenueThisMonth,
+    change:stats.growthPercentage,up:stats.growthPercentage >= 0, icon: DollarSign },
   { label: "Unit Sold", value: stats.unitsSold, icon: BarChart3 },
   { label: "Stock", value: product.stock, icon: Package },
 ];
@@ -71,15 +86,24 @@ export default function ProductDetail() {
                 />
               </div>
                 <div className="flex-1">
-                  {isAdmin && <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between">
                     <h1 className="font-heading text-2xl font-bold">{product.name}</h1>
                     <div className="flex gap-2">
-                      <Button variant="outline" size="sm"><Edit className="w-3 h-3 mr-1" /> Edit</Button>
-                      <Button variant="outline" size="sm" className="text-destructive hover:bg-destructive hover:text-destructive-foreground"><Trash2 className="w-3 h-3" /></Button>
+                      <>
+                      <Button variant="outline" size="sm" onClick={() => setOpenE(true)}
+                      ><Edit className="w-3 h-3 mr-1" /> Edit</Button>
+                        <AddProductPopup
+                      open={openE}
+                      setOpen={setOpenE}
+                      mode="edit"
+                      initialData = {product}
+                    /></>
+                      <Button variant="outline" size="sm" className="text-destructive hover:bg-destructive hover:text-destructive-foreground"
+                      onClick={() => setDeleteTarget(product._id)}><Trash2 className="w-3 h-3" /></Button>
                     </div>
-                  </div>}
+                  </div>
                   <p className="text-sm text-muted-foreground">{product.category}</p>
-                  <div className="font-heading text-xl font-bold text-primary mt-2">{product.price}</div>
+                  <div className="font-heading text-xl font-bold text-primary mt-2">${product.price}</div>
                 </div>
               </div>
               <p className="text-sm text-muted-foreground leading-relaxed">{product.description}</p>
@@ -118,10 +142,22 @@ export default function ProductDetail() {
               <span className="text-sm text-muted-foreground">{m.label}</span>
             </div>
             <div className="font-heading text-xl font-bold">{m.value}</div>
+            <div className={`flex items-center gap-1 text-xs mt-1 ${m.up && m.label != "Stock Alert" ? "text-success" : "text-destructive"} `}>
+                {m.label === "Month Revenu"? (m.up ? <TrendingUp className="w-3 h-3 " />: <TrendingDown className="w-3 h-3" />):(<div/>)}
+                {m.label === "Month Revenu"? (m.change +"% From last month"):(<></>)}
+              </div>
           </div>
         ))}
+
+
       </div>}
         </div>
+        <DeleteDialog 
+              open={deleteTarget !== null}
+              onConfirm={handleDeleteConfirm}
+              onCancel={() => setDeleteTarget(null)}
+              Page = "Product"
+            />
       </div>
   );
 }
