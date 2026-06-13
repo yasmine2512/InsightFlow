@@ -16,6 +16,7 @@ const { id } = useParams();
   description: "",
   features: "",
   image: null,
+  sku:"",
   })
 useEffect(() => {
   if (initialData) {
@@ -27,6 +28,7 @@ useEffect(() => {
       description: initialData.description || "",
       features: initialData.features?.join("\n") || "",
       image: initialData.image || null,
+      sku:initialData.sku || "",
     });
   }
 }, [initialData]);
@@ -51,6 +53,7 @@ useEffect(() => {
     data.append("desc", product.description)
     data.append("features", JSON.stringify(product.features))
     data.append("image", form.image)
+    data.append("sku", product.sku)
 try{
     await axios.post(`${API_URL}/api/products/${id}/new-product`, data,
   {
@@ -79,6 +82,7 @@ try{
     data.append("features", JSON.stringify(product.features))
     if (form.image instanceof File) {
     data.append("image", form.image)}
+    data.append("sku", product.sku)
 try{
     await axios.put(`${API_URL}/api/products/${id}/product/${initialData._id}`, data,
   {
@@ -186,6 +190,17 @@ try{
             setForm({ ...form, image: e.target.files[0] })
           }
           className="border p-2 rounded-lg"
+        />
+      </div>
+
+      <div className="flex flex-col mx-1">
+        <label className="mb-2 text-left ml-3">Sku</label>
+        <input
+          value={form?.sku}
+          name="sku"
+          placeholder="Product Sku"
+          className="border p-2 rounded-lg w-full"
+          onChange={handleChange}
         />
       </div>
 

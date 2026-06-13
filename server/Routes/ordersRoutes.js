@@ -1,4 +1,5 @@
 import express from "express";
+import mongoose from "mongoose";
 import Order from "../Models/Order.js";
 import Product from "../Models/Product.js";
 import Customer from "../Models/Customer.js"
@@ -8,8 +9,13 @@ import { verifyTokenAndAdmin, verifyTokenAndAuthorization } from "../Middlewares
 import {getallOrders,gettotalOrders,getCompletedOrders,getOrdersByStatus,getordersperday} 
 from "../Queries/ordersQueries.js";
 import { getMGR,getOrders } from "../Queries/dashboardQueries.js";
+import multer from "multer";
+import xlsx from "xlsx";
+const upload = multer({
+  storage: multer.memoryStorage(),
+});
 const router = express.Router();
-export default router; 
+
 
   const getNextOrderNumber = async () => {
     const counter = await Counter.findOneAndUpdate(
@@ -109,7 +115,7 @@ found = await Customer.create({
  /** 
    * @desc deliver order
    * @route /api/orders/:id/:orderId/status
-   * @method POST
+   * @method POST7yuh 
    * @access private
    */  
 router.patch("/:id/:orderId/status",verifyTokenAndAuthorization,asyncHandler(async (req, res) => {
@@ -158,16 +164,126 @@ router.delete("/:id/:orderId", asyncHandler(async (req, res) => {
   res.json({ message: "Order deleted successfully" });
 }));
 
-
-
 /** 
    * @desc create from exel
    * @route /api/orders/:id
    * @method POST
    * @access private
    */  
-  router.post("/:id",verifyTokenAndAuthorization,asyncHandler(async(req,res)=>{
-   const orgid = req.params.id;
-  
-  
-  }));
+ router.post("/import/:id",verifyTokenAndAuthorization,upload.single("file"),
+  asyncHandler(async (req, res) => {
+    const orgId = new mongoose.Types.ObjectId(req.params.id);
+    const workbook = xlsx.read(req.file.buffer, {type: "buffer",});
+    const sheetName = workbook.SheetNames[0];
+    const rows = xlsx.utils.sheet_to_json(workbook.Sheets[sheetName]);
+    if (!rows.length) {return res.status(400).json({
+        message: "Empty Excel file",
+      });
+    }
+    const errors = [];
+    const ordersMap = {};
+    for (const row of rows) {
+      const {orderRef,Fullname,email,phone,address,productSKU,quantity,date} = row;
+      if (!orderRef || !email || !productSKU){
+      errors.push({
+      row,
+      message: "Missing required fields",
+      });
+     continue;
+    }
+      if (!ordersMap[orderRef]) {
+        ordersMap[orderRef] = {customer: {Fullname,email,phone,address,},
+        date: parseExcelDate(date) || new Date() ,
+        products: [],};
+      }
+      const parsedDate = date && !isNaN(parseExcelDate(date))? parseExcelDate(date):new Date();
+      ordersMap[orderRef].orderDate = parsedDate;
+      ordersMap[orderRef].products.push({productSKU,quantity: Number(quantity) || 1,});
+    }
+     
+    const createdOrders = [];
+    for (const orderRef in ordersMap) {
+      const data = ordersMap[orderRef];
+      try {
+        let customer = await Customer.findOne({
+          organization: orgId,
+          email: data.customer.email,
+        });
+        if (!customer) {
+          customer = await Customer.create({
+            organization: orgId,
+            name: data.customer.Fullname,
+            email: data.customer.email,
+            phone: data.customer.phone,
+            address: data.customer.address,
+            createdAt: data.date,
+          });
+        }
+        const products = [];
+        let totalPrice = 0;
+        for (const item of data.products) {
+          const product = await Product.findOne({
+            organization: orgId,
+            sku: item.productSKU,
+          });
+          if (!product) {
+            errors.push({
+              orderRef,
+              message: `Product not found: ${item.productSKU}`,
+            });
+            continue;
+          }
+          const qty = item.quantity;
+          products.push({
+            product: product._id,
+            quantity: qty,
+            priceAtPurchase: product.price,
+          });
+          totalPrice += qty * product.price;
+        }
+        if (!products.length) continue;
+        const order = await Order.create({
+          organization: orgId,
+          orderNumber: await getNextOrderNumber(),
+          customer: customer._id,
+          products,
+          totalPrice,
+          status: "pending",
+          createdAt: data.date,
+        });
+        createdOrders.push(order);
+      } catch (err) {
+        errors.push({
+          orderRef,
+          message: err.message,
+        });
+      }
+    }
+    if (createdOrders.length === 0) {
+  return res.status(400).json({
+    message: "Import failed - no orders created",
+    errors,
+  });
+}
+    return res.status(201).json({
+      message: "Import completed",
+      created: createdOrders.length,
+      failed: errors.length,
+      errors,
+    });
+  })
+);
+function parseExcelDate(value) {
+  if (!value) return null;
+  if (typeof value === "number") {
+    const utcDays = value - 25569; // Excel → Unix offset
+    const utcSeconds = utcDays * 86400;
+    const date = new Date(utcSeconds * 1000);
+    return new Date(Date.UTC(date.getUTCFullYear(),date.getUTCMonth(),date.getUTCDate()));
+  }
+  const d = new Date(value);
+  if (isNaN(d.getTime())) return null;
+  return new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()));
+}
+
+export default router; 

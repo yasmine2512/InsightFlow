@@ -57,7 +57,7 @@ const [filter,setFilter] = useState("");
 useEffect(() => {
   const timer = setTimeout(() => {
     setDebouncedSearch(search);
-  }, 400);
+  }, 800);
   return () => clearTimeout(timer);
 }, [search]);
 useEffect(() => {
@@ -148,10 +148,7 @@ const end = Math.min(currentPage * rowsPerPage,totalproducts);
   )}
               </div>
             </div>
-            <Button><Download className="w-4 h-4 mr-2" />Export</Button>
         </div>
-
-
 
        <div className="bg-card rounded-xl border border-border shadow-soft overflow-hidden">
   <div className="overflow-x-auto">

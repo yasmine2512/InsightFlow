@@ -135,7 +135,39 @@ const fetchOrders= async ({page,search,status}) => {
         throw err;
       }
     }
+const fileInputRef = useRef(null);
+const [loadingImport, setLoadingImport] = useState(false);
+const handleImportClick = () => {
+  fileInputRef.current.click();
+};
 
+
+const handleFileChange = async (e) => {
+  const file = e.target.files[0];
+  const token = localStorage.getItem("token");
+  if (!file) return;
+  const formData = new FormData();
+  formData.append("file", file);
+  try {
+    setLoadingImport(true);
+    await axios.post(
+      `${API_URL}/api/orders/import/${id}`,
+      formData,
+      {headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "multipart/form-data",
+        },}
+    );
+    alert("Import successful");
+    queryClient.invalidateQueries(["orders", id]);
+  } catch (err) {
+    console.log(err.response?.data?.errors || "no error");
+    alert(err.response?.data?.message || "Import failed");
+  } finally {
+    setLoadingImport(false);
+    e.target.value = "";
+  }
+};
 const [search, setSearch] = useState("");
 const [debouncedSearch, setDebouncedSearch] = useState(search);
 const STATUS_OPTIONS = ["all", "pending", "completed", "canceled"];
@@ -279,7 +311,13 @@ const end = Math.min(currentPage * rowsPerPage,totalorders);
     </div>
   )}</div>
             </div>
-            <Button><Download className="w-4 h-4 mr-2" />Export</Button>
+            <input type="file"ref={fileInputRef} accept=".xlsx,.xls"
+              onChange={handleFileChange}style={{ display: "none" }}
+              />
+            <Button  onClick={handleImportClick}
+  className="px-4 py-2 bg-green-600 text-white rounded-lg">
+  {loadingImport ? "Importing..." : "Import Excel"}<Download className="w-4 h-4 mr-2" />
+            </Button>
         </div>
 
         <div className="bg-card rounded-xl border border-border shadow-soft overflow-hidden">

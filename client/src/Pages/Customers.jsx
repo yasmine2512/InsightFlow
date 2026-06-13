@@ -125,7 +125,7 @@ queryFn: () => fetchCustomers({page:currentPage,search:debouncedSearch}),keepPre
   if (isLoading ) return <div>Loading...</div>
   if (error) return <p>Error loading customers</p>;
 
-  const CL7M =fillCustomerMonths(data?.newClast7month || []);
+const CL7M =fillCustomerMonths(data?.newClast7month || []);
 const spendingChartData =spendingDistribution(data?.customersSpendingDistribution || []);
 const CLV = data.customerLiftimeValue.toFixed(1);
 const stats = [

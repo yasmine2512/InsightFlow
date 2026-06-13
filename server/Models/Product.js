@@ -9,6 +9,7 @@ const productSchema = new mongoose.Schema({
   category: {type : String},
   features:{type: Array},
   image: String, 
+  sku: {type : String,required: true,unique: true},
   createdAt: { type: Date, default: Date.now },
 });
 const Product = mongoose.models.Product || mongoose.model("Product", productSchema);

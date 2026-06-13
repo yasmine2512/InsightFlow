@@ -79,7 +79,7 @@ router.get("/:id/cataloge",verifyTokenAndAuthorization,asyncHandler(async(req,re
    * @access private
    */ 
 router.post("/:id/new-product", verifyTokenAndAuthorization, (req, res, next) => {
-  getUpload().single("image")(req, res, next); // ← initialized when request hits
+  getUpload().single("image")(req, res, next); 
 }, asyncHandler(async (req, res) => {
  const orgid = req.params.id;
 const {name,price,desc,category,stock} = req.body;
@@ -101,6 +101,7 @@ const newproduct = new Product({
     description : desc,
     features,
     stock,
+    sku,
     image :req.file.path,
 })
 
@@ -146,25 +147,19 @@ return res.status(201).json({message: "Product added successfully"});
   const orgid = req.params.id;
   const product = await Product.findOne({_id: productId,organization: orgid});
   if (!product) return res.status(404).json({ message: "Product not found" });
-
-  const { name, desc, price, stock, category, features } = req.body;
+  const { name, desc, price, stock, category, features,sku } = req.body;
   const updateFields = {};
-
   if (name) updateFields.name = name;
   if (desc) updateFields.description = desc;
   if (category) updateFields.category = category;
   if (price !== undefined) updateFields.price = price;
   if (stock !== undefined) updateFields.stock = Number(stock);
-
-  // parse features if sent
+  if (sku !== undefined) updateFields.sku = sku;
   if (features) {
-    try {
-      updateFields.features = JSON.parse(features);
-    } catch {
+    try {updateFields.features = JSON.parse(features);} catch {
       return res.status(400).json({ message: "Features must be a JSON array" });
     }
   }
-
   // if new image uploaded, delete old from cloudinary and use new URL
   if (req.file) {
     if (product.image) {
@@ -174,11 +169,9 @@ return res.status(201).json({message: "Product added successfully"});
     }
     updateFields.image = req.file.path;
   }
-
   if (Object.keys(updateFields).length === 0) {
     return res.status(400).json({ message: "No fields to update" });
   }
-
   const updated = await Product.findOneAndUpdate(
     {_id:productId,organization:orgid},
     { $set: updateFields },
@@ -188,6 +181,4 @@ return res.status(201).json({message: "Product added successfully"});
   return res.status(200).json({ message: "Product updated successfully", product: updated });
 }));
 
-
-
-export default router; 
+export default router;
