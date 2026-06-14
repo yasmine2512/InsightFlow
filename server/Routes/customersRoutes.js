@@ -79,7 +79,7 @@ router.post("/:id",verifyTokenAndAuthorization,asyncHandler(async (req, res) => 
     }
     const cleanEmail = email.trim().toLowerCase();
   const customer = await Customer.create({organization: orgid,name,email:cleanEmail,phone,address, });
-    return res.status(201).json({message: "Customer created successfully",customer,});
+    return res.status(201).json({message: "Customer created successfully"});
   })
 );
 /** 

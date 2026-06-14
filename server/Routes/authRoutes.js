@@ -5,13 +5,26 @@ import Product from "../Models/Product.js"
 import asyncHandler from "express-async-handler";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-
-
 import {
   verifyToken,
   verifyTokenAndAuthorization,
   verifyTokenAndAdmin
 } from '../Middlewares/JWTauth.js'
+import passport from "passport";
+import mongoose from "mongoose";
+
+
+router.get("/google",passport.authenticate("google", {
+    scope: ["profile", "email"]
+  })
+);
+router.get("/google/callback",
+  passport.authenticate("google", {session: false,failureRedirect: "/login"}),
+  async (req, res) => {
+    const { user, token } = req.user;
+    res.redirect(`http://localhost:5173/oauth-success?token=${token}&id=${user._id}`);
+  }
+);
 
 /** 
    * @desc login
@@ -46,29 +59,29 @@ res.status(200).json({ user :other, token });
    */  
 
   router.post("/register", asyncHandler(async (req, res) => {
-  console.log(req.body); // debug
+  console.log(req.body); 
 
-  const { name, email, password,isadmin, subscriptionId } = req.body;
+  const { name,email, password} = req.body;
 
-  if (!name || !email || !password) {
+  if (!name ||!email || !password) {
     return res.status(400).json({ message: "Missing required fields" });
   }
-
   const existingUser = await User.findOne({ email });
   if (existingUser) return res.status(400).json({ message: "User already exists" });
-
   const hashedPassword = await bcrypt.hash(password, 10);
-
-  const newUser = new User({
+  const newUser =await User.create({
     name,
     email,
     password: hashedPassword,
-    isadmin,
-    subscriptionId
   });
-
-  await newUser.save();
-  res.status(201).json({ message: "User created" });
+// create token
+const token = jwt.sign(
+  { id: newUser._id, isadmin: newUser.isadmin },
+  process.env.JWT_SECRET_KEY,
+  { expiresIn: "1d" }
+);
+const { password: _, ...other } = newUser._doc;
+res.status(200).json({ user:other, token });
 }));
 
 /** 
@@ -98,14 +111,32 @@ router.delete("/:id/all-users/:userId",verifyTokenAndAdmin,asyncHandler(async(re
 
   /** 
    * @desc get profile
-   * @route /api/auth/:id
+   * @route /api/auth/profile/:id
    * @method GET
    * @access private
    */  
-  router.get("/:id", verifyTokenAndAuthorization, (req, res) => {
- res.json("Protected user data");
-});
+  router.get("/profile/:id",verifyTokenAndAuthorization,asyncHandler(async (req, res) => {
+ const orgId = new mongoose.Types.ObjectId(req.params.id);
+ const user = await User.findById(orgId).select("-password");
+ return res.status(200).json(user);
+}));
 
+/** 
+   * @desc update profile
+   * @route /api/auth/profile/:id
+   * @method PUT
+   * @access private
+   */  
+ router.put("/profile/:id",verifyTokenAndAuthorization,asyncHandler(async (req, res) => {
+ const orgId = req.params.id;
+ const {name,orgname} = req.body;
+ const user = await User.findByIdAndUpdate(req.params.id,{
+        $set: {
+          ...(name && { name }),
+          ...(orgname && { organizationName: orgname }),
+        },},{ new: true }  ).select("-password");
+ return res.status(200).json(user);
+}));
 
 export default router; 
 

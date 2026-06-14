@@ -122,21 +122,21 @@ const {  data: customerslist, isLoading, error } = useQuery({
 queryKey: ["customerslist", id,currentPage,debouncedSearch],
 queryFn: () => fetchCustomers({page:currentPage,search:debouncedSearch}),keepPreviousData: true,staleTime: 1000 * 60 * 5});
 
-  if (isLoading ) return <div>Loading...</div>
+  if (isLoading || !data) return <div>Loading...</div>
   if (error) return <p>Error loading customers</p>;
 
 const CL7M =fillCustomerMonths(data?.newClast7month || []);
 const spendingChartData =spendingDistribution(data?.customersSpendingDistribution || []);
-const CLV = data.customerLiftimeValue.toFixed(1);
+const CLV = data?.customerLiftimeValue.toFixed(1) || 0;
 const stats = [
   { label: "Total Customers", value: data.totalcustomers,growth:false,icon:Users },
-  { label: "Active Customers", value: data.activecustomers, change: data.ACgrowth.toFixed(1), 
+  { label: "Active Customers", value: data.activecustomers || 0, change: data.ACgrowth?.toFixed(1) || 0, 
     up: data.ACgrowth>= 0,growth:true, icon:  UserCheck },
   { label: "Customer Retention Rate", value:data.customerRetentionRate, 
     change:data.CRRgrowth.toFixed(1),up:data.CRRgrowth,growth:true, icon: RefreshCw },
   { label: "Customer Avg Liftime Value", value:"$"+CLV,growth:false, icon:DollarSign },
 ];
-const customers =customerslist.customers.customers;
+const customers =customerslist?.customers.customers || [];
 const rowsPerPage = 10;
 const totalcustomers = customerslist.customers.total;
 const totalPages = Math.ceil(totalcustomers / rowsPerPage);

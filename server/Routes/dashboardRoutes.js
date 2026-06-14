@@ -19,7 +19,7 @@ import{getordersperday} from "../Queries/ordersQueries.js"
  * @method GET
  * @access private
  */  
-router.get("/:id",verifyTokenAndAdmin,asyncHandler(async(req,res)=>{
+router.get("/:id",verifyTokenAndAuthorization,asyncHandler(async(req,res)=>{
   const orgid= req.params.id;
 
 const [MGR,orders,customers,revenuel7m,ordersthisweek,BSP,stockalert,TC,recentorders] = await Promise.all([

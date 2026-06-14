@@ -21,10 +21,6 @@ export default function Login() {
     try{
      const response= await axios.post(`${API_URL}/api/auth/login`,{email,password});
      const {token,user} = response.data;
-      // localStorage.setItem("token", token);
-      // localStorage.setItem("userId", user._id);
-      // localStorage.setItem("isAdmin",user.isadmin);
-      // console.log(user);
        login(token, user);
       navigate(`/${user._id}/dashboard`);
     }catch(err){
@@ -91,9 +87,10 @@ export default function Login() {
             <span className="text-xs text-muted-foreground">or continue with</span>
             <div className="flex-1 h-px bg-border" />
           </div>
-          <div className="mt-4 grid grid-cols-2 gap-3">
-            <Button variant="outline" size="sm">Google</Button>
-            <Button variant="outline" size="sm">GitHub</Button>
+          <div className="mt-4">
+            <Button variant="outline" w-full size="sm" className="w-1/2"
+            onClick={() => 
+            { window.location.href ="http://localhost:5000/api/auth/google";}}>Google</Button>
           </div>
         </motion.div>
       </div>

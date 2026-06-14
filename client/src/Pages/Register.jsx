@@ -4,8 +4,36 @@ import { Mail, Lock, User, ArrowRight } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/Input";
 import { Label } from "../components/ui/Label";
-
+import { useEffect,useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+import axios from "axios"
 export default function Register() {
+const {login}= useAuth();
+ const [error,setError] = useState(null);
+ const navigate = useNavigate()
+ const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const[name,setName] = useState("");
+  const API_URL = import.meta.env.VITE_API_URL;
+  async function handleRegister(){
+    try{
+     const response= await axios.post(`${API_URL}/api/auth/register`,{name,email,password});
+     const {token,user} = response.data;
+       login(token, user);
+       console.log(user)
+      navigate(`/${user._id}/dashboard`);
+    }catch(err){
+      if (err.response && err.response.status === 400) {
+    setError("Email already exist, try agian");
+  } else {
+    setError("Register failed. Please try again.");
+  }
+window.alert(error);
+  console.log(err);
+    }
+
+  }
   return (
     <div className="min-h-screen flex">
       <div className="hidden lg:flex lg:w-1/2 gradient-hero items-center justify-center p-12 relative overflow-hidden">
@@ -31,30 +59,41 @@ export default function Register() {
               <Label htmlFor="name">Full Name</Label>
               <div className="relative">
                 <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input id="name" placeholder="John Doe" className="pl-10" />
+                <Input id="name" placeholder="John Doe" value={name} className="pl-10" onChange={e => setName(e.target.value)} />
               </div>
             </div>
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input id="email" type="email" placeholder="you@example.com" className="pl-10" />
+                <Input id="email" type="email" value={email}
+                 placeholder="you@example.com" className="pl-10" 
+                onChange={e => setEmail(e.target.value)}/>
               </div>
             </div>
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input id="password" type="password" placeholder="••••••••" className="pl-10" />
+                <Input id="password" type="password" placeholder="••••••••" className="pl-10" 
+                value={password} onChange={e => setPassword(e.target.value)}/>
               </div>
             </div>
-            <Link to="/dashboard">
-              <Button className="w-full gradient-primary border-0 text-primary-foreground mt-2">
+              <Button className="w-full gradient-primary border-0 text-primary-foreground mt-2"
+              onClick={handleRegister}>
                 Create Account <ArrowRight className="ml-2 w-4 h-4" />
               </Button>
-            </Link>
           </form>
-
+             <div className="mt-6 flex items-center gap-3">
+            <div className="flex-1 h-px bg-border" />
+            <span className="text-xs text-muted-foreground">or continue with</span>
+            <div className="flex-1 h-px bg-border" />
+          </div>
+          <div className="mt-4">
+            <Button variant="outline" size="sm" className="w-1/2"
+            onClick={() => 
+            { window.location.href ="http://localhost:5000/api/auth/google";}}>Google</Button>
+          </div>
           <p className="text-xs text-muted-foreground mt-6 text-center">
             By signing up, you agree to our Terms of Service and Privacy Policy.
           </p>

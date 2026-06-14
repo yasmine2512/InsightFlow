@@ -9,18 +9,30 @@ export default function DashboardLayout() {
   const location = useLocation();
   const [open, setOpen] = useState(false);
    const {user,logout } = useAuth();
+   const [initials,setInitials]= useState("??");
   const isAdmin = user?.isAdmin;
 const userId =localStorage.getItem("userId");
 const navItems = [
-  { label: "Dashboard", icon: LayoutDashboard, to: `/${userId}/dashboard`, adminOnly: true  },
+  { label: "Dashboard", icon: LayoutDashboard, to: `/${userId}/dashboard` },
   { label: "Products", icon: Package, to: `/${userId}/products`},
   { label: "Catalog", icon: GalleryVertical , to: `/${userId}/cataloge`},
-  { label: "Orders", icon: ShoppingCart, to: `/${userId}/orders`, adminOnly: true  },
-  { label: "Cart", icon: ShoppingCart, to: `/${userId}/cart`, userOnly: true},
-  { label: "Customers", icon: Users, to: `/${userId}/customers`, adminOnly: true },
-  { label: "Subscriptions", icon: CreditCard, to: "/subscriptions" , adminOnly: true },
+  { label: "Orders", icon: ShoppingCart, to: `/${userId}/orders`},
+  { label: "Customers", icon: Users, to: `/${userId}/customers`},
+  { label: "Subscriptions", icon: CreditCard, to: "/subscriptions"},
   { label: "Settings", icon: Settings, to: "/settings"},
 ];
+useEffect(() => {
+  const username = localStorage.getItem("username");
+
+  const parts = (username || "").trim().split(" ");
+
+  const ini =
+    parts.length >= 2
+      ? parts[0][0] + parts[parts.length - 1][0]
+      : parts[0]?.[0] ?? "?";
+
+  setInitials(ini.toUpperCase());
+}, []);
 
   return (
     <div className="min-h-screen flex bg-background">
@@ -40,11 +52,7 @@ const navItems = [
         </div>
 
         <nav className="flex-1 px-3 space-y-1">
-          {navItems.filter(item => {
-  if (item.adminOnly && !isAdmin) return false; 
-  if (item.userOnly && isAdmin) return false;   
-  return true;                                  
-}).map((item) => {
+          {navItems.map((item) => {
             const active = location.pathname.startsWith(item.to);
             return (
               <Link
@@ -78,7 +86,7 @@ const navItems = [
         <header className="h-14 border-b border-border bg-card flex items-center px-4 gap-4 sticky top-0 z-30">
           <button className="lg:hidden" onClick={() => setOpen(true)}><Menu className="w-5 h-5" /></button>
           <div className="flex-1" />
-          <div className="w-8 h-8 rounded-full gradient-primary flex items-center justify-center text-xs font-bold text-primary-foreground">JD</div>
+          <div className="w-8 h-8 rounded-full gradient-primary flex items-center justify-center text-xs font-bold text-primary-foreground">{initials}</div>
         </header>
         <main className="flex-1 p-6 animate-fade-in">
           <Outlet />

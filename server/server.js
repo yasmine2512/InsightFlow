@@ -9,12 +9,13 @@ import productsRoutes from './Routes/productsRoutes.js';
 import subscriptionRoutes from './Routes/subscriptionRoutes.js';
 import customersRoutes from './Routes/customersRoutes.js';
 import connectDB from "./config/db.js"; 
+import passport from "./config/passport.js";
 
 const app = express();
 
 connectDB();
-app.use("/uploads", express.static("uploads"));
 app.use(cors());
+app.use(passport.initialize());
 app.use(express.json());
 app.use("/api/auth",authRoutes);
 app.use("/api/customers",customersRoutes);

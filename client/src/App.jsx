@@ -14,7 +14,7 @@ import Register from "./Pages/Register"
 import Settings from "./Pages/Settings"
 import Subscriptions from "./Pages/Subsriptions"
 import Customers from "./Pages/Customers"
-
+import OAuth from './Pages/OauthPage'
 
 
 function App() {
@@ -37,7 +37,9 @@ function App() {
 <Route path="/settings" element={<Settings/>} />
 <Route path="/subscriptions" element={<Subscriptions/>} />
 </Route>
+<Route path="/oauth-success" element={<OAuth/>}></Route>
 <Route path="*" element={<NotFound />} />
+
 
 
 </Routes>

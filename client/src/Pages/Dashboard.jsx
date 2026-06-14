@@ -76,9 +76,9 @@ const { data, isLoading, error } = useQuery({ queryKey: ["overview", id], queryF
   if (error) return <p>Error loading dashboard</p>;
   const Rgrowth = `${data.revenugrowth>= 0 ? "+" : ""}${data.revenugrowth.toFixed(1)}% from last month`;
   const Ogrowth = `${data.ordersgrowth>= 0 ? "+" : ""}${data.ordersgrowth.toFixed(1)}% from last month`;
-  const lowstock = data.stockAlert[0].lowStock;
-  const outofstock = data.stockAlert[0].outOfStock;
-  const Cgrowth = `${data.customersgrowth>= 0 ? "+" : ""}${data.customersgrowth.toFixed(1)}% from last month`;
+  const lowstock = data?.stockAlert[0]?.lowStock || 0;
+  const outofstock = data?.stockAlert[0]?.outOfStock || 0;
+  const Cgrowth = `${data?.customersgrowth>= 0 ? "+" : ""}${data.customersgrowth.toFixed(1)}% from last month`;
 const stats = [
   { label: "Revenue", value: "$"+ data.revenue,change: Rgrowth, up: data.revenugrowth>= 0, icon: DollarSign },
   { label: "Orders", value: data.orders, change: Ogrowth, up: data.ordersgrowth>= 0, icon: ShoppingCart },
