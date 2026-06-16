@@ -156,6 +156,7 @@ const end = Math.min(currentPage * rowsPerPage,totalproducts);
       <thead>
         <tr className="border-b border-border bg-muted/50">
           <th className="text-left p-4 font-medium text-muted-foreground">Name</th>
+          <th className="text-left p-4 font-medium text-muted-foreground">SKU</th>
           <th className="text-left p-4 font-medium text-muted-foreground">Price</th>
           <th className="text-left p-4 font-medium text-muted-foreground">Stock</th>
           <th className="text-left p-4 font-medium text-muted-foreground">Category</th>
@@ -168,6 +169,7 @@ const end = Math.min(currentPage * rowsPerPage,totalproducts);
         {products.map((o) => (
           <tr key={o._id} className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors">
             <td className="text-left p-4 font-medium">{o.name}</td>
+             <td className="text-left p-4 font-medium">{o.sku}</td>
             <td className="text-left p-4">${o.price}</td>
             <td className="text-left p-4"><div>{o.stock}</div></td>
             <td className="text-left p-4">{ o.category ? (o.category):("No category")}</td>

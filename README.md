@@ -1,135 +1,233 @@
 # InsightFlow
 
-## Overview
+> A SaaS business intelligence platform that gives business owners a unified view of their performance — orders, revenue, customers, and products — without the spreadsheets.
 
-InsightFlow is a multi-tenant Business Intelligence SaaS platform that helps organizations transform raw business data into actionable insights.
+---
 
-Businesses can import products, customers, and orders through CSV files or API integrations. The platform processes the data and provides analytics dashboards, business metrics, and AI-ready insights to support decision-making.
+## What is InsightFlow?
+
+Most small business owners track their business across disconnected tools — an Excel sheet for orders, another for customers, manual revenue calculations. InsightFlow replaces all of that with a single dashboard powered by real analytics.
+
+You get live KPIs, trend charts, and actionable insights calculated directly from your data using MongoDB's Aggregation Framework — not cached summaries or approximations.
 
 ---
 
 ## Features
 
-### Authentication & Authorization
+### Dashboard
+The command center of InsightFlow. Loads with a full business health overview on login.
 
-* JWT Authentication
-* Role-Based Access Control (Owner, Manager, Analyst)
-* Protected Routes
+- **KPI strip** — Revenue, Orders, Customers, Products (all MTD with growth indicators)
+- **Charts** — Revenue trend (7 months), Orders this week
+- **Recent activity** — Latest orders
+- **Top performers** — Top customers by spend, top products by units sold
 
-### Multi-Tenancy
+### Products
+Full product catalog management with analytics built in.
 
-* Organization-based workspaces
-* Secure data isolation
-* Team management
+- Add, edit, delete products
+- Search, filter, paginate
+- Per-product revenue, units sold 
+- Stock alert system — low stock and out-of-stock flagged automatically
+- Inventory value and Active products 
 
-### Data Import
+### Orders
+End-to-end order tracking and analysis.
 
-* CSV Import
-* REST API Data Ingestion
-* Data validation and processing
+- Add, edit, delete orders
+- Filter by status (pending / completed / cancelled)
+- Search and pagination
+- Order distribution chart, orders-this-week chart
+- Average Order Value (AOV), fulfillment rate, order growth trends
 
-### Analytics Dashboard
+### Customers
+Customer base management with retention analytics.
 
-* Revenue tracking
-* Orders analytics
-* Customer growth metrics
-* Product performance analysis
-* Top customers
-* Best-selling products
-* Inventory alerts
+- Add, edit, delete customers
+- Active customers MTD, Customer Lifetime Value (CLV), retention rate
+- Top customers by spend
+- Customer growth chart, spending distribution
 
-### AI Insights
+### Analytics Layer
+InsightFlow's strongest feature. Every metric is calculated live via **MongoDB Aggregation Framework pipelines** — no stale data.
 
-* Sales trend analysis
-* Business recommendations
-* Stock alerts
-* AI-ready architecture for future predictive analytics
+| Category | Metrics |
+|---|---|
+| Revenue | Total revenue, revenue growth (MTD vs same MTD last month), revenue trends |
+| Orders | Order count, order growth, AOV, fulfillment rate, order trends |
+| Customers | Active customers, retention rate, CLV, Avg Liftime Value |
+| Products | Product revenue,Inventory value,Low stock alert, active product count |
 
-### Subscription Management
+Growth percentages use **MTD vs same MTD last month** — comparing June 1–8 against May 1–8, not a full prior month, so the numbers are always a fair apples-to-apples comparison.
 
-* Free, Pro, and Business plans
-* Usage limits
-* Subscription tracking
+---
+
+## Pricing
+
+### Free Plan
+- Full product, customer, and order management
+- Dashboard with all KPIs and charts
+- Analytics layer (all aggregation metrics)
+- Unlimited records
+
+### Pro Plan
+- Everything in Free
+- **Excel Import** — bulk import products, customers, and orders directly from `.xlsx` spreadsheets
+- Powered by Stripe — subscription managed with Stripe Webhooks
 
 ---
 
 ## Tech Stack
 
 ### Frontend
-
-* React
-* Tailwind CSS
-* React Router
-* Axios
+| Tool | Purpose |
+|---|---|
+| React | UI framework |
+| React Router | Client-side routing and protected routes |
+| Tailwind CSS | Styling |
+| Axios | HTTP client |
+| React Query | Server state management and client-side caching |
+| Recharts | Charts and data visualization |
+| Framer Motion | Animations and transitions |
 
 ### Backend
+| Tool | Purpose |
+|---|---|
+| Node.js + Express.js | REST API server |
+| JWT | Stateless authentication, protected routes |
+| Passport.js | Google OAuth 2.0 strategy |
 
-* Node.js
-* Express.js
-* MongoDB
-* Mongoose
-* JWT Authentication
+### Database
+| Tool | Purpose |
+|---|---|
+| MongoDB | Primary database |
+| Mongoose | Schema modeling and query layer |
+| Aggregation Framework | All analytics calculations |
 
-### Analytics
-
-* MongoDB Aggregation Framework
-* Business Metrics Engine
+### Payments
+| Tool | Purpose |
+|---|---|
+| Stripe | Pro plan subscription billing |
+| Stripe Webhooks | Subscription lifecycle events (activated, cancelled, renewed) |
 
 ---
 
-## System Architecture
+## Authentication
 
-```text
-Organization
-│
-├── Users
-├── Products
-├── Customers
-└── Orders
-        │
-        ▼
- Analytics Engine
-        │
-        ▼
- Dashboard & Insights
+InsightFlow supports two auth flows, both issuing a JWT on success.
+
+**Traditional**
+1. User registers with email and password
+2. Password hashed and stored
+3. Login issues a signed JWT
+4. JWT attached to every request via Authorization header
+5. Protected routes validate the token server-side
+
+**Google OAuth**
+1. User clicks "Sign in with Google"
+2. Passport.js handles the OAuth 2.0 flow
+3. On first login, account is created automatically
+4. JWT issued and returned — same flow as traditional auth from this point
+
+---
+
+## Analytics Deep Dive
+
+All metrics are computed with MongoDB aggregation pipelines. Growth indicators compare the current MTD window against the identical window in the prior month:
+
+```js
+// Current MTD (e.g. June 1–8)
+{ $match: { createdAt: { $gte: startOfMonth, $lte: today } } }
+
+// Same window last month (May 1–8)
+{ $match: { createdAt: { $gte: startOfLastMonth, $lte: todayLastMonth } } }
+
+// Growth %
+((current - previous) / previous) * 100
+```
+
+This avoids the common mistake of comparing a partial current month against a full prior month, which produces misleading negative growth early in the month.
+
+---
+
+## Project Structure
+
+```
+insightflow/
+├── client/                  # React frontend
+│   ├── src/
+│   │   ├── components/      # Reusable UI components
+│   │   ├── pages/           # Route-level pages (Dashboard, Orders, etc.)
+│   │   ├── hooks/           # React Query hooks
+│   │   ├── lib/             # Axios instance, helpers
+│   │   └── context/         # Auth context
+│   └── ...
+├── server/                  # Express backend
+│   ├── routes/              # API routes
+│   ├── controllers/         # Route handlers
+│   ├── models/              # Mongoose schemas
+│   ├── middleware/          # JWT auth, error handling
+│   ├── config/              # DB and Passport Config
+│   ├── queries/             # MongoDB aggregation pipelines
+│   └── webhooks/            # Stripe webhook handlers
+└── ...
 ```
 
 ---
 
-## Core Metrics
+## Getting Started
 
-* Total Revenue
-* Revenue Growth
-* Orders Analytics
-* Customer Growth
-* Top Customers
-* Best-Selling Products
-* Inventory Status
-* Business Performance Indicators
+### Prerequisites
+- Node.js 18+
+- MongoDB (local or Atlas)
+- Stripe account (for Pro plan)
+- Google OAuth credentials (for Google Sign-In)
 
----
+### Installation
 
-## Future Enhancements
+```bash
+# Clone the repo
+git clone https://github.com/your-username/insightflow.git
+cd insightflow
 
-* Shopify Integration
-* WooCommerce Integration
-* AI Forecasting
-* Email Reports
-* Real-Time Analytics
-* WebSocket Notifications
+# Install server dependencies
+cd server && npm install
 
----
+# Install client dependencies
+cd ../client && npm install
+```
 
-## Project Goals
+### Environment Variables
 
-* Build a scalable SaaS architecture
-* Implement secure multi-tenant access control
-* Provide meaningful business analytics
-* Create AI-ready data pipelines
-* Deliver a modern and responsive user experience
+Create a `.env` file in `/server`:
 
----
+```env
+PORT=5000
+MONGODB_URI=your_mongodb_connection_string
 
-## Author
+JWT_SECRET=your_jwt_secret
+JWT_EXPIRES_IN=7d
 
-Developed as a full-stack SaaS project using React, Node.js, Express, and MongoDB.
+GOOGLE_CLIENT_ID=your_google_client_id
+GOOGLE_CLIENT_SECRET=your_google_client_secret
+GOOGLE_CALLBACK_URL=http://localhost:5000/auth/google/callback
+
+STRIPE_SECRET_KEY=your_stripe_secret_key
+STRIPE_WEBHOOK_SECRET=your_stripe_webhook_secret
+
+CLIENT_URL=http://localhost:5173
+```
+
+### Run Locally'
+```bash
+# Start Both 
+ npm run dev
+
+# Start backend
+cd server && npm run dev
+
+# Start frontend (new terminal)
+cd client && npm run dev
+```
+
+Frontend runs on `http://localhost:5173`, backend on `http://localhost:5000`.

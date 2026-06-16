@@ -195,9 +195,16 @@ const AOVG = data.averageordervalue.toFixed(1);
 const FR= data.fulfillmentrate.toFixed(1);
 const FRG=data.FRgrowth.toFixed(1);
 const ordersData = data.ordersbystatus;
+const orders = orderslist.orders.orders;
+const ordersperday = fillMissingDays(data.ordersperday);
+  const rowsPerPage = 10;
+  const totalorders = orderslist.orders.total;
+  const totalPages = Math.ceil(totalorders / rowsPerPage);
+  const start = (currentPage - 1) * rowsPerPage + 1;
+const end = Math.min(currentPage * rowsPerPage,totalorders);
    const stats = [
-  { label: "Orders", value: data.ordersTM,change:OG,growth:true, up:OG>= 0, icon: Package },
-  { label: "Pending Orders", value:0,growth:false, stock: 0, icon: ShoppingCart },
+  { label: "Orders This Month", value: data.ordersTM,change:OG,growth:true, up:OG>= 0, icon: Package },
+  { label: "All Orders", value:totalorders,growth:false, icon: ShoppingCart },
   { label: "Average Order Value", value:AOV,change:AOVG,up:AOVG>0
 ,growth:true, stock:0, icon: DollarSign },
   { label: "Fulfillment Rate", value:FR ,change:FRG,growth:true,up:FRG>0, icon: CheckCircle2 },
@@ -206,14 +213,6 @@ const ordersData = data.ordersbystatus;
 const colors = [
    "hsl(243 75% 59%)" , "hsl(172 66% 50%)" ,"hsl(38 92% 50%)","hsl(280 72% 55%)"
 ];
-const ordersperday = fillMissingDays(data.ordersperday);
-const orders = orderslist.orders.orders;
-
-  const rowsPerPage = 10;
-  const totalorders = orderslist.orders.total;
-  const totalPages = Math.ceil(totalorders / rowsPerPage);
-  const start = (currentPage - 1) * rowsPerPage + 1;
-const end = Math.min(currentPage * rowsPerPage,totalorders);
   return (
       <div className="space-y-6">
         <div className="relative">

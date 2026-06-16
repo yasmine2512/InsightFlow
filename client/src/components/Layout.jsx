@@ -15,7 +15,7 @@ const userId =localStorage.getItem("userId");
 const navItems = [
   { label: "Dashboard", icon: LayoutDashboard, to: `/${userId}/dashboard` },
   { label: "Products", icon: Package, to: `/${userId}/products`},
-  { label: "Catalog", icon: GalleryVertical , to: `/${userId}/cataloge`},
+  { label: "Catalog", icon: GalleryVertical , to: `/${userId}/catalog`},
   { label: "Orders", icon: ShoppingCart, to: `/${userId}/orders`},
   { label: "Customers", icon: Users, to: `/${userId}/customers`},
   { label: "Subscriptions", icon: CreditCard, to: "/subscriptions"},

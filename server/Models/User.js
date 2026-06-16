@@ -7,6 +7,7 @@ const userSchema = new mongoose.Schema({
   password: { type: String,default: ""},
   isadmin: { type: Boolean, default: false}, 
   createdAt: { type: Date, default: Date.now },
+  plan: {type: String,enum: ["free", "pro"],default: "free"},
   subscriptionId: { type: String }, // Stripe subscription
   googleId: {type: String,default: ""}
 });

@@ -90,6 +90,7 @@ const pipeline =[
         price: {$first: "$price"},
         stock: {$first: "$stock"},
         category: {$first: "$category"},
+        sku:{$first: "$sku"},
         sold: {$sum: {$cond: [{ $eq: ["$orders.status", "completed"] },
         { $ifNull: ["$orders.products.quantity", 0] }, 0]}},
         revenue: {$sum: {$cond: [{ $eq: ["$orders.status", "completed"] },

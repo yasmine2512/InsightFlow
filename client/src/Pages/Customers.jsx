@@ -188,7 +188,7 @@ const end = Math.min(currentPage * rowsPerPage,totalcustomers);
             </ResponsiveContainer>
           </div>
           <div className="bg-card rounded-xl border border-border p-5 shadow-soft">
-            <h3 className="font-heading font-semibold mb-4">New Customers Last 7 Months</h3>
+            <h3 className="font-heading font-semibold mb-4">Spending Distribution</h3>
             <ResponsiveContainer width="100%" height={240}>
               <BarChart data={spendingChartData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(220 13% 90%)" />
