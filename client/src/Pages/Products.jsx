@@ -7,20 +7,18 @@ import { useParams ,  useNavigate} from "react-router-dom"
 import { useEffect, useState } from "react"
 import axios from "axios"
 import { useQuery } from "@tanstack/react-query";
+import { useAuth } from "../context/AuthContext";
 
 
 export default function Products() {
-  const { id } = useParams()
+  const { user} = useAuth();
+  const token = user?.token;
+  const id = user?.userId;
   const [profile, setProfile] = useState(null)
   const API_URL = import.meta.env.VITE_API_URL;
   const navigate = useNavigate();
 
     const fetchStats = async () => {
-      const token = localStorage.getItem("token");
-        if (!token) {
-      navigate("/login");
-      return;
-    }
       try {
         const res = await axios.get(`${API_URL}/api/products/${id}/stats`, {
           headers: { Authorization: `Bearer ${token}` },
@@ -33,11 +31,6 @@ export default function Products() {
       }
     }
     const fetchProducts = async ({page,search,filter}) => {
-      const token = localStorage.getItem("token");
-        if (!token) {
-      navigate("/login");
-      return;
-    }
       try {
         const res = await axios.get(`${API_URL}/api/products/${id}`, {
           headers: { Authorization: `Bearer ${token}` },

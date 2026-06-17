@@ -15,13 +15,13 @@ const app = express();
 
 connectDB();
 app.use(cors());
+app.use("/api/subscription",subscriptionRoutes);
 app.use(passport.initialize());
 app.use(express.json());
 app.use("/api/auth",authRoutes);
 app.use("/api/customers",customersRoutes);
 app.use("/api/products",productsRoutes);
 app.use("/api/orders",ordersRoutes);
-app.use("/api/subscription",subscriptionRoutes);
 app.use("/api/dashboard",dashboardRoutes);
 // app.connectdb();
 app.use("/", (req, res) => {

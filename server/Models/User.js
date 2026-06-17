@@ -9,6 +9,7 @@ const userSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now },
   plan: {type: String,enum: ["free", "pro"],default: "free"},
   subscriptionId: { type: String }, // Stripe subscription
+  stripeCustomerId: { type: String },
   googleId: {type: String,default: ""}
 });
 const User = mongoose.model("User", userSchema);

@@ -168,8 +168,7 @@ insightflow/
 │   ├── models/              # Mongoose schemas
 │   ├── middleware/          # JWT auth, error handling
 │   ├── config/              # DB and Passport Config
-│   ├── queries/             # MongoDB aggregation pipelines
-│   └── webhooks/            # Stripe webhook handlers
+│   └── queries/             # MongoDB aggregation pipelines
 └── ...
 ```
 

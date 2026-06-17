@@ -9,9 +9,11 @@ export default function DashboardLayout() {
   const location = useLocation();
   const [open, setOpen] = useState(false);
    const {user,logout } = useAuth();
+  const token = user?.token;
+  const userId = user?.userId;
    const [initials,setInitials]= useState("??");
   const isAdmin = user?.isAdmin;
-const userId =localStorage.getItem("userId");
+  const username = user?.username;
 const navItems = [
   { label: "Dashboard", icon: LayoutDashboard, to: `/${userId}/dashboard` },
   { label: "Products", icon: Package, to: `/${userId}/products`},
@@ -21,18 +23,16 @@ const navItems = [
   { label: "Subscriptions", icon: CreditCard, to: "/subscriptions"},
   { label: "Settings", icon: Settings, to: "/settings"},
 ];
+
 useEffect(() => {
-  const username = localStorage.getItem("username");
-
   const parts = (username || "").trim().split(" ");
-
   const ini =
     parts.length >= 2
       ? parts[0][0] + parts[parts.length - 1][0]
       : parts[0]?.[0] ?? "?";
 
   setInitials(ini.toUpperCase());
-}, []);
+}, [username]);
 
   return (
     <div className="min-h-screen flex bg-background">

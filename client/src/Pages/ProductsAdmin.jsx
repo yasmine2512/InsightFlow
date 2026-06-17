@@ -11,20 +11,16 @@ import AddProductPopup from "./AddProduct";
 import { useQuery } from "@tanstack/react-query";
 
 export default function ProductsCatalog() {
-  const { id } = useParams()
   const{user}= useAuth();
   const isAdmin = user?.isAdmin;
+  const token = user?.token;
+  const id = user?.userId;
    const [open, setOpen] = useState(false)
   //  const [products, setProducts] = useState(null)
     const API_URL = import.meta.env.VITE_API_URL;
     const navigate = useNavigate();
   
        const fetchProducts = async ({page,search}) => {
-         const token = localStorage.getItem("token");
-           if (!token) {
-         navigate("/login");
-         return;
-       }
          try {
           console.log(search)
            const res = await axios.get(`${API_URL}/api/products/${id}/cataloge`, {

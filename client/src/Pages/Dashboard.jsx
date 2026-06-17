@@ -5,6 +5,7 @@ import { useParams ,  useNavigate} from "react-router-dom"
 import { useEffect, useState } from "react"
 import axios from "axios"
 import { useQuery } from "@tanstack/react-query";
+import { useAuth } from "../context/AuthContext";
 
 const fillMissingMonths = (data) => {
   const now = new Date();
@@ -42,22 +43,14 @@ const result = [];
 };
 
 export default function Dashboard() {
-  const { id } = useParams()
+  const { user} = useAuth();
+  const token = user?.token;
+  const id = user?.userId;
   const [profile, setProfile] = useState(null)
   const API_URL = import.meta.env.VITE_API_URL;
   const navigate = useNavigate();
-  useEffect(() => {
-  if (!localStorage.getItem("token")) {
-    navigate("/login");
-  }
-}, []);
     const fetchProfile = async () => {
-      const token = localStorage.getItem("token");
-        if (!token) {
-      throw new Error("No token");
-    }
       try {
-      
         const res = await axios.get(`${API_URL}/api/dashboard/${id}`, {
           headers: { Authorization: `Bearer ${token}` }
         })

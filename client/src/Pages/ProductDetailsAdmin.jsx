@@ -12,13 +12,14 @@ import { DeleteDialog } from "./DeleteDialog";
 import AddProductPopup from "./AddProduct";
 
 export default function ProductDetail() {
-    const { user } = useAuth();
+    const { user} = useAuth();
   const isAdmin = user?.isAdmin;
   const {productid} = useParams();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [openE, setOpenE] = useState(false);
-   const userId = localStorage.getItem("userId");
+  const token = user?.token;
+  const userId = user?.userId;
 
      const [product, setProduct] = useState(null);
      const [stats,setstats] = useState(null);
@@ -26,11 +27,6 @@ export default function ProductDetail() {
       const [deleteTarget, setDeleteTarget] = useState(null);
        useEffect(() => {
          const fetchProduct = async () => {
-           const token = localStorage.getItem("token");
-             if (!token) {
-           navigate("/login");
-           return;
-         }
            try {
              const res = await axios.get(`${API_URL}/api/products/${userId}/detail/${productid}`, {
           headers: { Authorization: `Bearer ${token}` },
@@ -48,7 +44,6 @@ export default function ProductDetail() {
      
        if (!product) return <div>Loading...</div>
     const handleDeleteConfirm = async () => {
-const token = localStorage.getItem("token");
   try {
     await axios.delete(`${API_URL}/api/products/${userId}/product/${deleteTarget}`, {
       headers: { Authorization: `Bearer ${token}` }

@@ -8,7 +8,7 @@ function OAuth() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const token = params.get("token");
-     const id = params.get("id");
+    const id = params.get("id");
     const API_URL = import.meta.env.VITE_API_URL;
    const loadUser = async () => {
       if (!token) return navigate("/");

@@ -4,6 +4,7 @@ import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/Input";
 import { useParams ,  useNavigate} from "react-router-dom"
 import { useEffect, useState } from "react"
+import { useAuth } from "../context/AuthContext";
 import axios from "axios"
 import { useQuery } from "@tanstack/react-query";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from "recharts";
@@ -43,7 +44,9 @@ const statusColor = {
 };
 
 export default function Customers() {
-   const { id } = useParams()
+  const { user} = useAuth();
+  const token = user?.token;
+  const id = user?.userId;
   const [profile, setProfile] = useState(null)
   const API_URL = import.meta.env.VITE_API_URL;
   const navigate = useNavigate();
@@ -52,8 +55,8 @@ export default function Customers() {
   const [selectedCustomer, setSelectedCustomer] = useState(null);
   const queryClient = useQueryClient();
   const [deleteTarget, setDeleteTarget] = useState(null);
+
   const handleDeleteConfirm = async () => {
-const token = localStorage.getItem("token");
   try {
     await axios.delete(`${API_URL}/api/customers/${id}/${deleteTarget}`, {
       headers: { Authorization: `Bearer ${token}` }
@@ -67,11 +70,6 @@ const token = localStorage.getItem("token");
   }
   }
     const fetchStats = async () => {
-      const token = localStorage.getItem("token");
-        if (!token) {
-      navigate("/login");
-      return;
-    }
       try {
       
         const res = await axios.get(`${API_URL}/api/customers/${id}/stats`, {
@@ -86,13 +84,7 @@ const token = localStorage.getItem("token");
       }
     }
     const fetchCustomers = async ({page,search}) => {
-      const token = localStorage.getItem("token");
-        if (!token) {
-      navigate("/login");
-      return;
-    }
       try {
-      
         const res = await axios.get(`${API_URL}/api/customers/${id}`, {
           headers: { Authorization: `Bearer ${token}` },
            params: { page,limit: 10,search}

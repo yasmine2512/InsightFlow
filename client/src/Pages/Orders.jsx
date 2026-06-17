@@ -9,7 +9,7 @@ import { useQuery } from "@tanstack/react-query";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip,BarChart ,CartesianGrid,XAxis, YAxis,Bar} from "recharts";
 import { useQueryClient } from "@tanstack/react-query";
 import { DeleteDialog } from "./DeleteDialog";
-
+import { useAuth } from "../context/AuthContext";
 const fillMissingDays = (data) => {
 const result = [];
   for (let i = 6; i >= 0; i--) {
@@ -78,14 +78,16 @@ function StatusPopover({ currentStatus, onSelect }) {
 }
 
 export default function Orders() {
-  const { id } = useParams()
+  const { user} = useAuth();
+  const token = user?.token;
+  const id = user?.userId;
+  const plan = user.plan;
   const [profile, setProfile] = useState(null)
   const API_URL = import.meta.env.VITE_API_URL;
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [deleteTarget, setDeleteTarget] = useState(null);
   const handleDeleteConfirm = async () => {
-const token = localStorage.getItem("token");
   try {
     await axios.delete(`${API_URL}/api/orders/${id}/${deleteTarget}`, {
       headers: { Authorization: `Bearer ${token}` }
@@ -99,11 +101,6 @@ const token = localStorage.getItem("token");
   }
 
   const fetchStats= async () => {
-      const token = localStorage.getItem("token");
-        if (!token) {
-      navigate("/login");
-      return;
-    }
       try {
         const res = await axios.get(`${API_URL}/api/orders/${id}/stats`, {
           headers: { Authorization: `Bearer ${token}` }
@@ -112,16 +109,10 @@ const token = localStorage.getItem("token");
         return res.data;
       } catch (err) {
         console.error("Unauthorized or token invalid", err)
-        // navigate("/login");
         throw err;
       }
     }
 const fetchOrders= async ({page,search,status}) => {
-      const token = localStorage.getItem("token");
-        if (!token) {
-      navigate("/login");
-      return;
-    }
       try {
         const res = await axios.get(`${API_URL}/api/orders/${id}`, {
           headers: { Authorization: `Bearer ${token}` },
@@ -131,20 +122,19 @@ const fetchOrders= async ({page,search,status}) => {
         return res.data;
       } catch (err) {
         console.error("Unauthorized or token invalid", err)
-        // navigate("/login");
         throw err;
       }
     }
 const fileInputRef = useRef(null);
 const [loadingImport, setLoadingImport] = useState(false);
 const handleImportClick = () => {
-  fileInputRef.current.click();
+  if(!plan ||plan === "free"){
+    navigate("/subscriptions");
+  }else{
+  fileInputRef.current.click();}
 };
-
-
 const handleFileChange = async (e) => {
   const file = e.target.files[0];
-  const token = localStorage.getItem("token");
   if (!file) return;
   const formData = new FormData();
   formData.append("file", file);

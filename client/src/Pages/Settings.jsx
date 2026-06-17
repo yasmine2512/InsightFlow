@@ -6,6 +6,7 @@ import { Label } from "../components/ui/Label";
 import { Switch } from "../components/ui/switch";
 import { Separator } from "../components/ui/separator";
 import axios from "axios";
+import { useAuth } from "../context/AuthContext";
 export default function SettingsPage() {
   const [name, setFullname] = useState("");
   const [orgname, setOrganization] = useState("");
@@ -14,16 +15,15 @@ export default function SettingsPage() {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState(null);
   const API_URL = import.meta.env.VITE_API_URL;
+  const { user,updateUser} = useAuth();
+  const token = user?.token;
+  const userId = user?.userId;
   useEffect(() => {
-    const userId = localStorage.getItem("userId");
-    const token = localStorage.getItem("token");
     async function fetchdata(){
-      if (!userId) return;
      try{
       const response= await axios.get(`${API_URL}/api/auth/profile/${userId}`,{
           headers: { Authorization: `Bearer ${token}` },
         });
-      console.log(response.data.name,response.data.orgname);
       const parts = (response.data.name || "").trim().split(" ");
         const ini = parts.length >= 2
           ? parts[0][0] + parts[parts.length - 1][0]
@@ -36,11 +36,9 @@ export default function SettingsPage() {
       finally{ setLoading(false);}}
     fetchdata();
 
-  }, []);
+  }, [userId,token]);
 
   async function handleSave(){
-    const userId = localStorage.getItem("userId");
-    const token = localStorage.getItem("token");
     if (!userId) return;
     setSaving(true);
     setMessage(null);
@@ -48,7 +46,7 @@ export default function SettingsPage() {
      const response= await axios.put(`${API_URL}/api/auth/profile/${userId}`,{name,orgname},{
           headers: { Authorization: `Bearer ${token}` },
         });
-
+      updateUser({username: response.data.name});
       const parts = response.data.name.trim().split(" ");
       const ini = parts.length >= 2
         ? parts[0][0] + parts[parts.length - 1][0]

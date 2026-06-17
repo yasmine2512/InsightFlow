@@ -1,41 +1,56 @@
 import { createContext, useContext, useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom"
+import { useNavigate } from "react-router-dom";
+
 const AuthContext = createContext();
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
-  const navigate = useNavigate()
+  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
+
+  // restore session
   useEffect(() => {
-    // restore user from localStorage on page refresh
-    const token = localStorage.getItem("token");
-    const userId = localStorage.getItem("userId");
-    const isAdmin = localStorage.getItem("isAdmin") === "true";
-    const username = localStorage.getItem("username");
-    if (token && userId) {
-      setUser({ token, userId, isAdmin });
+    const storedUser = localStorage.getItem("user");
+
+    if (storedUser) {
+      setUser(JSON.parse(storedUser));
     }
+      setLoading(false);
   }, []);
 
+  // LOGIN
   const login = (token, userData) => {
-    localStorage.setItem("token", token);
-    localStorage.setItem("userId", userData._id);
-    localStorage.setItem("isAdmin", userData.isadmin);
-    localStorage.setItem("username", userData.name);
-    setUser({ token, userId: userData._id, isAdmin: userData.isadmin });
+    const fullUser = {
+      token,
+      userId: userData._id,
+      isAdmin: userData.isadmin,
+      username: userData.name,
+      plan: userData.plan,
+    };
+
+    setUser(fullUser);
+    setLoading(false);
+    localStorage.setItem("user", JSON.stringify(fullUser));
   };
 
+  // UPDATE USER (VERY IMPORTANT FOR STRIPE)
+  const updateUser = (newData) => {
+    setUser((prev) => {
+      const updated = { ...prev, ...newData };
+      localStorage.setItem("user", JSON.stringify(updated));
+      return updated;
+    });
+  };
+
+  // LOGOUT
   const logout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("userId");
-    localStorage.removeItem("isAdmin");
-    localStorage.removeItem("username");
     setUser(null);
-    navigate(`/`);
-    
+    localStorage.removeItem("user");
+    navigate("/");
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout }}>
+    <AuthContext.Provider value={{ user,loading, login, logout, updateUser }}>
       {children}
     </AuthContext.Provider>
   );

@@ -1,10 +1,31 @@
 import { CreditCard, Check, TableProperties, Shield } from "lucide-react";
 import { Button } from "../components/ui/button";
-
+import axios from "axios"
+import { useAuth } from "../context/AuthContext";
+import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 export default function SubscriptionPage() {
-  const handleUpgrade = () => {
-    // Stripe checkout here
-    console.log("Upgrade to Pro");
+  const API_URL = import.meta.env.VITE_API_URL;
+  const { user ,updateUser} = useAuth();
+    const navigate = useNavigate();
+  useEffect(() => {
+    if (user?.plan === "pro") {
+      navigate("/subscription-success");
+    }
+  }, [user,navigate]);
+  const handleUpgrade =async () => {
+  const token = user?.token;
+  const id = user?.userId;
+    const response = await axios.post(`${API_URL}/api/subscription/${id}/create-checkout-session`,
+  {},
+  {
+    headers: {
+      Authorization: `Bearer ${token}`
+    }
+  }
+);
+updateUser({ plan: "pro" });
+window.location.href = response.data.url;
   };
 
   return (
