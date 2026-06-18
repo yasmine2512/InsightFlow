@@ -22,7 +22,7 @@ export default function Login() {
      const response= await axios.post(`${API_URL}/api/auth/login`,{email,password});
      const {token,user} = response.data;
        login(token, user);
-      navigate(`/${user._id}/dashboard`);
+      navigate(`/dashboard`);
     }catch(err){
       if (err.response && err.response.status === 401) {
     setError("Wrong password!");

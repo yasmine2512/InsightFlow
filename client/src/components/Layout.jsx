@@ -9,17 +9,14 @@ export default function DashboardLayout() {
   const location = useLocation();
   const [open, setOpen] = useState(false);
    const {user,logout } = useAuth();
-  const token = user?.token;
-  const userId = user?.userId;
    const [initials,setInitials]= useState("??");
-  const isAdmin = user?.isAdmin;
   const username = user?.username;
 const navItems = [
-  { label: "Dashboard", icon: LayoutDashboard, to: `/${userId}/dashboard` },
-  { label: "Products", icon: Package, to: `/${userId}/products`},
-  { label: "Catalog", icon: GalleryVertical , to: `/${userId}/catalog`},
-  { label: "Orders", icon: ShoppingCart, to: `/${userId}/orders`},
-  { label: "Customers", icon: Users, to: `/${userId}/customers`},
+  { label: "Dashboard", icon: LayoutDashboard, to: `/dashboard` },
+  { label: "Products", icon: Package, to: `/products`},
+  { label: "Catalog", icon: GalleryVertical , to: `/catalog`},
+  { label: "Orders", icon: ShoppingCart, to: `/orders`},
+  { label: "Customers", icon: Users, to: `/customers`},
   { label: "Subscriptions", icon: CreditCard, to: "/subscriptions"},
   { label: "Settings", icon: Settings, to: "/settings"},
 ];

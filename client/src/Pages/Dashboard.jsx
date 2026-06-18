@@ -1,7 +1,6 @@
 import DashboardLayout from "../components/Layout";
 import { TrendingUp, TrendingDown, DollarSign, Package, ShoppingCart, Users,AlertTriangle} from "lucide-react";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar ,} from "recharts";
-import { useParams ,  useNavigate} from "react-router-dom"
 import { useEffect, useState } from "react"
 import axios from "axios"
 import { useQuery } from "@tanstack/react-query";
@@ -48,7 +47,6 @@ export default function Dashboard() {
   const id = user?.userId;
   const [profile, setProfile] = useState(null)
   const API_URL = import.meta.env.VITE_API_URL;
-  const navigate = useNavigate();
     const fetchProfile = async () => {
       try {
         const res = await axios.get(`${API_URL}/api/dashboard/${id}`, {

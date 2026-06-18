@@ -19,7 +19,7 @@ function OAuth() {
       });
       const user = res.data;
       login(token, user);
-      navigate(`/${user._id}/dashboard`);
+      navigate(`/dashboard`);
     };
 
     loadUser();

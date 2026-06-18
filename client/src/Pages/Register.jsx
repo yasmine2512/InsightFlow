@@ -22,7 +22,7 @@ const {login}= useAuth();
      const {token,user} = response.data;
        login(token, user);
        console.log(user)
-      navigate(`/${user._id}/dashboard`);
+      navigate(`/dashboard`);
     }catch(err){
       if (err.response && err.response.status === 400) {
     setError("Email already exist, try agian");
