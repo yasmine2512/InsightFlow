@@ -35,7 +35,7 @@ return Product.aggregate([{$match:match},
 ]);
 }
 
-//getproducttable
+//get product table
 export const getProductsWithStats = async (orgId, query) => {
   const now = new Date();
   const startMonth = new Date(now.getFullYear(),now.getMonth(),1);
@@ -73,18 +73,18 @@ const pipeline =[
         path: "$orders.products",
         preserveNullAndEmptyArrays: true
       }},
-    {$match: {
-        $expr: {
-          $or: [
-            {$eq: [
-                "$orders.products.product",
-                "$_id"
-              ]},
-            {$eq: [
-                "$orders",
-                null
-              ]}]}
-    }},
+    // {$match: {
+    //     $expr: {
+    //       $or: [
+    //         {$eq: [
+    //             "$orders.products.product",
+    //             "$_id"
+    //           ]},
+    //         {$eq: [
+    //             "$orders",
+    //             null
+    //           ]}]}
+    // }},
     {$group: {_id: "$_id",
         name: {$first: "$name"},
         price: {$first: "$price"},

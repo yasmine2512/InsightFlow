@@ -131,7 +131,7 @@ const stats = [
 const customers =customerslist?.customers.customers || [];
 const rowsPerPage = 10;
 const totalcustomers = customerslist.customers.total;
-const totalPages = Math.ceil(totalcustomers / rowsPerPage);
+const totalPages =Math.max(1,Math.ceil(totalcustomers / rowsPerPage));
 const start = (currentPage - 1) * rowsPerPage + 1;
 const end = Math.min(currentPage * rowsPerPage,totalcustomers);
   return (
@@ -205,7 +205,6 @@ const end = Math.min(currentPage * rowsPerPage,totalcustomers);
             setOpen(true);}}><Plus/>Add Customer</Button>
           <AddCustomerPopup open={open}
         setOpen={setOpen}
-        organizationId={id}
         mode = {mode}
         initialData={selectedCustomer}/>
         </div>

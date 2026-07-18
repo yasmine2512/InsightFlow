@@ -121,13 +121,12 @@ export default function ProductDetail() {
         <AddOrderPopup
         open={open}
         setOpen={setOpen}
-        organizationId={userId}
         productId={product._id}
         productPrice={product.price}
         />
           </div>
 
-      { isAdmin && <div className="space-y-4">
+       <div className="space-y-4">
         {metrics.map((m) => (
           <div key={m.label} className="bg-card rounded-xl border border-border p-5 shadow-soft">
             <div className="flex items-center gap-3 mb-2">
@@ -145,7 +144,7 @@ export default function ProductDetail() {
         ))}
 
 
-      </div>}
+      </div>
         </div>
         <DeleteDialog 
               open={deleteTarget !== null}

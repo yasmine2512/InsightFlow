@@ -82,7 +82,7 @@ router.post("/:id/new-product", verifyTokenAndAuthorization, (req, res, next) =>
   getUpload().single("image")(req, res, next); 
 }, asyncHandler(async (req, res) => {
  const orgid = req.params.id;
-const {name,price,desc,category,stock} = req.body;
+const {name,price,desc,category,stock,sku} = req.body;
 let features = []
     try {
       features = JSON.parse(req.body.features)

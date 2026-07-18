@@ -1,11 +1,14 @@
 import { useState ,useEffect} from "react";
 import axios from "axios";
 import { useQueryClient } from "@tanstack/react-query";
-import { useParams } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 
 const API_URL = import.meta.env.VITE_API_URL;
-export default function AddCustomerPopup({open,setOpen,organizationId,mode, initialData}) {
+export default function AddCustomerPopup({open,setOpen,mode, initialData}) {
 const queryClient = useQueryClient();
+const {user} = useAuth();
+const token = user?.token;
+const id = user?.userId;
 const emptyForm = {
   name: "",
   email: "",
@@ -43,11 +46,11 @@ const emptyForm = {
         address: form.address,
         };
       const res = await axios.post(
-        `${API_URL}/api/customers/${organizationId}`,
+        `${API_URL}/api/customers/${id}`,
         cleanedForm,
         {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
+            Authorization: `Bearer ${token}`,
           },
         }
       );
@@ -74,11 +77,11 @@ const handleUpdate = async () => {
         address: form.address,
         };
       const res = await axios.put(
-        `${API_URL}/api/customers/${organizationId}/${initialData._id}`,
+        `${API_URL}/api/customers/${id}/${initialData._id}`,
         cleanedForm,
         {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
+            Authorization: `Bearer ${token}`,
           },
         }
       );

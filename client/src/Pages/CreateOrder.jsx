@@ -1,16 +1,18 @@
 import { useState } from "react";
 import axios from "axios";
-
+import { useAuth } from "../context/AuthContext";
 const API_URL = import.meta.env.VITE_API_URL;
 
 export default function AddOrderPopup({
   open,
   setOpen,
   onSave,
-  organizationId,
   productId,
   productPrice,
 }) {
+  const {user} = useAuth();
+  const token = user?.token;
+  const id = user?.userId;
   const [form, setForm] = useState({
     customerName: "",
     customerEmail: "",
@@ -46,9 +48,9 @@ export default function AddOrderPopup({
         totalPrice,
       };
       const res = await axios.post(
-        `${API_URL}/api/orders/${organizationId}`,
+        `${API_URL}/api/orders/${id}`,
         body,
-        {headers: { Authorization: `Bearer ${localStorage.getItem("token")}`,},}
+        {headers: { Authorization: `Bearer ${token}`,},}
       );
       alert("Order created successfully");
 

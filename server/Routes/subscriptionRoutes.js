@@ -87,7 +87,7 @@ router.post("/webhook", express.raw({ type: "application/json" }), async (req, r
                 status: "active",
                 plan: "pro",
               },
-              { upsert: true, new: true }
+              { upsert: true, returnDocument: "after" }
             );
           }
           break;}

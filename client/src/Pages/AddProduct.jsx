@@ -1,12 +1,14 @@
 import { useState ,useEffect} from "react"
 import axios from "axios"
-import { useParams } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
+import { useAuth } from "../context/AuthContext";
 const API_URL = import.meta.env.VITE_API_URL;
 
 export default function AddProductPopup({ open, setOpen, onSave, mode, initialData }) {
   const queryClient = useQueryClient();
-const { id } = useParams();
+  const {user} = useAuth();
+  const token = user?.token;
+  const id = user?.userId;
 
   const [form, setForm] = useState({
   name: "",
@@ -58,7 +60,7 @@ try{
     await axios.post(`${API_URL}/api/products/${id}/new-product`, data,
   {
     headers: {
-      Authorization: `Bearer ${localStorage.getItem("token")}`,
+      Authorization: `Bearer ${token}`,
     },
   });
   alert("Product added successfully!");
@@ -87,7 +89,7 @@ try{
     await axios.put(`${API_URL}/api/products/${id}/product/${initialData._id}`, data,
   {
     headers: {
-      Authorization: `Bearer ${localStorage.getItem("token")}`,
+      Authorization: `Bearer ${token}`,
     },
   });
   alert("Product updated successfully!");

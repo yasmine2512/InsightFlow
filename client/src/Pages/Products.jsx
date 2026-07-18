@@ -77,7 +77,7 @@ const {  data: productlist, isLoading, error } = useQuery({ queryKey: ["productl
   const products = productlist.productslist.products;
   const rowsPerPage = 10;
   const totalproducts = productlist.productslist.total;
-  const totalPages = Math.ceil(totalproducts / rowsPerPage);
+const totalPages = Math.max(1, Math.ceil(totalproducts / rowsPerPage));
   const start = (currentPage - 1) * rowsPerPage + 1;
 const end = Math.min(currentPage * rowsPerPage,totalproducts);
   return (

@@ -54,10 +54,10 @@ useEffect(() => {
    const products = data?.products;
    const rowsPerPage = 12;
    const totalproducts = data?.total;
-   const totalPages = Math.ceil(totalproducts / rowsPerPage);
+   const totalPages =Math.max(1,Math.ceil(totalproducts / rowsPerPage));
    const start = (currentPage - 1) * rowsPerPage + 1;
    const end = Math.min(currentPage * rowsPerPage,totalproducts);
-
+ console.log("total pages:",totalPages);
   return (
       <div className="space-y-6">
         <div className="flex items-center justify-between align-center">
