@@ -2,6 +2,9 @@ import express from "express";
 const router = express.Router();
 import User from '../Models/User.js'
 import Product from "../Models/Product.js"
+import Customer from "../Models/Customer.js";
+import Subscription from "../Models/Subscription.js";
+import Order from "../Models/Order.js";
 import asyncHandler from "express-async-handler";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
@@ -98,13 +101,17 @@ res.json({users : all_users });
 
 /** 
    * @desc delete user
-   * @route /api/auth/:id/all-users/:userId
+   * @route /api/auth/:id
    * @method DELETE
    * @access private
    */  
-router.delete("/:id/all-users/:userId",verifyTokenAndAdmin,asyncHandler(async(req,res)=>{
-    const userId = req.params.userId;
-    await User.deleteOne({_id : userId});
+router.delete("/:id",verifyTokenAndAdmin,asyncHandler(async(req,res)=>{
+    const userId = req.params.id;
+    await Customer.deleteMany({ organization: userId });
+    await Product.deleteMany({ organization: userId });
+    await Order.deleteMany({ organization: userId });
+    await Subscription.deleteMany({ organization: userId });
+    await User.findByIdAndDelete(userId);
     return res.status(200).json({message : "user deleted succesfully"});
 
 }))

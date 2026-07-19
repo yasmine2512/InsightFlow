@@ -38,6 +38,15 @@ export default function SettingsPage() {
 
   }, [userId,token]);
 
+  async function handleDelete(){
+    if (!userId) return;
+    try{
+    //api/auth/:id
+    }catch(error){
+      console.log(error);
+    }
+  }
+
   async function handleSave(){
     if (!userId) return;
     setSaving(true);

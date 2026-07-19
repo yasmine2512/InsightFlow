@@ -17,7 +17,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 router.post("/:id/create-checkout-session",verifyTokenAndAuthorization,async (req, res) => {
     try {
       const { id } = req.params;
-      const existing = await Subscription.findOne({user: id,status: "active",}).lean();
+      const existing = await Subscription.findOne({organization: id,status: "active",}).lean();
       if (existing) {return res.status(409).json({ 
         message: "You already have an active subscription." });}
       const user = await User.findById(id).lean();
@@ -82,7 +82,7 @@ router.post("/webhook", express.raw({ type: "application/json" }), async (req, r
             await Subscription.findOneAndUpdate(
               { stripeSubscriptionId: session.subscription },
               {
-                user: userId,
+                organization: userId,
                 stripeSubscriptionId: session.subscription,
                 status: "active",
                 plan: "pro",
@@ -143,7 +143,7 @@ router.post("/webhook", express.raw({ type: "application/json" }), async (req, r
 router.get("/:id", verifyTokenAndAuthorization, async (req, res) => {
   try {
     const subscription = await Subscription.findOne({
-      user: req.params.id,
+      organization: req.params.id,
     }).sort({ createdAt: -1 }) .lean();
     if (!subscription) {
       return res.json({ plan: "free", status: null });
@@ -168,7 +168,7 @@ router.get("/:id", verifyTokenAndAuthorization, async (req, res) => {
 router.post("/:id/cancel", verifyTokenAndAuthorization, async (req, res) => {
   try {
     const subscription = await Subscription.findOne({
-      user: req.params.id,
+      organization: req.params.id,
       status: "active",
     });
     if (!subscription) {
@@ -202,7 +202,7 @@ router.post("/:id/cancel", verifyTokenAndAuthorization, async (req, res) => {
 router.post("/:id/resume", verifyTokenAndAuthorization, async (req, res) => {
   try {
     const subscription = await Subscription.findOne({
-      user: req.params.id,
+      organization: req.params.id,
       status: "cancelling",
     });
     if (!subscription) {
