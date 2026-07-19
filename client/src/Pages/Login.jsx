@@ -18,6 +18,7 @@ export default function Login() {
   const API_URL = import.meta.env.VITE_API_URL;
 
   async function handleLogin(){
+    setError("");
     try{
      const response= await axios.post(`${API_URL}/api/auth/login`,{email,password});
      const {token,user} = response.data;
@@ -57,7 +58,11 @@ export default function Login() {
           <p className="text-sm text-muted-foreground mb-8">
             Don't have an account? <Link to="/register" className="text-primary hover:underline">Create one</Link>
           </p>
-
+          {error && (
+          <div className="mb-4 rounded-md px-4 py-3 text-sm text-red-600">
+            {error}
+          </div>
+        )}
           <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>

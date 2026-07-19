@@ -16,7 +16,49 @@ const {login}= useAuth();
   const [password, setPassword] = useState("");
   const[name,setName] = useState("");
   const API_URL = import.meta.env.VITE_API_URL;
+
+  const validateInputs = () => {
+  if (!name.trim()) {
+    setError("Full name is required.");
+    return false;
+  }
+
+  if (!email.trim()) {
+    setError("Email is required.");
+    return false;
+  }
+
+  // Basic email validation
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) {
+    setError("Please enter a valid email address.");
+    return false;
+  }
+
+  if (!password) {
+    setError("Password is required.");
+    return false;
+  }
+
+  if (password.length < 6) {
+    setError("Password must be at least 6 characters long.");
+    return false;
+  }
+
+  // At least one letter and one number
+  const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d).+$/;
+
+  if (!passwordRegex.test(password)) {
+    setError("Password must contain at least one letter and one number.");
+    return false;
+  }
+
+  setError("");
+  return true;
+};
+
   async function handleRegister(){
+    if (!validateInputs()) return;
     try{
      const response= await axios.post(`${API_URL}/api/auth/register`,{name,email,password});
      const {token,user} = response.data;
@@ -24,12 +66,15 @@ const {login}= useAuth();
        console.log(user)
       navigate(`/dashboard`);
     }catch(err){
-      if (err.response && err.response.status === 400) {
-    setError("Email already exist, try agian");
-  } else {
-    setError("Register failed. Please try again.");
-  }
-window.alert(error);
+      if (axios.isAxiosError(err)) {
+      if (err.response?.status === 400) {
+        setError("Email already exists.");
+      } else {
+        setError("Registration failed. Please try again.");
+      }
+    } else {
+      setError("Something went wrong.");
+    }
   console.log(err);
     }
 
@@ -53,7 +98,11 @@ window.alert(error);
           <p className="text-sm text-muted-foreground mb-8">
             Already have an account? <Link to="/login" className="text-primary hover:underline">Sign in</Link>
           </p>
-
+          {error && (
+          <div className="mb-4 rounded-md px-4 py-3 text-sm text-red-600">
+            {error}
+          </div>
+          )}
           <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
             <div className="space-y-2">
               <Label htmlFor="name">Full Name</Label>
