@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ErrorDialog } from "./Error";
+import { ErrorDialog } from "./ErrorDialog";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/Input";
 import { Label } from "../components/ui/Label";

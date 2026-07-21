@@ -2,7 +2,7 @@ import { useState ,useEffect} from "react"
 import axios from "axios"
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "../context/AuthContext";
-import { ErrorDialog } from "./Error";
+import { ErrorDialog } from "./ErrorDialog";
 const API_URL = import.meta.env.VITE_API_URL;
 
 export default function AddProductPopup({ open, setOpen, onSave, mode, initialData }) {

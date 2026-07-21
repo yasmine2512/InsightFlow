@@ -1,7 +1,7 @@
 import { useState ,useEffect} from "react";
 import axios from "axios";
 import { useQueryClient } from "@tanstack/react-query";
-import { ErrorDialog } from "./Error";
+import { ErrorDialog } from "./ErrorDialog";
 import { useAuth } from "../context/AuthContext";
 
 const API_URL = import.meta.env.VITE_API_URL;
