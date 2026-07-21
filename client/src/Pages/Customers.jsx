@@ -61,8 +61,8 @@ export default function Customers() {
     await axios.delete(`${API_URL}/api/customers/${id}/${deleteTarget}`, {
       headers: { Authorization: `Bearer ${token}` }
     });
-    queryClient.invalidateQueries(["orderslist", id]);
-    queryClient.invalidateQueries(["orders", id]);
+    queryClient.invalidateQueries(["customerslist", id]);
+    queryClient.invalidateQueries(["customer", id]);
     setDeleteTarget(null);
   } catch (err) {
      console.error("Failed to delete customer", err);
@@ -304,7 +304,7 @@ const end = Math.min(currentPage * rowsPerPage,totalcustomers);
               open={deleteTarget !== null}
               onConfirm={handleDeleteConfirm}
               onCancel={() => setDeleteTarget(null)}
-              Page = "Customer"
+              Page = "The Customer"
             />
       </div>
   );

@@ -1,23 +1,29 @@
 import { useState, useEffect } from "react";
-import DashboardLayout from "../components/Layout";
+import { ErrorDialog } from "./Error";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/Input";
 import { Label } from "../components/ui/Label";
 import { Switch } from "../components/ui/switch";
 import { Separator } from "../components/ui/separator";
 import axios from "axios";
+import { DeleteDialog } from "./DeleteDialog";
 import { useAuth } from "../context/AuthContext";
 export default function SettingsPage() {
   const [name, setFullname] = useState("");
   const [orgname, setOrganization] = useState("");
+  const [email,setEmail] = useState("");
   const [initials, setInitials] = useState("??");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState(null);
+  const [errorOpen, setErrorOpen] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [open, setOpen] = useState(false);
   const API_URL = import.meta.env.VITE_API_URL;
-  const { user,updateUser} = useAuth();
+  const { user,updateUser,logout} = useAuth();
   const token = user?.token;
   const userId = user?.userId;
+  
   useEffect(() => {
     async function fetchdata(){
      try{
@@ -31,6 +37,7 @@ export default function SettingsPage() {
         setInitials(ini.toUpperCase());
         setFullname(response.data.name);
         setOrganization(response.data.organizationName);
+        setEmail(response.data.email);
      }
       catch(err){ setMessage({ type: "error", text: "Failed to load profile." })}
       finally{ setLoading(false);}}
@@ -41,9 +48,13 @@ export default function SettingsPage() {
   async function handleDelete(){
     if (!userId) return;
     try{
-    //api/auth/:id
+      await axios.delete(`${API_URL}/api/auth/${userId}`,{
+          headers: { Authorization: `Bearer ${token}` }});
+      logout();
     }catch(error){
       console.log(error);
+      setErrorMessage(error.message);
+      setErrorOpen(true);
     }
   }
 
@@ -71,6 +82,8 @@ export default function SettingsPage() {
     }
   };
 
+  
+
   return (
     <div className="space-y-6 max-w">
       <div>
@@ -95,6 +108,14 @@ export default function SettingsPage() {
           <p className="text-sm text-muted-foreground">Loading profile…</p>
         ) : (
           <div className="grid sm:grid-cols-2 gap-4">
+             <div className="space-y-2 sm:col-span-2">
+              <Label htmlFor="name">Email</Label>
+              <Input
+                id="email"
+                value={email}
+                disabled
+              />
+            </div>
             <div className="space-y-2 sm:col-span-2">
               <Label htmlFor="name">Full Name</Label>
               <Input
@@ -160,10 +181,23 @@ export default function SettingsPage() {
         <p className="text-sm text-muted-foreground">
           Permanently delete your account and all associated data. This action cannot be undone.
         </p>
-        <Button variant="outline" className="border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground">
+        <Button onClick={() => setOpen(true)} variant="outline" className="border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground">
           Delete Account
         </Button>
       </div>
+      <DeleteDialog 
+            open={open}
+            onConfirm={handleDelete}
+            onCancel={() => setOpen(false)}
+            Page = "Your Account"
+          />
+      <ErrorDialog
+        open={errorOpen}
+        title="Delete Error"
+        message={errorMessage}
+        actionLabel="Okay"
+        onClose={() => setErrorOpen(false)}
+      />
     </div>
   );
 }

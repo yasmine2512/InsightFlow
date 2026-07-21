@@ -1,7 +1,12 @@
 import { useState } from "react";
 import axios from "axios";
 import { useAuth } from "../context/AuthContext";
+import { useQueryClient } from "@tanstack/react-query";
+import { ErrorDialog } from "./Error";
+
+
 const API_URL = import.meta.env.VITE_API_URL;
+
 
 export default function AddOrderPopup({
   open,
@@ -10,6 +15,7 @@ export default function AddOrderPopup({
   productId,
   productPrice,
 }) {
+  const queryClient = useQueryClient();
   const {user} = useAuth();
   const token = user?.token;
   const id = user?.userId;
@@ -21,7 +27,8 @@ export default function AddOrderPopup({
     quantity: 1,
     status: "pending",
   });
-
+  const [errorOpen,setErrorOpen] = useStae(false);
+  const [errorMessage, setErrorMessage] = useState("");
   const handleChange = (e) => {
     setForm({
       ...form,
@@ -52,6 +59,8 @@ export default function AddOrderPopup({
         body,
         {headers: { Authorization: `Bearer ${token}`,},}
       );
+      queryClient.invalidateQueries(["orderslist", id]);
+      queryClient.invalidateQueries(["orders", id]);
       alert("Order created successfully");
 
       if (onSave) {
@@ -60,10 +69,8 @@ export default function AddOrderPopup({
       setOpen(false);
     } catch (error) {
       console.log(error);
-      alert(
-        error.response?.data?.message ||
-          "Failed to create order"
-      );
+      setErrorMessage(error.message);
+      setErrorOpen(true);
     }
   };
   
@@ -177,6 +184,13 @@ export default function AddOrderPopup({
           </button>
         </div>
       </div>
+      <ErrorDialog
+              open={errorOpen}
+              title="Create Error"
+              message={errorMessage}
+              actionLabel="Okay"
+              onClose={() => setErrorOpen(false)}
+            />
     </div>
   );
 }

@@ -105,12 +105,14 @@ res.json({users : all_users });
    * @method DELETE
    * @access private
    */  
-router.delete("/:id",verifyTokenAndAdmin,asyncHandler(async(req,res)=>{
+router.delete("/:id",verifyTokenAndAuthorization,asyncHandler(async(req,res)=>{
     const userId = req.params.id;
-    await Customer.deleteMany({ organization: userId });
-    await Product.deleteMany({ organization: userId });
-    await Order.deleteMany({ organization: userId });
-    await Subscription.deleteMany({ organization: userId });
+    await Promise.all([
+     Customer.deleteMany({ organization: userId }),
+     Product.deleteMany({ organization: userId }),
+     Order.deleteMany({ organization: userId }),
+     Subscription.deleteMany({ organization: userId })
+    ]);
     await User.findByIdAndDelete(userId);
     return res.status(200).json({message : "user deleted succesfully"});
 

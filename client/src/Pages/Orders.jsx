@@ -429,7 +429,7 @@ const colors = [
       open={deleteTarget !== null}
       onConfirm={handleDeleteConfirm}
       onCancel={() => setDeleteTarget(null)}
-      Page = "Order"
+      Page = "The Order"
     />
       </div>
   );

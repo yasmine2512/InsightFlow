@@ -2,6 +2,7 @@ import { useState ,useEffect} from "react"
 import axios from "axios"
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "../context/AuthContext";
+import { ErrorDialog } from "./Error";
 const API_URL = import.meta.env.VITE_API_URL;
 
 export default function AddProductPopup({ open, setOpen, onSave, mode, initialData }) {
@@ -19,7 +20,9 @@ export default function AddProductPopup({ open, setOpen, onSave, mode, initialDa
   features: "",
   image: null,
   sku:"",
-  })
+  });
+  const [errorOpen,setErrorOpen] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 useEffect(() => {
   if (initialData) {
     setForm({
@@ -64,10 +67,14 @@ try{
     },
   });
   alert("Product added successfully!");
+    queryClient.invalidateQueries(["productsStats", id]);
+    queryClient.invalidateQueries(["productlist", id]);
+    setOpen(false);
 }catch(error){
     console.log(error.message);
+    setErrorMessage(error.message);
+    setErrorOpen(true);
 }
-    setOpen(false)
   }
  const handleUpdate = async() => {
     const product = {
@@ -93,9 +100,12 @@ try{
     },
   });
   alert("Product updated successfully!");
-  queryClient.invalidateQueries(["product", id]);
+  queryClient.invalidateQueries(["productsStats", id]);
+  queryClient.invalidateQueries(["productlist", id]);
 }catch(error){
     console.log(error.response?.data || error.message);
+    setErrorMessage(error.message);
+    setErrorOpen(true);
 }
     setOpen(false)
   }
@@ -232,6 +242,13 @@ try{
     </div>
 
   </div>
+  <ErrorDialog
+              open={errorOpen}
+              title="Create Error"
+              message={errorMessage}
+              actionLabel="Okay"
+              onClose={() => setErrorOpen(false)}
+            />
 </div>
   )
 }

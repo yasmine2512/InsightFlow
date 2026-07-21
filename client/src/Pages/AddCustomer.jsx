@@ -1,6 +1,7 @@
 import { useState ,useEffect} from "react";
 import axios from "axios";
 import { useQueryClient } from "@tanstack/react-query";
+import { ErrorDialog } from "./Error";
 import { useAuth } from "../context/AuthContext";
 
 const API_URL = import.meta.env.VITE_API_URL;
@@ -17,6 +18,8 @@ const emptyForm = {
 };
   const [error, setError] = useState("");
   const [form, setForm] = useState(emptyForm);
+  const [errorOpen,setErrorOpen] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
   useEffect(() => {
   if (mode === "edit" && initialData) {
     setForm({
@@ -56,15 +59,13 @@ const emptyForm = {
       );
       alert("Customer added successfully");
       setOpen(false);
-     queryClient.invalidateQueries(["orderslist", organizationId]);
+      queryClient.invalidateQueries(["customerslist", id]);
 
       setForm({name: "",email: "",phone: "",address: "",});
     } catch (error) {
       console.log(error);
-      alert(
-        error.response?.data?.message ||
-          "Failed to add customer"
-      );
+      setErrorMessage(error.message);
+      setErrorOpen(true);
     }
   };
 
@@ -87,18 +88,14 @@ const handleUpdate = async () => {
       );
       alert("Customer updated successfully");
       setOpen(false);
-      queryClient.invalidateQueries(["orderslist", organizationId]);
-      queryClient.invalidateQueries(["orders", organizationId]);
+      queryClient.invalidateQueries(["customerslist", id]);
       setForm({name: "",email: "",phone: "",address: "",});
     } catch (error) {
         const msg = error.response?.data?.message;
-       if (msg === "Email already exists") {
-    setError("email");
-  } else{
-      alert(error.response?.data?.message ||"Failed to update customer");}
-    }
+        setErrorMessage(msg);
+        setErrorOpen(true);
   };
-
+}
   if (!open) return null;
 
   return (
@@ -208,6 +205,13 @@ const handleUpdate = async () => {
           )}
         </div>
       </div>
+      <ErrorDialog
+              open={errorOpen}
+              title="Create Error"
+              message={errorMessage}
+              actionLabel="Okay"
+              onClose={() => setErrorOpen(false)}
+            />
     </div>
   );
 }

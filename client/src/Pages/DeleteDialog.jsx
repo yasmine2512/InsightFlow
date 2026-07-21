@@ -10,7 +10,7 @@ export function DeleteDialog({ open, onConfirm, onCancel ,Page }) {
         </div>
         <h2 className="text-base font-semibold text-center mb-1">Delete {Page}</h2>
         <p className="text-sm text-muted-foreground text-center mb-6">
-          This action cannot be undone. The {Page} will be permanently removed.
+          This action cannot be undone. {Page} will be permanently removed.
         </p>
         <div className="flex gap-3">
           <button

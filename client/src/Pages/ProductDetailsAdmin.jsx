@@ -7,12 +7,13 @@ import { useState,useEffect } from "react";
 import axios from "axios"; 
 import { useAuth } from "../context/AuthContext";
 import { useQuery } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import AddOrderPopup from "./CreateOrder";
 import { DeleteDialog } from "./DeleteDialog";
 import AddProductPopup from "./AddProduct";
 
 export default function ProductDetail() {
-    const { user} = useAuth();
+  const { user} = useAuth();
   const isAdmin = user?.isAdmin;
   const {productid} = useParams();
   const navigate = useNavigate();
@@ -20,11 +21,11 @@ export default function ProductDetail() {
   const [openE, setOpenE] = useState(false);
   const token = user?.token;
   const userId = user?.userId;
-
-     const [product, setProduct] = useState(null);
-     const [stats,setstats] = useState(null);
-      const API_URL = import.meta.env.VITE_API_URL;
-      const [deleteTarget, setDeleteTarget] = useState(null);
+  const queryClient = useQueryClient();
+  const [product, setProduct] = useState(null);
+  const [stats,setstats] = useState(null);
+  const API_URL = import.meta.env.VITE_API_URL;
+  const [deleteTarget, setDeleteTarget] = useState(null);
        useEffect(() => {
          const fetchProduct = async () => {
            try {
@@ -49,6 +50,8 @@ export default function ProductDetail() {
       headers: { Authorization: `Bearer ${token}` }
     });
     setDeleteTarget(null);
+    queryClient.invalidateQueries(["productsStats", id]);
+    queryClient.invalidateQueries(["productlist", id]);
     navigate(-1);
   } catch (err) {
    console.error("Failed to delete product", err);
@@ -150,7 +153,7 @@ export default function ProductDetail() {
               open={deleteTarget !== null}
               onConfirm={handleDeleteConfirm}
               onCancel={() => setDeleteTarget(null)}
-              Page = "Product"
+              Page = "The Product"
             />
       </div>
   );
