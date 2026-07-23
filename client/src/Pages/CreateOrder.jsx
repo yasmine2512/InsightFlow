@@ -3,7 +3,7 @@ import axios from "axios";
 import { useAuth } from "../context/AuthContext";
 import { useQueryClient } from "@tanstack/react-query";
 import { ErrorDialog } from "./ErrorDialog";
-
+import { SuccessDialog } from "./SuccesDialog";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -29,6 +29,8 @@ export default function AddOrderPopup({
   });
   const [errorOpen,setErrorOpen] = useStae(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const [succesOpen,setSuccessOpen] = useState(false);
+  const [successMessgae, setSuccessMessage] = useState("");
   const handleChange = (e) => {
     setForm({
       ...form,
@@ -61,7 +63,8 @@ export default function AddOrderPopup({
       );
       queryClient.invalidateQueries(["orderslist", id]);
       queryClient.invalidateQueries(["orders", id]);
-      alert("Order created successfully");
+      setSuccessMessage("The Order has been created and saved successfully.");
+      setSuccessOpen(true);
 
       if (onSave) {
         onSave(res.data.order);
@@ -191,6 +194,11 @@ export default function AddOrderPopup({
               actionLabel="Okay"
               onClose={() => setErrorOpen(false)}
             />
+      <SuccessDialog
+              open={succesOpen}
+              message={successMessgae}
+              onClose={() => setSuccessOpen(false)}
+            />      
     </div>
   );
 }

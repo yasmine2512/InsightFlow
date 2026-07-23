@@ -2,7 +2,9 @@ import { useState ,useEffect} from "react";
 import axios from "axios";
 import { useQueryClient } from "@tanstack/react-query";
 import { ErrorDialog } from "./ErrorDialog";
+import { SuccessDialog } from "./SuccesDialog";
 import { useAuth } from "../context/AuthContext";
+import { SuccessDialog } from "./SuccesDialog";
 
 const API_URL = import.meta.env.VITE_API_URL;
 export default function AddCustomerPopup({open,setOpen,mode, initialData}) {
@@ -20,6 +22,8 @@ const emptyForm = {
   const [form, setForm] = useState(emptyForm);
   const [errorOpen,setErrorOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const [succesOpen,setSuccessOpen] = useState(false);
+  const [successMessgae, setSuccessMessage] = useState("");
   useEffect(() => {
   if (mode === "edit" && initialData) {
     setForm({
@@ -57,7 +61,8 @@ const emptyForm = {
           },
         }
       );
-      alert("Customer added successfully");
+      setSuccessMessage("The Client has been created and saved successfully.");
+      setSuccessOpen(true);
       setOpen(false);
       queryClient.invalidateQueries(["customerslist", id]);
 
@@ -86,7 +91,8 @@ const handleUpdate = async () => {
           },
         }
       );
-      alert("Customer updated successfully");
+      setSuccessMessage("The Client has been updated successfully.")
+      setSuccessOpen(true);
       setOpen(false);
       queryClient.invalidateQueries(["customerslist", id]);
       setForm({name: "",email: "",phone: "",address: "",});
@@ -212,6 +218,11 @@ const handleUpdate = async () => {
               actionLabel="Okay"
               onClose={() => setErrorOpen(false)}
             />
+      <SuccessDialog
+              open={succesOpen}
+              message= {successMessgae}
+              onClose={() => setSuccessOpen(false)}
+            />      
     </div>
   );
 }

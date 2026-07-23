@@ -12,7 +12,7 @@ export function SuccessDialog({ open, onClose, title = "Success!", message, acti
         </div>
         <h2 className="text-base font-semibold text-center mb-1">{title}</h2>
         <p className="text-sm text-muted-foreground text-center mb-6">
-           The {message} has been created and saved successfully.
+         {message}
         </p>
         <div className="flex gap-3">
           <button

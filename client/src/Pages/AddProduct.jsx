@@ -3,6 +3,7 @@ import axios from "axios"
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "../context/AuthContext";
 import { ErrorDialog } from "./ErrorDialog";
+import { SuccessDialog } from "./SuccesDialog";
 const API_URL = import.meta.env.VITE_API_URL;
 
 export default function AddProductPopup({ open, setOpen, onSave, mode, initialData }) {
@@ -23,6 +24,8 @@ export default function AddProductPopup({ open, setOpen, onSave, mode, initialDa
   });
   const [errorOpen,setErrorOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const [succesOpen,setSuccessOpen] = useState(false);
+  const [successMessgae, setSuccessMessage] = useState("");
 useEffect(() => {
   if (initialData) {
     setForm({
@@ -66,7 +69,8 @@ try{
       Authorization: `Bearer ${token}`,
     },
   });
-  alert("Product added successfully!");
+  setSuccessMessage("The Product has been created and saved successfully.");
+  setSuccessOpen(true);
     queryClient.invalidateQueries(["productsStats", id]);
     queryClient.invalidateQueries(["productlist", id]);
     setOpen(false);
@@ -99,7 +103,8 @@ try{
       Authorization: `Bearer ${token}`,
     },
   });
-  alert("Product updated successfully!");
+  setSuccessMessage("The Product has been updated successfully.");
+  setSuccessOpen(true);
   queryClient.invalidateQueries(["productsStats", id]);
   queryClient.invalidateQueries(["productlist", id]);
 }catch(error){
@@ -249,6 +254,11 @@ try{
               actionLabel="Okay"
               onClose={() => setErrorOpen(false)}
             />
+  <SuccessDialog
+              open={succesOpen}
+              message={successMessgae}
+              onClose={() => setSuccessOpen(false)}
+            />          
 </div>
   )
 }
