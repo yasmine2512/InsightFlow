@@ -15,6 +15,8 @@ import {
 } from '../Middlewares/JWTauth.js'
 import passport from "passport";
 import mongoose from "mongoose";
+const { google } = require("googleapis");
+const readline = require("readline");
 
 
 router.get("/google",passport.authenticate("google", {
