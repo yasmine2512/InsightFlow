@@ -83,26 +83,17 @@ res.status(200).json({ user :other, token });
   });
 // create verify token
 const verificationToken = jwt.sign(
-  {id: user._id,type: "verify"},process.env.JWT_SECRET_KEY,{expiresIn: "24h"});
-const verifyUrl =`${process.env.CLIENT_URL}/verify-email/${verificationToken}`;
+  {id: newUser._id,type: "verify"},process.env.JWT_SECRET_KEY,{expiresIn: "3h"});
+const verifyUrl =`${process.env.SERVER_URL}/api/auth/verify-email/${verificationToken}`;
 // send verification email
 await sendEmail({
-        to: user.email,
+        to: newUser.email,
         subject: "Verify your email",
         html: `
-            <h2>Welcome ${user.name}</h2>
+            <h2>Welcome ${newUser.name}</h2>
             <p>Please verify your email.</p>
             <a href="${verifyUrl}">Verify Email</a>
         `});
-// create token
-// const token = jwt.sign(
-//   { id: newUser._id, isadmin: newUser.isadmin },
-//   process.env.JWT_SECRET_KEY,
-//   { expiresIn: "1d" }
-// );
-// const { password: _, ...other } = newUser._doc;
-// res.status(200).json({ user:other, token });
-
 res.status(201).json({message: "Registration successful. Please verify your email."});
 }));
 
@@ -114,8 +105,9 @@ res.status(201).json({message: "Registration successful. Please verify your emai
    * @access private
    */  
 router.get("/verify-email/:token", asyncHandler(async (req, res) => {
+    let payload;
     try{
-    const payload = jwt.verify(req.params.token,process.env.JWT_SECRET_KEY);
+    payload = jwt.verify(req.params.token,process.env.JWT_SECRET_KEY);
     } catch (err) {
     return res.status(400).json({message: "Invalid or expired link."});
     }
@@ -133,7 +125,15 @@ router.get("/verify-email/:token", asyncHandler(async (req, res) => {
 
     await user.save();
 
-    res.json({message: "Email verified successfully."});
+    // create token
+const token = jwt.sign(
+  { id: user._id, isadmin: user.isadmin },
+  process.env.JWT_SECRET_KEY,
+  { expiresIn: "1d" }
+);
+ res.redirect(`${process.env.CLIENT_URL}/verify-success?token=${token}`);
+
+
 }));
 
 /** 
@@ -166,6 +166,22 @@ router.delete("/:id",verifyTokenAndAuthorization,asyncHandler(async(req,res)=>{
     return res.status(200).json({message : "user deleted succesfully"});
 
 }))
+
+
+/**
+ * @desc get current logged user
+ * @route /api/auth/me
+ * @method GET
+ * @access private
+ */
+router.get("/me",verifyToken,asyncHandler(async (req, res) => {
+    const user = await User.findById(req.user.id).select("-password");
+    if (!user) {
+      return res.status(404).json({message: "User not found"});
+    }
+    res.status(200).json({user});
+  })
+);
 
   /** 
    * @desc get profile
@@ -233,8 +249,9 @@ router.post("/reset-password/:userId/:token", asyncHandler(async (req, res) => {
     const user = await User.findById(req.params.userId);
     if (!user) return res.status(404).json({ message: "User not found" });
     const secret = process.env.JWT_SECRET_KEY + user.password;
+    let payload;
     try {
-    const payload = jwt.verify(req.params.token,secret);
+    payload = jwt.verify(req.params.token,secret);
     } catch (err) {
     return res.status(400).json({message: "Invalid or expired link."});
 }

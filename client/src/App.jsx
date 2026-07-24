@@ -6,7 +6,6 @@ import Dashboard from "./Pages/Dashboard"
 import Login from "./Pages/Login"
 import NotFound from "./Pages/NotFound"
 import Orders from "./Pages/Orders"
-// import Products from "./Pages/Products"
 import ProductsDetailsAdmin from "./Pages/ProductDetailsAdmin"
 import ProductsCataloge from "./Pages/ProductsAdmin"
 import Products from "./Pages/Products"
@@ -18,6 +17,7 @@ import SubscriptionSuccess from "./Pages/SubscriptionSuccess"
 import SubscriptionCancel from "./Pages/SubscriptionCancel"
 import OAuth from './Pages/OauthPage'
 import ProtectedRoute from './context/ProtectedRoute'
+import VerifySuccess from "./Pages/VerifySuccess"
 
 function App() {
   return (
@@ -39,6 +39,7 @@ function App() {
 <Route path="/subscription-success" element={<SubscriptionSuccess/>} />
 <Route path="/subscription-cancel" element={<SubscriptionCancel/>} />
 </Route></Route>
+<Route path="/verify-success" element={<VerifySuccess />}/>
 <Route path="/oauth-success" element={<OAuth/>}/>
 <Route path="*" element={<NotFound />} />
 

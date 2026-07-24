@@ -11,6 +11,7 @@ import axios from "axios"
 export default function Register() {
 const {login}= useAuth();
  const [error,setError] = useState(null);
+ const [success,setSuccess] = useState(null);
  const navigate = useNavigate()
  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -28,7 +29,6 @@ const {login}= useAuth();
     return false;
   }
 
-  // Basic email validation
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!emailRegex.test(email)) {
     setError("Please enter a valid email address.");
@@ -45,7 +45,6 @@ const {login}= useAuth();
     return false;
   }
 
-  // At least one letter and one number
   const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d).+$/;
 
   if (!passwordRegex.test(password)) {
@@ -61,10 +60,11 @@ const {login}= useAuth();
     if (!validateInputs()) return;
     try{
      const response= await axios.post(`${API_URL}/api/auth/register`,{name,email,password});
-     const {token,user} = response.data;
-       login(token, user);
-       console.log(user)
-      navigate(`/dashboard`);
+     setSuccess(response.data.message);
+    //  const {token,user} = response.data;
+    //    login(token, user);
+    //    console.log(user)
+    // navigate(`/dashboard`);
     }catch(err){
       if (axios.isAxiosError(err)) {
       if (err.response?.status === 400) {
@@ -101,6 +101,11 @@ const {login}= useAuth();
           {error && (
           <div className="mb-4 rounded-md px-4 py-3 text-sm text-red-600">
             {error}
+          </div>
+          )}
+          {success && (
+          <div className="mb-4 rounded-md px-4 py-3 text-sm text-green-600">
+            {success}
           </div>
           )}
           <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
