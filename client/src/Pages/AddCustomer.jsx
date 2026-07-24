@@ -4,7 +4,6 @@ import { useQueryClient } from "@tanstack/react-query";
 import { ErrorDialog } from "./ErrorDialog";
 import { SuccessDialog } from "./SuccesDialog";
 import { useAuth } from "../context/AuthContext";
-import { SuccessDialog } from "./SuccesDialog";
 
 const API_URL = import.meta.env.VITE_API_URL;
 export default function AddCustomerPopup({open,setOpen,mode, initialData}) {

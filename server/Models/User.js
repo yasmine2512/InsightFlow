@@ -10,7 +10,8 @@ const userSchema = new mongoose.Schema({
   plan: {type: String,enum: ["free", "pro"],default: "free"},
   subscriptionId: { type: String }, // Stripe subscription
   stripeCustomerId: { type: String },
-  googleId: {type: String,default: ""}
+  googleId: {type: String,default: ""},
+  isVerified: {type: Boolean, default: false},
 });
 const User = mongoose.model("User", userSchema);
 export default User;

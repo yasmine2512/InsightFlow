@@ -13,10 +13,9 @@ import {
   verifyTokenAndAuthorization,
   verifyTokenAndAdmin
 } from '../Middlewares/JWTauth.js'
+import sendEmail from "../Middlewares/sendEmail.js";
 import passport from "passport";
 import mongoose from "mongoose";
-const { google } = require("googleapis");
-const readline = require("readline");
 
 
 router.get("/google",passport.authenticate("google", {
@@ -40,7 +39,9 @@ router.get("/google/callback",
   router.post("/login",asyncHandler(async(req,res)=>{
 const user = await User.findOne({ email: req.body.email });
 if (!user) return res.status(404).json({message :"User not found"});
-
+if (!user.isVerified) {
+    return res.status(403).json({message: "Please verify your email."});
+}
 const validPassword = await bcrypt.compare(
   req.body.password,
   user.password
@@ -78,15 +79,61 @@ res.status(200).json({ user :other, token });
     name,
     email,
     password: hashedPassword,
+    isVerified: false
   });
+// create verify token
+const verificationToken = jwt.sign(
+  {id: user._id,type: "verify"},process.env.JWT_SECRET_KEY,{expiresIn: "24h"});
+const verifyUrl =`${process.env.CLIENT_URL}/verify-email/${verificationToken}`;
+// send verification email
+await sendEmail({
+        to: user.email,
+        subject: "Verify your email",
+        html: `
+            <h2>Welcome ${user.name}</h2>
+            <p>Please verify your email.</p>
+            <a href="${verifyUrl}">Verify Email</a>
+        `});
 // create token
-const token = jwt.sign(
-  { id: newUser._id, isadmin: newUser.isadmin },
-  process.env.JWT_SECRET_KEY,
-  { expiresIn: "1d" }
-);
-const { password: _, ...other } = newUser._doc;
-res.status(200).json({ user:other, token });
+// const token = jwt.sign(
+//   { id: newUser._id, isadmin: newUser.isadmin },
+//   process.env.JWT_SECRET_KEY,
+//   { expiresIn: "1d" }
+// );
+// const { password: _, ...other } = newUser._doc;
+// res.status(200).json({ user:other, token });
+
+res.status(201).json({message: "Registration successful. Please verify your email."});
+}));
+
+
+/** 
+   * @desc verify email
+   * @route /api/auth/verify-email/:token
+   * @method GET
+   * @access private
+   */  
+router.get("/verify-email/:token", asyncHandler(async (req, res) => {
+    try{
+    const payload = jwt.verify(req.params.token,process.env.JWT_SECRET_KEY);
+    } catch (err) {
+    return res.status(400).json({message: "Invalid or expired link."});
+    }
+    if (payload.type !== "verify")
+        return res.status(400).json({message: "Invalid token."});
+
+    const user = await User.findById(payload.id);
+    if (!user)
+        return res.status(404).json({message: "User not found."});
+
+    if (user.isVerified)
+        return res.json({message: "Email already verified."});
+
+    user.isVerified = true;
+
+    await user.save();
+
+    res.json({message: "Email verified successfully."});
 }));
 
 /** 
@@ -147,6 +194,59 @@ router.delete("/:id",verifyTokenAndAuthorization,asyncHandler(async(req,res)=>{
           ...(orgname && { organizationName: orgname }),
         },},{ new: true }  ).select("-password");
  return res.status(200).json(user);
+}));
+
+/** 
+   * @desc generate update password url
+   * @route /forgot-password
+   * @method PUT
+   * @access private
+   */  
+router.post("/forgot-password", asyncHandler(async (req, res) => {
+    const { email } = req.body;
+    const user = await User.findOne({ email });
+    if (!user) {
+        return res.json({message:"User not found , Please enter a valid email"});
+    }
+    const secret = process.env.JWT_SECRET_KEY + user.password;
+    const token = jwt.sign(
+        {id: user._id,type: "reset"},secret,{expiresIn: "15m"}
+    );
+
+    const resetUrl =`${process.env.CLIENT_URL}/reset-password/${user._id}/${token}`;
+
+    await sendEmail({
+        to: user.email,
+        subject: "Reset Password",
+        html: `
+            <h2>Password Reset</h2>
+            <p>Click below to reset your password.</p>
+            <a href="${resetUrl}">Reset Password</a>
+        `
+    });
+    res.json({message:"Check your inbox ,a reset email has been sent."});
+
+}));
+
+router.post("/reset-password/:userId/:token", asyncHandler(async (req, res) => {
+    const { password } = req.body;
+    const user = await User.findById(req.params.userId);
+    if (!user) return res.status(404).json({ message: "User not found" });
+    const secret = process.env.JWT_SECRET_KEY + user.password;
+    try {
+    const payload = jwt.verify(req.params.token,secret);
+    } catch (err) {
+    return res.status(400).json({message: "Invalid or expired link."});
+}
+    if (payload.type !== "reset")
+        return res.status(400).json({message: "Invalid token."});
+
+    user.password = await bcrypt.hash(password, 10);
+
+    await user.save();
+
+    res.json({message: "Password updated successfully."});
+
 }));
 
 export default router; 
