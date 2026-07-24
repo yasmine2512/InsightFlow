@@ -16,6 +16,7 @@ const {login}= useAuth();
  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const[name,setName] = useState("");
+  const [loading, setLoading] = useState(false);
   const API_URL = import.meta.env.VITE_API_URL;
 
   const validateInputs = () => {
@@ -53,11 +54,14 @@ const {login}= useAuth();
   }
 
   setError("");
+  setSuccess("");
   return true;
 };
 
   async function handleRegister(){
     if (!validateInputs()) return;
+    if (loading) return;
+     setLoading(true);
     try{
      const response= await axios.post(`${API_URL}/api/auth/register`,{name,email,password});
      setSuccess(response.data.message);
@@ -68,7 +72,7 @@ const {login}= useAuth();
     }catch(err){
       if (axios.isAxiosError(err)) {
       if (err.response?.status === 400) {
-        setError("Email already exists.");
+        setError(err.response?.data?.message);
       } else {
         setError(err.response.message);
       }
@@ -76,7 +80,9 @@ const {login}= useAuth();
       setError("Something went wrong. Please try again");
     }
   console.log(err);
-    }
+    }finally {
+    setLoading(false);
+  }
 
   }
   return (
@@ -134,7 +140,8 @@ const {login}= useAuth();
               </div>
             </div>
               <Button className="w-full gradient-primary border-0 text-primary-foreground mt-2"
-              onClick={handleRegister}>
+              onClick={handleRegister}
+              disabled={loading}>
                 Create Account <ArrowRight className="ml-2 w-4 h-4" />
               </Button>
           </form>

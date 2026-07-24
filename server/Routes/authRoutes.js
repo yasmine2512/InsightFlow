@@ -8,6 +8,7 @@ import Order from "../Models/Order.js";
 import asyncHandler from "express-async-handler";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import dns from "dns/promises";
 import {
   verifyToken,
   verifyTokenAndAuthorization,
@@ -72,6 +73,12 @@ res.status(200).json({ user :other, token });
   if (!name ||!email || !password) {
     return res.status(400).json({ message: "Missing required fields" });
   }
+  const validDomain = await emailDomainExists(email);
+if (!validDomain) {
+  return res.status(400).json({
+    message:"Email domain does not exist. Please enter valid email"
+  });
+}
   const existingUser = await User.findOne({ email });
   if (existingUser) return res.status(400).json({ message: "User already exists" });
   const hashedPassword = await bcrypt.hash(password, 10);
@@ -86,7 +93,8 @@ const verificationToken = jwt.sign(
   {id: newUser._id,type: "verify"},process.env.JWT_SECRET_KEY,{expiresIn: "3h"});
 const verifyUrl =`${process.env.SERVER_URL}/api/auth/verify-email/${verificationToken}`;
 // send verification email
-await sendEmail({
+  try {
+      await sendEmail({
         to: newUser.email,
         subject: "Verify your email",
         html: `
@@ -94,6 +102,11 @@ await sendEmail({
             <p>Please verify your email.</p>
             <a href="${verifyUrl}">Verify Email</a>
         `});
+  } catch(error) {
+    console.error("Email sending failed:", error.message);
+    await User.findByIdAndDelete(newUser._id);
+    throw new Error("Failed to send verification email");
+  }
 res.status(201).json({message: "Registration successful. Please verify your email."});
 }));
 
@@ -230,8 +243,8 @@ router.post("/forgot-password", asyncHandler(async (req, res) => {
     );
 
     const resetUrl =`${process.env.CLIENT_URL}/reset-password/${user._id}/${token}`;
-
-    await sendEmail({
+try {
+       await sendEmail({
         to: user.email,
         subject: "Reset Password",
         html: `
@@ -240,6 +253,10 @@ router.post("/forgot-password", asyncHandler(async (req, res) => {
             <a href="${resetUrl}">Reset Password</a>
         `
     });
+  } catch(error) {
+    console.error("Email sending failed:", error.message);
+    throw new Error("Failed to send reseting email");
+  }
     res.json({message:"Check your inbox ,a reset email has been sent."});
 
 }));
@@ -271,6 +288,20 @@ router.post("/reset-password/:userId/:token", asyncHandler(async (req, res) => {
     res.json({message: "Password updated successfully."});
 
 }));
+
+// check if email exist
+async function emailDomainExists(email) {
+  try {
+    const domain = email.split("@")[1];
+
+    const records = await dns.resolveMx(domain);
+
+    return records.length > 0;
+
+  } catch (error) {
+    return false;
+  }
+}
 
 export default router; 
 

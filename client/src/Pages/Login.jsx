@@ -29,12 +29,12 @@ export default function Login() {
     setError("Wrong password!");
   } else if (err.response && err.response.status === 404) {
     setError("User not found!");
+  } else if (err.response && err.response.status === 403) {
+    setError("Please verify your email.");
   } else {
     setError("Login failed. Please try again.");
   }
-  console.log(error);
     }
-
   }
 
   return (
