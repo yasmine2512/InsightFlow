@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "cloudinary": "^1.41.3",
-    "multer-storage-cloudinary": "^4.0.0"
+    "multer-storage-cloudinary": "^4.0.0",
+    "validator": "^13.15.35"
   }
 }

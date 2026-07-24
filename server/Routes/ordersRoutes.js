@@ -115,7 +115,7 @@ found = await Customer.create({
  /** 
    * @desc deliver order
    * @route /api/orders/:id/:orderId/status
-   * @method POST7yuh 
+   * @method patch
    * @access private
    */  
 router.patch("/:id/:orderId/status",verifyTokenAndAuthorization,asyncHandler(async (req, res) => {
@@ -165,7 +165,7 @@ router.delete("/:id/:orderId", asyncHandler(async (req, res) => {
 }));
 
 /** 
-   * @desc create from exel
+   * @desc create from excel
    * @route /api/orders/:id
    * @method POST
    * @access private

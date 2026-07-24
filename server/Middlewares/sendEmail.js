@@ -36,11 +36,14 @@ export default async function sendEmail({
         .replace(/\+/g, "-")
         .replace(/\//g, "_")
         .replace(/=+$/, "");
-
+try {
     await gmail.users.messages.send({
         userId: "me",
         requestBody: {
             raw: encodedMessage,
         },
     });
+    } catch (error) {
+  throw new Error("Failed to send email");
+}
 }

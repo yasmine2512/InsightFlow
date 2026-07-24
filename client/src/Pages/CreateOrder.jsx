@@ -27,7 +27,7 @@ export default function AddOrderPopup({
     quantity: 1,
     status: "pending",
   });
-  const [errorOpen,setErrorOpen] = useStae(false);
+  const [errorOpen,setErrorOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [succesOpen,setSuccessOpen] = useState(false);
   const [successMessgae, setSuccessMessage] = useState("");
@@ -65,11 +65,9 @@ export default function AddOrderPopup({
       queryClient.invalidateQueries(["orders", id]);
       setSuccessMessage("The Order has been created and saved successfully.");
       setSuccessOpen(true);
-
       if (onSave) {
         onSave(res.data.order);
       }
-      setOpen(false);
     } catch (error) {
       console.log(error);
       setErrorMessage(error.message);
@@ -197,7 +195,10 @@ export default function AddOrderPopup({
       <SuccessDialog
               open={succesOpen}
               message={successMessgae}
-              onClose={() => setSuccessOpen(false)}
+              onClose={() => {
+                setSuccessOpen(false);
+                setOpen(false);
+              }}
             />      
     </div>
   );

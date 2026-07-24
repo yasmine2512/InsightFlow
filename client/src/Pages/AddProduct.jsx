@@ -73,7 +73,6 @@ try{
   setSuccessOpen(true);
     queryClient.invalidateQueries(["productsStats", id]);
     queryClient.invalidateQueries(["productlist", id]);
-    setOpen(false);
 }catch(error){
     console.log(error.message);
     setErrorMessage(error.message);
@@ -112,7 +111,6 @@ try{
     setErrorMessage(error.message);
     setErrorOpen(true);
 }
-    setOpen(false)
   }
   if (!open) return null
 
@@ -257,7 +255,10 @@ try{
   <SuccessDialog
               open={succesOpen}
               message={successMessgae}
-              onClose={() => setSuccessOpen(false)}
+              onClose={() => {
+                setSuccessOpen(false);
+                setOpen(false);
+              }}
             />          
 </div>
   )

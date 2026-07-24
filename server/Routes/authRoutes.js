@@ -8,7 +8,7 @@ import Order from "../Models/Order.js";
 import asyncHandler from "express-async-handler";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import dns from "dns/promises";
+import axios from "axios";
 import {
   verifyToken,
   verifyTokenAndAuthorization,
@@ -98,9 +98,65 @@ const verifyUrl =`${process.env.SERVER_URL}/api/auth/verify-email/${verification
         to: newUser.email,
         subject: "Verify your email",
         html: `
-            <h2>Welcome ${newUser.name}</h2>
-            <p>Please verify your email.</p>
-            <a href="${verifyUrl}">Verify Email</a>
+            <!DOCTYPE html>
+  <html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verify Your Email</title>
+  </head>
+  <body style="margin: 0; padding: 0; background-color: #f8fafc; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #f8fafc; padding: 40px 0;">
+      <tr>
+        <td align="center">
+          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); padding: 32px; width: 100%; max-width: 480px;">
+            <tr>
+              <td align="center" style="padding-bottom: 24px;">
+                <table role="presentation" cellspacing="0" cellpadding="0">
+                  <tr>
+                    <td align="center" style="width: 48px; height: 48px; background-color: rgba(15, 23, 42, 0.05); border-radius: 50%;">
+                      <span style="font-size: 20px; color: #0f172a;">✉️</span>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+            <tr>
+              <td align="center" style="padding-bottom: 8px;">
+                <h2 style="margin: 0; font-size: 18px; font-weight: 600; color: #0f172a;">Welcome, ${newUser.name}!</h2>
+              </td>
+            </tr>
+            <tr>
+              <td align="center" style="padding-bottom: 24px;">
+                <p style="margin: 0; font-size: 14px; color: #64748b; line-height: 1.5;">
+                  Thanks for getting started! Please verify your email address by clicking the button below.
+                </p>
+              </td>
+            </tr>
+            <tr>
+              <td align="center" style="padding-bottom: 24px;">
+                <table role="presentation" cellspacing="0" cellpadding="0">
+                  <tr>
+                    <td align="center" style="border-radius: 12px; background-color: #0f172a;">
+                      <a href="${verifyUrl}" target="_blank" style="font-size: 14px; font-weight: 500; color: #ffffff; text-decoration: none; padding: 12px 24px; border-radius: 12px; border: 1px solid #0f172a; display: inline-block;">Verify Email</a>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+            <tr>
+              <td align="center">
+                <p style="margin: 0; font-size: 12px; color: #94a3b8; line-height: 1.4;">
+                  If you didn't create an account, you can safely ignore this email.
+                </p>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+  </html>
         `});
   } catch(error) {
     console.error("Email sending failed:", error.message);
@@ -248,9 +304,76 @@ try {
         to: user.email,
         subject: "Reset Password",
         html: `
-            <h2>Password Reset</h2>
-            <p>Click below to reset your password.</p>
-            <a href="${resetUrl}">Reset Password</a>
+            <!DOCTYPE html>
+  <html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reset Your Password</title>
+  </head>
+  <body style="margin: 0; padding: 0; background-color: #f8fafc; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #f8fafc; padding: 40px 0;">
+      <tr>
+        <td align="center">
+          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); padding: 32px; width: 100%; max-width: 480px;">
+            <tr>
+              <td align="center" style="padding-bottom: 24px;">
+                <table role="presentation" cellspacing="0" cellpadding="0">
+                  <tr>
+                    <td align="center" style="width: 48px; height: 48px; background-color: rgba(15, 23, 42, 0.05); border-radius: 50%;">
+                      <span style="font-size: 20px; color: #0f172a;">🔑</span>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+            <tr>
+              <td align="center" style="padding-bottom: 8px;">
+                <h2 style="margin: 0; font-size: 18px; font-weight: 600; color: #0f172a;">Password Reset</h2>
+              </td>
+            </tr>
+            <tr>
+              <td align="center" style="padding-bottom: 24px;">
+                <p style="margin: 0; font-size: 14px; color: #64748b; line-height: 1.5;">
+                  We received a request to reset your password. Click the button below to choose a new one.
+                </p>
+              </td>
+            </tr>
+            <tr>
+              <td align="center" style="padding-bottom: 24px;">
+                <table role="presentation" cellspacing="0" cellpadding="0">
+                  <tr>
+                    <td align="center" style="border-radius: 12px; background-color: #0f172a;">
+                      <a href="${resetUrl}" target="_blank" style="font-size: 14px; font-weight: 500; color: #ffffff; text-decoration: none; padding: 12px 24px; border-radius: 12px; border: 1px solid #0f172a; display: inline-block;">Reset Password</a>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+            <tr>
+              <td align="center" style="padding-bottom: 16px;">
+                <p style="margin: 0; font-size: 12px; color: #94a3b8; line-height: 1.4;">
+                  Or copy and paste this link into your browser:
+                </p>
+                <p style="margin: 4px 0 0 0; font-size: 12px; color: #0f172a; word-break: break-all;">
+                  ${resetUrl}
+                </p>
+              </td>
+            </tr>
+            <tr>
+              <td align="center" style="border-top: 1px solid #f1f5f9; padding-top: 16px;">
+                <p style="margin: 0; font-size: 12px; color: #94a3b8; line-height: 1.4;">
+                  If you didn't request a password reset, you can safely ignore this email.
+                </p>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+  </html>
+  
         `
     });
   } catch(error) {
@@ -289,16 +412,24 @@ router.post("/reset-password/:userId/:token", asyncHandler(async (req, res) => {
 
 }));
 
-// check if email exist
 async function emailDomainExists(email) {
+  const domain = email.split("@")[1];
   try {
-    const domain = email.split("@")[1];
-
-    const records = await dns.resolveMx(domain);
-
-    return records.length > 0;
-
-  } catch (error) {
+    const response = await axios.get(
+      "https://dns.google/resolve",
+      {
+        params: {
+          name: domain,
+          type: "MX"
+        }
+      }
+    );
+    return (
+      response.data.Answer &&
+      response.data.Answer.length > 0
+    );
+  } catch(error) {
+    console.error(error.message);
     return false;
   }
 }

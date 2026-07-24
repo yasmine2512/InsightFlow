@@ -62,9 +62,7 @@ const emptyForm = {
       );
       setSuccessMessage("The Client has been created and saved successfully.");
       setSuccessOpen(true);
-      setOpen(false);
       queryClient.invalidateQueries(["customerslist", id]);
-
       setForm({name: "",email: "",phone: "",address: "",});
     } catch (error) {
       console.log(error);
@@ -92,7 +90,6 @@ const handleUpdate = async () => {
       );
       setSuccessMessage("The Client has been updated successfully.")
       setSuccessOpen(true);
-      setOpen(false);
       queryClient.invalidateQueries(["customerslist", id]);
       setForm({name: "",email: "",phone: "",address: "",});
     } catch (error) {
@@ -220,7 +217,10 @@ const handleUpdate = async () => {
       <SuccessDialog
               open={succesOpen}
               message= {successMessgae}
-              onClose={() => setSuccessOpen(false)}
+              onClose={() => {
+                setSuccessOpen(false);
+                setOpen(false);
+              }}
             />      
     </div>
   );
