@@ -18,7 +18,8 @@ import SubscriptionCancel from "./Pages/SubscriptionCancel"
 import OAuth from './Pages/OauthPage'
 import ProtectedRoute from './context/ProtectedRoute'
 import VerifySuccess from "./Pages/VerifySuccess"
-
+import ResetPassword from "./Pages/ResetPassword"
+import ForgotPassword from './Pages/ForgotPassword'
 function App() {
   return (
     <>
@@ -40,10 +41,10 @@ function App() {
 <Route path="/subscription-cancel" element={<SubscriptionCancel/>} />
 </Route></Route>
 <Route path="/verify-success" element={<VerifySuccess />}/>
+<Route path="reset-password/:userId/:token" element={<ResetPassword/>} />
+<Route path="/forgot-password" element={<ForgotPassword />} />
 <Route path="/oauth-success" element={<OAuth/>}/>
 <Route path="*" element={<NotFound />} />
-
-
 
 </Routes>
     </>

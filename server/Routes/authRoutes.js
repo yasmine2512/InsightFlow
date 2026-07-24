@@ -214,7 +214,7 @@ router.get("/me",verifyToken,asyncHandler(async (req, res) => {
 
 /** 
    * @desc generate update password url
-   * @route /forgot-password
+   * @route /api/auth/forgot-password
    * @method PUT
    * @access private
    */  
@@ -244,6 +244,12 @@ router.post("/forgot-password", asyncHandler(async (req, res) => {
 
 }));
 
+/** 
+   * @desc reset password
+   * @route /api/auth/reset-password/:userId/:token
+   * @method PUT
+   * @access private
+   */ 
 router.post("/reset-password/:userId/:token", asyncHandler(async (req, res) => {
     const { password } = req.body;
     const user = await User.findById(req.params.userId);

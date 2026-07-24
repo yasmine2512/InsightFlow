@@ -79,7 +79,7 @@ export default function Login() {
               </div>
             </div>
             <div className="flex items-center justify-end">
-              <a href="#" className="text-xs text-primary hover:underline">Forgot password?</a>
+              <a href="/forgot-password" className="text-xs text-primary hover:underline">Forgot password?</a>
             </div>
               <Button className="w-full gradient-primary border-0 text-primary-foreground mt-2" onClick={handleLogin} >
                 Sign In <ArrowRight className="ml-2 w-4 h-4" />
@@ -95,7 +95,7 @@ export default function Login() {
           <div className="mt-4">
             <Button variant="outline" w-full size="sm" className="w-1/2"
             onClick={() => 
-            { window.location.href ="http://localhost:5000/api/auth/google";}}>Google</Button>
+            { window.location.href =`${API_URL}/api/auth/google`;}}>Google</Button>
           </div>
         </motion.div>
       </div>

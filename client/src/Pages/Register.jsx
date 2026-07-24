@@ -70,10 +70,10 @@ const {login}= useAuth();
       if (err.response?.status === 400) {
         setError("Email already exists.");
       } else {
-        setError("Registration failed. Please try again.");
+        setError(err.response.message);
       }
     } else {
-      setError("Something went wrong.");
+      setError("Something went wrong. Please try again");
     }
   console.log(err);
     }
