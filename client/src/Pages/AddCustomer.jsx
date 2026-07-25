@@ -23,6 +23,12 @@ const emptyForm = {
   const [errorMessage, setErrorMessage] = useState("");
   const [succesOpen,setSuccessOpen] = useState(false);
   const [successMessgae, setSuccessMessage] = useState("");
+
+  const isValidEmail = (email) => {
+    return email === "" ||
+           /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+};
+
   useEffect(() => {
   if (mode === "edit" && initialData) {
     setForm({
@@ -44,6 +50,11 @@ const emptyForm = {
     });
   };
   const handleSubmit = async () => {
+    if (!isValidEmail(form.email)) {
+    setErrorMessage("Please enter a valid email address.");
+    setErrorOpen(true);
+    return;
+}
     try {
         const cleanedForm = {
         name: form.name.trim(),
@@ -65,13 +76,18 @@ const emptyForm = {
       queryClient.invalidateQueries(["customerslist", id]);
       setForm({name: "",email: "",phone: "",address: "",});
     } catch (error) {
-      console.log(error);
-      setErrorMessage(error.message);
+      console.log(error.response);
+      setErrorMessage(error.response?.data?.message);
       setErrorOpen(true);
     }
   };
 
 const handleUpdate = async () => {
+  if (!isValidEmail(form.email)) {
+    setErrorMessage("Please enter a valid email address.");
+    setErrorOpen(true);
+    return;
+}
     try {
         const cleanedForm = {
         name: form.name.trim(),
@@ -93,6 +109,7 @@ const handleUpdate = async () => {
       queryClient.invalidateQueries(["customerslist", id]);
       setForm({name: "",email: "",phone: "",address: "",});
     } catch (error) {
+      console.log(error.response);
         const msg = error.response?.data?.message;
         setErrorMessage(msg);
         setErrorOpen(true);
@@ -103,7 +120,6 @@ const handleUpdate = async () => {
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
       <div className="bg-white w-[650px] rounded-2xl shadow-xl p-6 border">
-
         {mode === "create"?(<h2 className="text-2xl font-semibold mb-6">
           Add Customer
         </h2>):(
@@ -205,6 +221,7 @@ const handleUpdate = async () => {
           </button>
 
           )}
+          
         </div>
       </div>
       <ErrorDialog

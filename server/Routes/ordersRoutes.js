@@ -75,12 +75,10 @@ router.post("/:id", verifyTokenAndAuthorization, asyncHandler(async (req, res) =
   const orgid = req.params.id;
   const { products, totalPrice , customer} = req.body;
   const decremented = [];
+  try{
 let found = await Customer.findOne({organization: orgid,$or:[{email: customer.email},{phone: customer.phone}]});
 if (!found){
-found = await Customer.create({
-    organization: orgid,
-    ...customer
-});
+found = await Customer.create({organization: orgid,...customer});
 }
   for (const item of products) {
     const updated = await Product.findOneAndUpdate(
@@ -110,6 +108,10 @@ found = await Customer.create({
   });
   await order.save();
   return res.status(201).json({ message: "Order and customer created", order });
+  }catch(error){
+  console.log(error);
+  return res.status(500).json({message: "Error saving order"});
+}
 }));
 
  /** 

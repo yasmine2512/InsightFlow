@@ -74,8 +74,8 @@ try{
     queryClient.invalidateQueries(["productsStats", id]);
     queryClient.invalidateQueries(["productlist", id]);
 }catch(error){
-    console.log(error.message);
-    setErrorMessage(error.message);
+    console.log(error.response);
+    setErrorMessage(error.response?.data?.message);
     setErrorOpen(true);
 }
   }
@@ -107,8 +107,8 @@ try{
   queryClient.invalidateQueries(["productsStats", id]);
   queryClient.invalidateQueries(["productlist", id]);
 }catch(error){
-    console.log(error.response?.data || error.message);
-    setErrorMessage(error.message);
+    console.log(error.response?.data);
+    setErrorMessage(error.response?.data.message);
     setErrorOpen(true);
 }
   }

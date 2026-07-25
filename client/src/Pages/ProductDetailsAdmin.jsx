@@ -10,6 +10,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useQueryClient } from "@tanstack/react-query";
 import AddOrderPopup from "./CreateOrder";
 import { DeleteDialog } from "./DeleteDialog";
+import { ErrorDialog } from "./ErrorDialog";
 import AddProductPopup from "./AddProduct";
 
 export default function ProductDetail() {
@@ -26,6 +27,9 @@ export default function ProductDetail() {
   const [stats,setstats] = useState(null);
   const API_URL = import.meta.env.VITE_API_URL;
   const [deleteTarget, setDeleteTarget] = useState(null);
+  const [errorOpen,setErrorOpen] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+
        useEffect(() => {
          const fetchProduct = async () => {
            try {
@@ -55,7 +59,9 @@ export default function ProductDetail() {
     navigate(-1);
   } catch (err) {
    console.error("Failed to delete product", err);
-    alert(err.response?.data?.message ||"Failed to delete product" );
+   setDeleteTarget(null);
+   setErrorMessage(err.response?.data?.message ||"Failed to delete product" )
+   setErrorOpen(true);
   }
   }
   const metrics = [
@@ -155,6 +161,13 @@ export default function ProductDetail() {
               onCancel={() => setDeleteTarget(null)}
               Page = "The Product"
             />
+        <ErrorDialog
+              open={errorOpen}
+              title="Create Error"
+              message={errorMessage}
+              actionLabel="Okay"
+              onClose={() => setErrorOpen(false)}
+                    />    
       </div>
   );
 }

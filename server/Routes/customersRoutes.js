@@ -77,7 +77,7 @@ router.post("/:id",verifyTokenAndAuthorization,asyncHandler(async (req, res) => 
     if (existing) {
       return res.status(400).json({message:"Customer with this email or phone already exists",});
     }
-    const cleanEmail = email.trim().toLowerCase();
+    const cleanEmail = email.trim().toLowerCase() || "";
   const customer = await Customer.create({organization: orgid,name,email:cleanEmail,phone,address, });
     return res.status(201).json({message: "Customer created successfully"});
   })

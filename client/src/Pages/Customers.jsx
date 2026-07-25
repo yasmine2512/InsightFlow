@@ -11,6 +11,8 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import AddCustomerPopup from "./AddCustomer"
 import { useQueryClient } from "@tanstack/react-query";
 import { DeleteDialog } from "./DeleteDialog";
+import { ErrorDialog } from "./ErrorDialog";
+import { SuccessDialog } from "./SuccesDialog";
 
 const fillCustomerMonths = (data) => {
   const result = [];
@@ -55,6 +57,10 @@ export default function Customers() {
   const [selectedCustomer, setSelectedCustomer] = useState(null);
   const queryClient = useQueryClient();
   const [deleteTarget, setDeleteTarget] = useState(null);
+  const [errorOpen,setErrorOpen] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [succesOpen,setSuccessOpen] = useState(false);
+  const [successMessgae, setSuccessMessage] = useState("");
 
   const handleDeleteConfirm = async () => {
   try {
@@ -64,11 +70,14 @@ export default function Customers() {
     queryClient.invalidateQueries(["customerslist", id]);
     queryClient.invalidateQueries(["customer", id]);
     setDeleteTarget(null);
-  } catch (err) {
+    setSuccessMessage("Customer deleted successfully");
+    setSuccessOpen(true);
+  } catch(err) {
      console.error("Failed to delete customer", err);
-    alert(err.response?.data?.message ||"Failed to delete customer" );
-  }
-  }
+    setDeleteTarget(null);
+    setErrorMessage(err.response?.data?.message ||"Failed to delete customer" );
+    setErrorOpen(true);
+  }}
     const fetchStats = async () => {
       try {
       
@@ -306,6 +315,21 @@ const end = Math.min(currentPage * rowsPerPage,totalcustomers);
               onCancel={() => setDeleteTarget(null)}
               Page = "The Customer"
             />
+        <ErrorDialog
+              open={errorOpen}
+              title="Create Error"
+              message={errorMessage}
+              actionLabel="Okay"
+              onClose={() => setErrorOpen(false)}
+                    />
+        <SuccessDialog
+              open={succesOpen}
+              message={successMessgae}
+              onClose={() => {
+                setSuccessOpen(false);
+                setOpen(false);
+                }}
+              /> 
       </div>
   );
 }

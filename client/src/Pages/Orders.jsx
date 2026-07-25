@@ -9,6 +9,8 @@ import { useQuery } from "@tanstack/react-query";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip,BarChart ,CartesianGrid,XAxis, YAxis,Bar} from "recharts";
 import { useQueryClient } from "@tanstack/react-query";
 import { DeleteDialog } from "./DeleteDialog";
+import { ErrorDialog } from "./ErrorDialog";
+import { SuccessDialog } from "./SuccesDialog";
 import { useAuth } from "../context/AuthContext";
 const fillMissingDays = (data) => {
 const result = [];
@@ -87,6 +89,10 @@ export default function Orders() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [deleteTarget, setDeleteTarget] = useState(null);
+  const [errorOpen,setErrorOpen] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [succesOpen,setSuccessOpen] = useState(false);
+  const [successMessgae, setSuccessMessage] = useState("");
   const handleDeleteConfirm = async () => {
   try {
     await axios.delete(`${API_URL}/api/orders/${id}/${deleteTarget}`, {
@@ -95,8 +101,12 @@ export default function Orders() {
     queryClient.invalidateQueries(["orderslist", id]);
     queryClient.invalidateQueries(["orders", id]);
     setDeleteTarget(null);
+    setSuccessMessage("Order deleted successfully");
+    setSuccessOpen(true);
   } catch (err) {
-    console.error("Failed to delete order", err);
+    setDeleteTarget(null);
+    setErrorMessage(err.response.data.message);
+    setErrorOpen(true);
   }
   }
 
@@ -179,14 +189,14 @@ const {  data: orderslist, isLoading, error } = useQuery({
    queryFn: () => fetchOrders({page:currentPage,search:debouncedSearch,status:filter}),keepPreviousData: true,staleTime: 1000 * 60 * 5});
   if (isLoading) return <div>Loading...</div>
   if (error) return <p>Error loading orders</p>;
-const OG = data.ordersgrowth.toFixed(1);
-const AOV = data.averageordervalue.toFixed(1);
-const AOVG = data.averageordervalue.toFixed(1);
-const FR= data.fulfillmentrate.toFixed(1);
-const FRG=data.FRgrowth.toFixed(1);
-const ordersData = data.ordersbystatus;
-const orders = orderslist.orders.orders;
-const ordersperday = fillMissingDays(data.ordersperday);
+const OG = data.ordersgrowth.toFixed(1) || 0;
+const AOV = data.averageordervalue.toFixed(1) || 0;
+const AOVG = data.averageordervalue.toFixed(1) || 0;
+const FR= data.fulfillmentrate.toFixed(1) || 0;
+const FRG=data.FRgrowth.toFixed(1) || 0;
+const ordersData = data.ordersbystatus || [];
+const orders = orderslist.orders.orders || [];
+const ordersperday = fillMissingDays(data.ordersperday || []);
   const rowsPerPage = 10;
   const totalorders = orderslist.orders.total;
   const totalPages = Math.max(1,Math.ceil(totalorders / rowsPerPage));
@@ -425,12 +435,27 @@ const colors = [
     </div>
   </div>
         </div>
-        <DeleteDialog 
+    <DeleteDialog 
       open={deleteTarget !== null}
       onConfirm={handleDeleteConfirm}
       onCancel={() => setDeleteTarget(null)}
       Page = "The Order"
     />
+    <ErrorDialog
+          open={errorOpen}
+          title="Create Error"
+          message={errorMessage}
+          actionLabel="Okay"
+          onClose={() => setErrorOpen(false)}
+                />
+    <SuccessDialog
+          open={succesOpen}
+          message={successMessgae}
+          onClose={() => {
+            setSuccessOpen(false);
+            setOpen(false);
+            }}
+          />
       </div>
   );
 }
