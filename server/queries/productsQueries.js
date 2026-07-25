@@ -73,18 +73,6 @@ const pipeline =[
         path: "$orders.products",
         preserveNullAndEmptyArrays: true
       }},
-    // {$match: {
-    //     $expr: {
-    //       $or: [
-    //         {$eq: [
-    //             "$orders.products.product",
-    //             "$_id"
-    //           ]},
-    //         {$eq: [
-    //             "$orders",
-    //             null
-    //           ]}]}
-    // }},
     {$group: {_id: "$_id",
         name: {$first: "$name"},
         price: {$first: "$price"},
@@ -148,7 +136,7 @@ const stats = await Order.aggregate([
 const product = await Product.findById(prodid);
 if (!product) return res.status(404).json({ message: "Product not found" });
 const result = stats[0] || {revenueThisMonth: 0,revenueLastMonth: 0,unitsSold: 0};
-const growth =result.revenueLastMonth === 0? 100: (
+const growth =result.revenueLastMonth === 0? 0: (
 ((result.revenueThisMonth -result.revenueLastMonth) /result.revenueLastMonth) * 100).toFixed(1);
 const finalData = {
   product,
@@ -221,7 +209,3 @@ return Order.aggregate([{$match:{organization : toObjectId(orgid),status:"comple
       { $unwind: "$product"},
 {$project:{_id: 0,totalSold: 1, productId: "$product._id",name: "$product.name",revenue: 1}}]);
 };
-
-//green → >20 enough stock
-//yellow → 10-20low stock
-//red →  <10out of stock

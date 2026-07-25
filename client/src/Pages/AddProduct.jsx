@@ -102,6 +102,9 @@ try{
       Authorization: `Bearer ${token}`,
     },
   });
+  if (onSave) {
+  await onSave();
+  }
   setSuccessMessage("The Product has been updated successfully.");
   setSuccessOpen(true);
   queryClient.invalidateQueries(["productsStats", id]);

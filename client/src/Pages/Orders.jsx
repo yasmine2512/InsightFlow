@@ -50,7 +50,7 @@ function StatusPopover({ currentStatus, onSelect }) {
   };
 
   return (
-    <div className="relative inline-block" ref={ref}>
+    <div className="relative inline-block" ref={ref} >
       <button onClick={() => setOpen((v) => !v)}>
         <span className={`px-2 py-1 rounded-full text-xs font-medium cursor-pointer ${styles[currentStatus]}`}>
           {currentStatus}
@@ -158,11 +158,13 @@ const handleFileChange = async (e) => {
           "Content-Type": "multipart/form-data",
         },}
     );
-    alert("Import successful");
+    setSuccessMessage("Import successful");
+    setSuccessOpen(true);
     queryClient.invalidateQueries(["orders", id]);
   } catch (err) {
     console.log(err.response?.data?.errors || "no error");
-    alert(err.response?.data?.message || "Import failed");
+    setErrorMessage(err.response?.data?.message || "Import failed");
+    setErrorOpen(true);
   } finally {
     setLoadingImport(false);
     e.target.value = "";
@@ -187,7 +189,7 @@ const [currentPage, setCurrentPage] = useState(1);
 const {  data: orderslist, isLoading, error } = useQuery({
    queryKey: ["orderslist", id,currentPage,debouncedSearch,filter],
    queryFn: () => fetchOrders({page:currentPage,search:debouncedSearch,status:filter}),keepPreviousData: true,staleTime: 1000 * 60 * 5});
-  if (isLoading) return <div>Loading...</div>
+  if (isLoading || !data) return <div>Loading...</div>
   if (error) return <p>Error loading orders</p>;
 const OG = data.ordersgrowth.toFixed(1) || 0;
 const AOV = data.averageordervalue.toFixed(1) || 0;
@@ -320,7 +322,7 @@ const colors = [
         </div>
 
         <div className="bg-card rounded-xl border border-border shadow-soft overflow-hidden">
-          <div className="overflow-x-auto">
+          <div className="overflow-visible">
              <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border">
@@ -357,15 +359,18 @@ const colors = [
                         disabled={o.status !== "pending"}
                         currentStatus={o.status}
                         onSelect={async (newStatus) => {
-                          const token = localStorage.getItem("token");
                           try {
                             await axios.patch(`${API_URL}/api/orders/${id}/${o._id}/status`,
                               { status: newStatus },
                               { headers: { Authorization: `Bearer ${token}` } }
                             );
+                            setSuccessMessage("Status updated successfuly");
+                            setSuccessOpen(true);
                             queryClient.invalidateQueries(["orderslist", id]);
                             queryClient.invalidateQueries(["orders", id]);
                           } catch (err) {
+                            setErrorMessage(err.response?.data.message);
+                            setErrorOpen(true);
                             console.error("Failed to update status", err);
                           }
                         }}

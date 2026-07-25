@@ -29,22 +29,22 @@ export default function ProductDetail() {
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [errorOpen,setErrorOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
-
-       useEffect(() => {
-         const fetchProduct = async () => {
+  const fetchProduct = async () => {
            try {
              const res = await axios.get(`${API_URL}/api/products/${userId}/detail/${productid}`, {
           headers: { Authorization: `Bearer ${token}` },
         })
              console.log(res.data);
              setProduct(res.data.result.product);
+             console.log(res.data.result.analytics);
              setstats(res.data.result.analytics);
            } catch (err) {
              console.error("Product not Found", err);
              navigate(-1);
            }
          }
-         fetchProduct()
+       useEffect(() => {
+         fetchProduct();
        }, [productid])
      
        if (!product) return <div>Loading...</div>
@@ -101,6 +101,7 @@ export default function ProductDetail() {
                       setOpen={setOpenE}
                       mode="edit"
                       initialData = {product}
+                      onSave={fetchProduct}
                     /></>
                       <Button variant="outline" size="sm" className="text-destructive hover:bg-destructive hover:text-destructive-foreground"
                       onClick={() => setDeleteTarget(product._id)}><Trash2 className="w-3 h-3" /></Button>
@@ -132,6 +133,7 @@ export default function ProductDetail() {
         setOpen={setOpen}
         productId={product._id}
         productPrice={product.price}
+        onSave={fetchProduct}
         />
           </div>
 

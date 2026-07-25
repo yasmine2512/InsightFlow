@@ -37,7 +37,16 @@ export default function AddOrderPopup({
       [e.target.name]: e.target.value,
     });
   };
+  const isValidEmail = (email) => {
+    return email === "" ||
+           /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+};
   const handleSubmit = async () => {
+    if (!isValidEmail(form.customerEmail)) {
+    setErrorMessage("Please enter a valid email address.");
+    setErrorOpen(true);
+    return;
+  }
      try {
       const totalPrice = Number(form.quantity) * productPrice;
       const body = {
@@ -66,7 +75,7 @@ export default function AddOrderPopup({
       setSuccessMessage("The Order has been created and saved successfully.");
       setSuccessOpen(true);
       if (onSave) {
-        onSave(res.data.order);
+        onSave();
       }
     } catch (error) {
       console.log(error.response.data);
