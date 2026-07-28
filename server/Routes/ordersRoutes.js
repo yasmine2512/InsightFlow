@@ -17,9 +17,9 @@ const upload = multer({
 const router = express.Router();
 
 
-  const getNextOrderNumber = async () => {
+  const getNextOrderNumber = async (orgId) => {
     const counter = await Counter.findOneAndUpdate(
-      { _id: "orderNumber" },
+      {organization: orgId,type: "order"},
       { $inc: { seq: 1 } },
       { new: true, upsert: true }
     );
@@ -100,7 +100,7 @@ found = await Customer.create({organization: orgid,...customer});
   }
   const order = new Order({
     organization: orgid,
-    orderNumber: await getNextOrderNumber(),
+    orderNumber: await getNextOrderNumber(orgid),
     customer: found._id,
     products,
     totalPrice,
@@ -134,6 +134,9 @@ router.patch("/:id/:orderId/status",verifyTokenAndAuthorization,asyncHandler(asy
             $inc: {
               stock: item.quantity
             }}); }) );
+    }
+    if(status === "completed"){
+      order.completedAt = new Date();
     }
     order.status = status;
     await order.save();
@@ -246,7 +249,7 @@ router.delete("/:id/:orderId", asyncHandler(async (req, res) => {
         if (!products.length) continue;
         const order = await Order.create({
           organization: orgId,
-          orderNumber: await getNextOrderNumber(),
+          orderNumber: await getNextOrderNumber(orgId),
           customer: customer._id,
           products,
           totalPrice,

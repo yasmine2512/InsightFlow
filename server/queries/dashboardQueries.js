@@ -22,10 +22,10 @@ const endPrevious = new Date(  now.getFullYear(),  now.getMonth() - 1, now.getDa
   return Order.aggregate([{$match:{organization : toObjectId(orgId),status: "completed"}},
     {$group: {_id: null,
     currentRevenue: {$sum:{$cond:[{$and: [
-    {$gte:["$createdAt", startCurrent] },{ $lte: ["$createdAt", endCurrent] }]},"$totalPrice",0]
+    {$gte:["$completedAt", startCurrent] },{ $lte: ["$completedAt", endCurrent] }]},"$totalPrice",0]
         }},
     previousRevenue: {$sum:{$cond: [{ $and: [
-    {$gte: ["$createdAt", startPrevious] },{$lte:["$createdAt",endPrevious]}]},"$totalPrice",0]
+    {$gte: ["$completedAt", startPrevious] },{$lte:["$completedAt",endPrevious]}]},"$totalPrice",0]
         }}}
   }]);};
 
@@ -75,10 +75,10 @@ export const getrevenuel7m = async (orgId) => {
   const sevenMonthsAgo = new Date();
   sevenMonthsAgo.setMonth(sevenMonthsAgo.getMonth() - 7);
   return Order.aggregate([
-  {$match:{organization : toObjectId(orgId) ,createdAt: {$gte:sevenMonthsAgo},status: "completed"}},
+  {$match:{organization : toObjectId(orgId) ,completedAt: {$gte:sevenMonthsAgo},status: "completed"}},
   {$group:{
-  _id: {year: { $year: "$createdAt" },
-  month: { $month: "$createdAt" }},
+  _id: {year: { $year: "$completedAt" },
+  month: { $month: "$completedAt" }},
   revenue: { $sum: "$totalPrice" }  }}, 
   {$project: {
       _id: 0,

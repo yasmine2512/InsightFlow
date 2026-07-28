@@ -5,6 +5,7 @@ import Product from "../Models/Product.js"
 import Customer from "../Models/Customer.js";
 import Subscription from "../Models/Subscription.js";
 import Order from "../Models/Order.js";
+import Counter from "../Models/Counter.js";
 import asyncHandler from "express-async-handler";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
@@ -88,6 +89,13 @@ if (!validDomain) {
     password: hashedPassword,
     isVerified: false
   });
+
+  await Counter.create({
+  organization: newUser._id,
+  type: "order",
+  seq: 999,
+});
+
 // create verify token
 const verificationToken = jwt.sign(
   {id: newUser._id,type: "verify"},process.env.JWT_SECRET_KEY,{expiresIn: "3h"});
@@ -161,6 +169,7 @@ const verifyUrl =`${process.env.SERVER_URL}/api/auth/verify-email/${verification
   } catch(error) {
     console.error("Email sending failed:", error.message);
     await User.findByIdAndDelete(newUser._id);
+    await Counter.findByIdAndDelete(newUser._id);
     throw new Error("Failed to send verification email");
   }
 res.status(201).json({message: "Registration successful. Please verify your email."});

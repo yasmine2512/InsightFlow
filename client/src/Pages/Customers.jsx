@@ -130,7 +130,7 @@ const CL7M =fillCustomerMonths(data?.newClast7month || []);
 const spendingChartData =spendingDistribution(data?.customersSpendingDistribution || []);
 const CLV = data?.customerLiftimeValue.toFixed(1) || 0;
 const stats = [
-  { label: "Total Customers", value: data.totalcustomers,growth:false,icon:Users },
+  { label: "New Customers", value: data.newcustomers,growth:true,change:data.NCgrowth?.toFixed(1) || 0,icon:Users },
   { label: "Active Customers", value: data.activecustomers || 0, change: data.ACgrowth?.toFixed(1) || 0, 
     up: data.ACgrowth>= 0,growth:true, icon:  UserCheck },
   { label: "Customer Retention Rate", value:data.customerRetentionRate, 

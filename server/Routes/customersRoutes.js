@@ -45,7 +45,7 @@ const CAC = AC.current[0]?.value;
 const PAC = AC.previous[0]?.value;
 const GAC = PAC === 0 ? 0 : ((CAC - PAC) / PAC) * 100;
 
-return res.status(200).json({totalcustomers:currentC,customerRetentionRate:currentCRR,CRRgrowth:CRRgrowth,activecustomers:CAC,ACgrowth:GAC,customerLiftimeValue:ALV,customersSpendingDistribution:CSD,newClast7month:CLM,topCustomers:TC});
+return res.status(200).json({newcustomers:currentC,NCgrowth:growthC,customerRetentionRate:currentCRR,CRRgrowth:CRRgrowth,activecustomers:CAC,ACgrowth:GAC,customerLiftimeValue:ALV,customersSpendingDistribution:CSD,newClast7month:CLM,topCustomers:TC});
 }));
 
 router.get("/:id",verifyTokenAndAuthorization,asyncHandler(async(req,res)=>{

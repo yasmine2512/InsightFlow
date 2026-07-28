@@ -66,7 +66,6 @@ export const getActiveCustomers = async (orgId) => {
   ]);
   return result[0];};
 
-
 //Average CLV
 export const getAvgCLV = async (orgId) => {
   return Order.aggregate([{$match: {organization: toObjectId(orgId),status: "completed"}},

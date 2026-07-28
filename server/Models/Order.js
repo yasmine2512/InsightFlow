@@ -11,8 +11,9 @@ const orderSchema = new mongoose.Schema({
     },
   ],
   totalPrice: { type: Number, required: true },
-  status: { type: String, default: "pending" }, // pending/shipped/completed
+  status: { type: String, default: "pending" }, 
   createdAt: { type: Date, default: Date.now },
+  completedAt: Date,
 },{ timestamps: true });
 const Order = mongoose.models.Order || mongoose.model("Order", orderSchema);
 export default Order
