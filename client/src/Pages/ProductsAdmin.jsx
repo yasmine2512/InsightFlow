@@ -66,7 +66,7 @@ useEffect(() => {
             <p className="text-sm text-muted-foreground ">Manage your product catalog</p>
           </div>
         <><Button className="gradient-primary border-0 text-primary-foreground" onClick={() => setOpen(true)}>
-            <Plus className="w-4 h-4 mr-2" /> Add Product
+            <Plus className="w-4 h-4" /> Add Product
           </Button>
           <AddProductPopup
         open={open}

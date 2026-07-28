@@ -1,67 +1,72 @@
-import { useState ,useEffect} from "react";
+import { useState, useEffect } from "react";
 import axios from "axios";
 import { useQueryClient } from "@tanstack/react-query";
 import { ErrorDialog } from "./ErrorDialog";
 import { SuccessDialog } from "./SuccesDialog";
 import { useAuth } from "../context/AuthContext";
+import { Users } from "lucide-react";
 
 const API_URL = import.meta.env.VITE_API_URL;
-export default function AddCustomerPopup({open,setOpen,mode, initialData}) {
-const queryClient = useQueryClient();
-const {user} = useAuth();
-const token = user?.token;
-const id = user?.userId;
-const emptyForm = {
-  name: "",
-  email: "",
-  phone: "",
-  address: "",
-};
+
+export default function AddCustomerPopup({ open, setOpen, mode, initialData }) {
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
+  const token = user?.token;
+  const id = user?.userId;
+
+  const emptyForm = {
+    name: "",
+    email: "",
+    phone: "",
+    address: "",
+  };
+
   const [error, setError] = useState("");
   const [form, setForm] = useState(emptyForm);
-  const [errorOpen,setErrorOpen] = useState(false);
+  const [errorOpen, setErrorOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
-  const [succesOpen,setSuccessOpen] = useState(false);
+  const [succesOpen, setSuccessOpen] = useState(false);
   const [successMessgae, setSuccessMessage] = useState("");
 
   const isValidEmail = (email) => {
-    return email === "" ||
-           /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-};
+    return email === "" || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  };
 
   useEffect(() => {
-  if (mode === "edit" && initialData) {
-    setForm({
-      name: initialData.name || "",
-      email: initialData.email || "",
-      phone: initialData.phone || "",
-      address: initialData.address || "",
-    });
-  }
-   if (mode === "create") {
-    setForm(emptyForm);
-  }
-  setError("");
-}, [mode,initialData]);
+    if (mode === "edit" && initialData) {
+      setForm({
+        name: initialData.name || "",
+        email: initialData.email || "",
+        phone: initialData.phone || "",
+        address: initialData.address || "",
+      });
+    }
+    if (mode === "create") {
+      setForm(emptyForm);
+    }
+    setError("");
+  }, [mode, initialData]);
+
   const handleChange = (e) => {
     setForm({
       ...form,
       [e.target.name]: e.target.value,
     });
   };
+
   const handleSubmit = async () => {
     if (!isValidEmail(form.email)) {
-    setErrorMessage("Please enter a valid email address.");
-    setErrorOpen(true);
-    return;
-}
+      setErrorMessage("Please enter a valid email address.");
+      setErrorOpen(true);
+      return;
+    }
     try {
-        const cleanedForm = {
+      const cleanedForm = {
         name: form.name.trim(),
         email: form.email.trim().toLowerCase(),
         phone: form.phone.trim(),
         address: form.address,
-        };
+      };
       const res = await axios.post(
         `${API_URL}/api/customers/${id}`,
         cleanedForm,
@@ -74,7 +79,7 @@ const emptyForm = {
       setSuccessMessage("The Client has been created and saved successfully.");
       setSuccessOpen(true);
       queryClient.invalidateQueries(["customerslist", id]);
-      setForm({name: "",email: "",phone: "",address: "",});
+      setForm({ name: "", email: "", phone: "", address: "" });
     } catch (error) {
       console.log(error.response);
       setErrorMessage(error.response?.data?.message);
@@ -82,19 +87,19 @@ const emptyForm = {
     }
   };
 
-const handleUpdate = async () => {
-  if (!isValidEmail(form.email)) {
-    setErrorMessage("Please enter a valid email address.");
-    setErrorOpen(true);
-    return;
-}
+  const handleUpdate = async () => {
+    if (!isValidEmail(form.email)) {
+      setErrorMessage("Please enter a valid email address.");
+      setErrorOpen(true);
+      return;
+    }
     try {
-        const cleanedForm = {
+      const cleanedForm = {
         name: form.name.trim(),
         email: form.email.trim().toLowerCase(),
         phone: form.phone.trim(),
         address: form.address,
-        };
+      };
       const res = await axios.put(
         `${API_URL}/api/customers/${id}/${initialData._id}`,
         cleanedForm,
@@ -104,55 +109,62 @@ const handleUpdate = async () => {
           },
         }
       );
-      setSuccessMessage("The Client has been updated successfully.")
+      setSuccessMessage("The Client has been updated successfully.");
       setSuccessOpen(true);
       queryClient.invalidateQueries(["customerslist", id]);
-      setForm({name: "",email: "",phone: "",address: "",});
+      setForm({ name: "", email: "", phone: "", address: "" });
     } catch (error) {
       console.log(error.response);
-        const msg = error.response?.data?.message;
-        setErrorMessage(msg);
-        setErrorOpen(true);
+      const msg = error.response?.data?.message;
+      setErrorMessage(msg);
+      setErrorOpen(true);
+    }
   };
-}
+
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-      <div className="bg-white w-[650px] rounded-2xl shadow-xl p-6 border">
-        {mode === "create"?(<h2 className="text-2xl font-semibold mb-6">
-          Add Customer
-        </h2>):(
-            <h2 className="text-2xl font-semibold mb-6">
-          Edit Customer
-        </h2>
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
+      <div className="bg-white w-[750px] max-h-[92vh] rounded-2xl overflow-y-auto shadow-xl p-6 flex flex-col border border-border">
+        
+        {/* Header with Icon */}
+        <div className="flex items-center gap-3 mb-6">
+          <div className="flex items-center justify-center w-10 h-10 rounded-full bg-primary/10 shrink-0">
+            <Users size={20} className="text-primary" />
+          </div>
+          <div className="flex flex-col items-start text-left justify-center">
+            <h2 className="text-xl font-semibold leading-tight">
+              {mode === "create" ? "Add Customer" : "Edit Customer"}
+            </h2>
+            <p className="text-xs text-muted-foreground mt-0.5">Fill in the contact and profile information for this customer.</p>
+          </div>
+        </div>
 
+        {error === "email" && (
+          <span className="text-red-500 text-sm mb-4">
+            Email already exists
+          </span>
         )}
-{error === "email" && (
-                <span className="text-red-500 text-sm mt-1">
-                    Email already exists
-                </span>)}
-        <div className="grid grid-cols-2 gap-4">
 
+        <div className="grid grid-cols-2 gap-4">
           {/* Name */}
           <div className="flex flex-col">
-            <label className="mb-2">
+            <label className="text-xs font-medium text-muted-foreground mb-1 ml-1">
               Name
             </label>
-
             <input
               type="text"
               name="name"
               value={form.name}
               onChange={handleChange}
               placeholder="Customer name"
-              className="border p-3 rounded-lg"
+              className="border border-border p-3 rounded-xl text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 w-full"
             />
           </div>
 
           {/* Email */}
           <div className="flex flex-col">
-            <label className="mb-2">
+            <label className="text-xs font-medium text-muted-foreground mb-1 ml-1">
               Email
             </label>
             <input
@@ -161,84 +173,84 @@ const handleUpdate = async () => {
               value={form.email}
               onChange={handleChange}
               placeholder="Customer email"
-              className="border p-3 rounded-lg"
+              className="border border-border p-3 rounded-xl text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 w-full"
             />
           </div>
 
           {/* Phone */}
           <div className="flex flex-col">
-            <label className="mb-2">
+            <label className="text-xs font-medium text-muted-foreground mb-1 ml-1">
               Phone
             </label>
-
             <input
               type="text"
               name="phone"
               value={form.phone}
               onChange={handleChange}
               placeholder="Customer phone"
-              className="border p-3 rounded-lg"
+              className="border border-border p-3 rounded-xl text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 w-full"
             />
           </div>
 
           {/* Address */}
           <div className="flex flex-col">
-            <label className="mb-2">
+            <label className="text-xs font-medium text-muted-foreground mb-1 ml-1">
               Address
             </label>
-
             <input
               type="text"
               name="address"
               value={form.address}
               onChange={handleChange}
               placeholder="Customer address"
-              className="border p-3 rounded-lg"
+              className="border border-border p-3 rounded-xl text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 w-full"
             />
           </div>
         </div>
 
-        <div className="flex justify-end gap-3 mt-6">
-
+        {/* Footer Actions */}
+        <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-border">
           <button
             onClick={() => setOpen(false)}
-            className="px-4 py-2 border rounded-lg"
+            className="px-5 py-2.5 border border-border rounded-xl text-sm font-medium hover:bg-muted transition-colors"
           >
             Cancel
           </button>
-            { mode === "create"?(
-          <button
-            onClick={handleSubmit}
-            className="px-4 py-2 bg-black text-white rounded-lg"
-          >
-            Add Customer
-          </button>):(
-                <button
-            onClick={handleUpdate}
-            className="px-4 py-2 bg-black text-white rounded-lg"
-          >
-            Update Customer
-          </button>
-
-          )}
           
+          {mode === "create" ? (
+            <button
+              onClick={handleSubmit}
+              className="px-5 py-2.5 bg-primary text-primary-foreground rounded-xl text-sm font-medium hover:bg-primary/90 transition-colors"
+            >
+              Add Customer
+            </button>
+          ) : (
+            <button
+              onClick={handleUpdate}
+              className="px-5 py-2.5 bg-primary text-primary-foreground rounded-xl text-sm font-medium hover:bg-primary/90 transition-colors"
+            >
+              Update Customer
+            </button>
+          )}
         </div>
       </div>
+
       <ErrorDialog
-              open={errorOpen}
-              title="Create Error"
-              message={errorMessage}
-              actionLabel="Okay"
-              onClose={() => setErrorOpen(false)}
-            />
+        open={errorOpen}
+        title="Create Error"
+        message={errorMessage}
+        actionLabel="Okay"
+        onClose={() => setErrorOpen(false)}
+      />
+      
       <SuccessDialog
-              open={succesOpen}
-              message= {successMessgae}
-              onClose={() => {
-                setSuccessOpen(false);
-                setOpen(false);
-              }}
-            />      
+        open={succesOpen}
+        message={successMessgae}
+        onClose={() => {
+          setSuccessOpen(false);
+          setOpen(false);
+        }}
+      />     
     </div>
   );
 }

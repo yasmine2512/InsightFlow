@@ -1,5 +1,5 @@
 import DashboardLayout from "../components/Layout";
-import { Search,Filter,Download,DollarSign,TrendingUp,TrendingDown, Package, ShoppingCart, Users,PackageCheck,AlertTriangle,XCircle} from "lucide-react";
+import { Search,Filter,Download,DollarSign,TrendingUp,TrendingDown, Package, ShoppingCart, Users,PackageCheck,AlertTriangle,XCircle,Plus} from "lucide-react";
 
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/Input";
@@ -8,6 +8,7 @@ import { useEffect, useState } from "react"
 import axios from "axios"
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "../context/AuthContext";
+import AddProductPopup from "./AddProduct";
 
 
 export default function Products() {
@@ -17,6 +18,7 @@ export default function Products() {
   const [profile, setProfile] = useState(null)
   const API_URL = import.meta.env.VITE_API_URL;
   const navigate = useNavigate();
+  const [openForm,setOpenForm] = useState(false);
 
     const fetchStats = async () => {
       try {
@@ -60,12 +62,12 @@ const { data:data,isLoading: isLoadingstats,error: errorstats } = useQuery({ que
 const [currentPage, setCurrentPage] = useState(1);
 const {  data: productlist, isLoading, error } = useQuery({ queryKey: ["productlist", id,currentPage,debouncedSearch,filter],
    queryFn: () => fetchProducts({page:currentPage,search:debouncedSearch,filter:filter}),keepPreviousData: true,staleTime: 1000 * 60 * 5});
-  if (isLoading) return <div>Loading...</div>
+  if (isLoading || !data) return <div>Loading...</div>
   if (error) return <p>Error loading products</p>;
 
-  const LS = data.productsKPI[0].lowStock;
-  const OS = data.productsKPI[0].outOfStock;
-  const IV = data.productsKPI[0].inventoryValue.toFixed(1);
+  const LS = data.productsKPI[0].lowStock || 0;
+  const OS = data.productsKPI[0].outOfStock || 0;
+  const IV = data.productsKPI[0].inventoryValue.toFixed(1) || 0;
   const STOCK_OPTIONS = ["All","Low Stock","active"];
 
   const stats = [
@@ -141,6 +143,11 @@ const end = Math.min(currentPage * rowsPerPage,totalproducts);
   )}
               </div>
             </div>
+            
+        <Button  onClick={()=> setOpenForm(true)}
+  className="px-4 py-2 bg-green-600 text-white rounded-lg">
+   <Plus className="w-4 h-4" />Add Product
+            </Button>
         </div>
 
        <div className="bg-card rounded-xl border border-border shadow-soft overflow-hidden">
@@ -231,6 +238,11 @@ const end = Math.min(currentPage * rowsPerPage,totalproducts);
     </div>
   </div>
 </div>
+<AddProductPopup
+        open={openForm}
+        setOpen={setOpenForm}
+        mode="create"
+      />
       </div>
   );
 }
