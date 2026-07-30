@@ -79,6 +79,7 @@ export default function AddCustomerPopup({ open, setOpen, mode, initialData }) {
       setSuccessMessage("The Client has been created and saved successfully.");
       setSuccessOpen(true);
       queryClient.invalidateQueries(["customerslist", id]);
+      queryClient.invalidateQueries(["customer", id]);
       setForm({ name: "", email: "", phone: "", address: "" });
     } catch (error) {
       console.log(error.response);

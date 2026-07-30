@@ -169,107 +169,141 @@ router.delete("/:id/:orderId", asyncHandler(async (req, res) => {
   res.json({ message: "Order deleted successfully" });
 }));
 
-/** 
-   * @desc create from excel
-   * @route /api/orders/:id
-   * @method POST
-   * @access private
-   */  
- router.post("/import/:id",verifyTokenAndAuthorization,upload.single("file"),
+/**
+ * @desc create orders from excel
+ * @route /api/orders/import/:id
+ * @method POST
+ * @access private
+ */
+router.post("/import/:id",verifyTokenAndAuthorization,upload.single("file"),
   asyncHandler(async (req, res) => {
     const orgId = new mongoose.Types.ObjectId(req.params.id);
-    const workbook = xlsx.read(req.file.buffer, {type: "buffer",});
+    if (!req.file) {
+      return res.status(400).json({
+        message: "No file uploaded",
+      });
+    }
+    const workbook = xlsx.read(req.file.buffer, {
+      type: "buffer",
+    });
     const sheetName = workbook.SheetNames[0];
-    const rows = xlsx.utils.sheet_to_json(workbook.Sheets[sheetName]);
-    if (!rows.length) {return res.status(400).json({
+    const rows = xlsx.utils.sheet_to_json(
+      workbook.Sheets[sheetName]
+    );
+    if (!rows.length) {
+      return res.status(400).json({
         message: "Empty Excel file",
       });
     }
     const errors = [];
     const ordersMap = {};
     for (const row of rows) {
-      const {orderRef,Fullname,email,phone,address,productSKU,quantity,date} = row;
-      if (!orderRef || !email || !productSKU){
-      errors.push({
-      row,
-      message: "Missing required fields",
-      });
-     continue;
-    }
-      if (!ordersMap[orderRef]) {
-        ordersMap[orderRef] = {customer: {Fullname,email,phone,address,},
-        date: parseExcelDate(date) || new Date() ,
-        products: [],};
+      const {
+        "Order ID": orderRef,
+        "Full Name": Fullname,
+        "Email": email,
+        "Phone": phone,
+        "Address": address,
+        "Product SKU": productSKU,
+        "Quantity": quantity,
+        "Date": date,
+      } = row;
+      if (!orderRef || !productSKU) {
+        errors.push({row,message: "Missing required fields"});
+        continue;
       }
-      const parsedDate = date && !isNaN(parseExcelDate(date))? parseExcelDate(date):new Date();
-      ordersMap[orderRef].orderDate = parsedDate;
-      ordersMap[orderRef].products.push({productSKU,quantity: Number(quantity) || 1,});
+      if (!ordersMap[orderRef]) {
+        if (!email) {
+        errors.push({
+          orderRef,
+          message: "First row of order must contain customer email"
+        });
+        continue;
+      }
+        ordersMap[orderRef] = {
+          customer: {
+            Fullname,
+            email: email.trim().toLowerCase(),
+            phone,
+            address,
+          },
+          date: parseExcelDate(date) || new Date(),
+          products: [],
+        };
+      }
+      ordersMap[orderRef].products.push({
+        productSKU,
+        quantity: Number(quantity) || 1,
+      });
     }
-     
     const createdOrders = [];
     for (const orderRef in ordersMap) {
-      const data = ordersMap[orderRef];
+      const session = await mongoose.startSession();
       try {
-        let customer = await Customer.findOne({
-          organization: orgId,
-          email: data.customer.email,
-        });
-        if (!customer) {
-          customer = await Customer.create({
-            organization: orgId,
-            name: data.customer.Fullname,
-            email: data.customer.email,
-            phone: data.customer.phone,
-            address: data.customer.address,
-            createdAt: data.date,
-          });
-        }
+        session.startTransaction();
+        const data = ordersMap[orderRef];
         const products = [];
         let totalPrice = 0;
         for (const item of data.products) {
           const product = await Product.findOne({
             organization: orgId,
-            sku: item.productSKU,
-          });
+            sku: item.productSKU,}).session(session);
+
           if (!product) {
-            errors.push({
-              orderRef,
-              message: `Product not found: ${item.productSKU}`,
-            });
-            continue;
+            throw new Error(`Product not found: ${item.productSKU}`);
           }
-          const qty = item.quantity;
           products.push({
             product: product._id,
-            quantity: qty,
+            quantity: item.quantity,
             priceAtPurchase: product.price,
           });
-          totalPrice += qty * product.price;
+          totalPrice +=
+            item.quantity * product.price;
         }
-        if (!products.length) continue;
-        const order = await Order.create({
+        let customer = await Customer.findOne({
           organization: orgId,
-          orderNumber: await getNextOrderNumber(orgId),
-          customer: customer._id,
-          products,
-          totalPrice,
-          status: "pending",
-          createdAt: data.date,
-        });
-        createdOrders.push(order);
+          email: data.customer.email,}).session(session);
+        if (!customer) {
+          const createdCustomer =
+            await Customer.create(
+              [{organization: orgId,
+                name: data.customer.Fullname,
+                email: data.customer.email,
+                phone: data.customer.phone,
+                address: data.customer.address,
+                createdAt: data.date,
+              }],{session,}
+            );
+          customer = createdCustomer[0];
+        }
+        const orderNumber =
+          await getNextOrderNumber(orgId);
+        const createdOrder =
+          await Order.create(
+            [{organization: orgId,
+              orderNumber,
+              customer: customer._id,
+              products,
+              totalPrice,
+              status: "pending",
+              createdAt: data.date,}],{session}
+          );
+        await session.commitTransaction();
+        createdOrders.push(createdOrder[0]);
       } catch (err) {
-        errors.push({
-          orderRef,
-          message: err.message,
+        await session.abortTransaction();
+        errors.push({orderRef,message: err.message,
         });
+      } finally {
+        session.endSession();
       }
     }
-    if (createdOrders.length === 0) {
-  return res.status(400).json({
-    message: "Import failed - no orders created",
-    errors,
-  });
-}
+    if (!createdOrders.length) {
+      return res.status(400).json({
+        message:"Import failed - no orders created",
+        errors,
+      });
+    }
     return res.status(201).json({
       message: "Import completed",
       created: createdOrders.length,
@@ -278,6 +312,7 @@ router.delete("/:id/:orderId", asyncHandler(async (req, res) => {
     });
   })
 );
+
 function parseExcelDate(value) {
   if (!value) return null;
   if (typeof value === "number") {

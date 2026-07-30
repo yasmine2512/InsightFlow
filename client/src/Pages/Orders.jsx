@@ -159,20 +159,20 @@ const fetchOrders= async ({page,search,status}) => {
     }
 const fileInputRef = useRef(null);
 const [loadingImport, setLoadingImport] = useState(false);
-const handleImportClick = () => {
-  if(!plan ||plan === "free"){
-    navigate("/subscriptions");
-  }else{
-  fileInputRef.current.click();}
-};
-const handleFileChange = async (e) => {
-  const file = e.target.files[0];
+// const handleImportClick = () => {
+//   if(!plan ||plan === "free"){
+//     navigate("/subscriptions");
+//   }else{
+//   fileInputRef.current.click();
+// }
+// };
+const handleFileChange = async (file) => {
   if (!file) return;
   const formData = new FormData();
   formData.append("file", file);
   try {
     setLoadingImport(true);
-    await axios.post(
+    const res = await axios.post(
       `${API_URL}/api/orders/import/${id}`,
       formData,
       {headers: {
@@ -180,16 +180,45 @@ const handleFileChange = async (e) => {
           "Content-Type": "multipart/form-data",
         },}
     );
-    setSuccessMessage("Import successful");
-    setSuccessOpen(true);
+    
     queryClient.invalidateQueries(["orders", id]);
+    queryClient.invalidateQueries(["customerslist", id]);
+    queryClient.invalidateQueries(["customer", id]);
+    queryClient.invalidateQueries(["productsStats", id]);
+    queryClient.invalidateQueries(["productlist", id]);
+    const { created, failed, errors } = res.data;
+  if (failed > 0) {
+    const issues = errors.map((err) => {
+        return `${err.orderRef || "Row"}: ${err.message}`;
+      }).join("\n");
+
+    setSuccessMessage(
+      `Import completed.\n\n${created} orders created.\n${failed} issues found:\n${issues}`
+    );
+  } else {
+    setSuccessMessage(
+      `Import completed successfully. ${created} orders created.`
+    );
+  }
+   setopenOrderModal(false);
+   setSuccessOpen(true);
   } catch (err) {
     console.log(err.response?.data?.errors || "no error");
-    setErrorMessage(err.response?.data?.message || "Import failed");
+    const errors = err.response?.data?.errors || [];
+    const errorMessage = errors
+    .map((error) => {
+      if (error.row) {
+        return `Row error: ${error.message}`;
+      }
+
+      return `${error.orderRef}: ${error.message}`;
+    })
+    .join("\n");
+    setopenOrderModal(false);
+    setErrorMessage(errorMessage || "Import failed");
     setErrorOpen(true);
   } finally {
     setLoadingImport(false);
-    e.target.value = "";
   }
 };
 const [search, setSearch] = useState("");
@@ -334,9 +363,6 @@ const colors = [
     </div>
   )}</div>
             </div>
-            <input type="file"ref={fileInputRef} accept=".xlsx,.xls"
-              onChange={handleFileChange}style={{ display: "none" }}
-              />
             <Button  onClick={()=> setopenOrderModal(true)}
   className="px-4 py-2 bg-green-600 text-white rounded-lg">
   {loadingImport ? "Importing..." : "Import Excel"}<Download className="w-4 h-4 mr-2" />
@@ -466,7 +492,16 @@ const colors = [
     </div>
   </div>
         </div>
-    <DeleteDialog 
+    <AddOrderPopup2
+    open={openOrderForm}
+    setOpen={setopenOrderForm}
+    productsList={productsList}
+    />     
+    <ImportOrdersModal
+     open={openOrderModal} 
+     onClose={()=> setopenOrderModal(false)}
+     onUpload={handleFileChange} />
+         <DeleteDialog 
       open={deleteTarget !== null}
       onConfirm={handleDeleteConfirm}
       onCancel={() => setDeleteTarget(null)}
@@ -487,15 +522,7 @@ const colors = [
             setOpen(false);
             }}
           />
-    <AddOrderPopup2
-    open={openOrderForm}
-    setOpen={setopenOrderForm}
-    productsList={productsList}
-    />     
-    <ImportOrdersModal
-     open={openOrderModal} 
-     onClose={()=> setopenOrderModal(false)}
-     onUpload={handleImportClick} />
       </div>
+
   );
 }

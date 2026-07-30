@@ -8,9 +8,14 @@ import {
   verifyTokenAndAuthorization,
   verifyTokenAndAdmin
 } from '../Middlewares/JWTauth.js'
+import multer from "multer";
 import { getUpload, cloudinary } from "../Middlewares/Multer.js";
-import {getProductsWithStats,getActiveProductsGrowth,getProductKPIs,gettopproducts, getallproducts,getproductdetails}
- from "../Queries/productsQueries.js"
+import {getProductsWithStats,getActiveProductsGrowth,getProductKPIs,gettopproducts, 
+  getallproducts,getproductdetails} from "../Queries/productsQueries.js"
+import xlsx from "xlsx";
+const upload = multer({
+   storage: multer.memoryStorage(),
+ });
 const router = express.Router();
 
 const toObjectId = (id) =>
@@ -180,5 +185,100 @@ return res.status(201).json({message: "Product added successfully"});
 
   return res.status(200).json({ message: "Product updated successfully", product: updated });
 }));
+
+/**
+ * @desc import products from excel
+ * @route /api/products/import/:id
+ * @method POST
+ * @access private
+ */
+router.post("/import/:id",verifyTokenAndAuthorization,upload.single("file"),
+  asyncHandler(async (req, res) => {
+    const orgId = new mongoose.Types.ObjectId(req.params.id);
+    if (!req.file) {
+      return res.status(400).json({
+        message: "No file uploaded",
+      });
+    }
+    const workbook = xlsx.read(req.file.buffer, {
+      type: "buffer",
+    });
+    const sheetName = workbook.SheetNames[0];
+    const rows = xlsx.utils.sheet_to_json(
+      workbook.Sheets[sheetName]
+    );
+    if (!rows.length) {
+      return res.status(400).json({
+        message: "Empty Excel file",
+      });
+    }
+    const errors = [];
+    const createdProducts = [];
+    for (const row of rows) {
+      const {
+        "SKU": sku,
+        "Product Name": name,
+        "Price": price,
+        "Stock": stock,
+        "Category": category,
+        "Description": description,
+        "Features": features,
+        "Image URL": image,
+      } = row;
+      try {
+        if (!sku || !name || price === undefined || stock === undefined) {
+          errors.push({
+            sku: sku || "unknown",
+            message: "Missing required fields (SKU, Name, Price, Stock)",
+          });
+          continue;
+        }
+        const existing = await Product.findOne({
+          organization: orgId,
+          sku,
+        });
+        if (existing) {
+          errors.push({
+            sku,
+            message: "Product with this SKU already exists",
+          });
+          continue;
+        }
+        const productFeatures = features
+          ? features.split(",").map(f => f.trim())
+          : [];
+        const productData = {
+          organization: orgId,
+          sku,
+          name,
+          price: Number(price),
+          stock: Number(stock),
+          category,
+          description,
+          features: productFeatures,
+        };
+        if (image) {
+          productData.image = image;
+        }  
+        const product = await Product.create(productData);
+        createdProducts.push(product);
+      } catch (err) {
+        errors.push({sku,message: err.message,});
+      }
+    }
+    if (!createdProducts.length) {
+      return res.status(400).json({
+        message: "Import failed - no products created",
+        errors,
+      });
+    }
+    return res.status(201).json({
+      message: "Products imported successfully",
+      created: createdProducts.length,
+      failed: errors.length,
+      errors,
+    });
+  })
+);
 
 export default router;

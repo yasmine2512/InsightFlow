@@ -1,16 +1,24 @@
-import { useState } from "react";
+import { useState ,useRef} from "react";
 import { Upload, FileSpreadsheet, X } from "lucide-react";
-
+import * as XLSX from "xlsx";
 export function ImportOrdersModal({ open, onClose, onUpload }) {
   if (!open) return null;
-
+  const fileInputRef = useRef(null);
   const downloadOrderTemplate = () => {
-    // Template generation logic using SheetJS
     const sampleData = [
-      { "Order ID": "ORD-001", "Customer Name": "John Doe", "Customer Email": "john@example.com", "Product SKU": "PROD-001", "Quantity": 2 },
-      { "Order ID": "ORD-001", "Customer Name": "", "Customer Email": "", "Product SKU": "PROD-002", "Quantity": 1 }
+      { "Order ID": "ORD-001", "Full Name": "John Doe", "Email": "john@example.com","Phone":"05555555555","Address":"alger,algeria", "Product SKU": "PROD-001", "Quantity": 2,"Date":new Date(2026, 4, 17) },
+      { "Order ID": "ORD-001", "Full Name": "", "Email": "","Phone":"","Address":"", "Product SKU": "PROD-002", "Quantity": 1,"Date":""},
+      { "Order ID": "ORD-002", "Full Name": "Jane Smith", "Email": "jane@example.com","Phone":"0666666666","Address":"alger,algeria", "Product SKU": "PROD-042", "Quantity": 3 ,"Date":""}
     ];
     const worksheet = XLSX.utils.json_to_sheet(sampleData);
+      worksheet["!cols"] = [{ wch: 10 }, { wch: 15 },{ wch: 20 },{ wch: 20 },{ wch: 15 },
+        { wch: 10 },{ wch: 10 },{ wch: 20 }];
+   worksheet["H2"] = {
+  t: "n",
+  f: "DATE(2026,5,17)"
+};
+
+worksheet["H2"].z = "dd/mm/yyyy";
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Orders");
     XLSX.writeFile(workbook, "order_import_template.xlsx");
@@ -53,6 +61,7 @@ export function ImportOrdersModal({ open, onClose, onUpload }) {
         {/* File Input Upload Area */}
         <div className="border-2 border-dashed border-border rounded-xl p-6 text-center hover:border-primary/50 transition-colors cursor-pointer mb-6">
           <input
+            ref={fileInputRef}
             type="file"
             accept=".xlsx, .xls, .csv"
             onChange={(e) => onUpload(e.target.files[0])}

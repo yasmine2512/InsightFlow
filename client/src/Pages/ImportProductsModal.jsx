@@ -1,30 +1,38 @@
-import { useState } from "react";
+import { useState , useRef} from "react";
 import { Upload, FileSpreadsheet, X } from "lucide-react";
 import * as XLSX from "xlsx";
 
 export function ImportProductsModal({ open, onClose, onUpload }) {
   if (!open) return null;
-
+  const fileInputRef = useRef(null);
   const downloadProductTemplate = () => {
-    // Generate sample data for products
+
     const sampleData = [
       { 
         "SKU": "PROD-001", 
         "Product Name": "Wireless Mouse", 
         "Price": 25.99, 
         "Stock": 120, 
-        "Image URL": "https://example.com/mouse.jpg" 
+        "Category": "Peripherals",
+        "Description":"Vertical design for reduced wrist strain",
+        "Features":"Feature 1,Feature 2,Feature 3",
+        "Image URL": " https://en.wikipedia.org/wiki/Computer_mouse" ,
       },
       { 
         "SKU": "PROD-002", 
         "Product Name": "Mechanical Keyboard", 
-        "Price": 89.99, 
+        "Price": 90, 
         "Stock": 45, 
-        "Image URL": "https://example.com/keyboard.jpg" 
+        "Category": "Peripherals",
+        "Description":"Tactile switches with RGB backlight and aluminum frame",
+        "Features":"Feature 1,Feature 2,Feature 3",
+        "Image URL": "" 
       }
     ];
 
     const worksheet = XLSX.utils.json_to_sheet(sampleData);
+    worksheet["!cols"] = [{ wch: 10 }, { wch: 15 },{ wch: 10 },{ wch: 10 },{ wch: 15 },
+        { wch: 25 },{ wch: 25},{ wch: 30 }];
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Products");
     
@@ -69,6 +77,7 @@ export function ImportProductsModal({ open, onClose, onUpload }) {
         {/* File Input Upload Area */}
         <div className="border-2 border-dashed border-border rounded-xl p-6 text-center hover:border-primary/50 transition-colors cursor-pointer mb-6">
           <input
+            ref={fileInputRef}
             type="file"
             accept=".xlsx, .xls, .csv"
             onChange={(e) => onUpload(e.target.files[0])}

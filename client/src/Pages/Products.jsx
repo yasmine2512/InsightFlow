@@ -7,8 +7,12 @@ import { useParams ,  useNavigate} from "react-router-dom"
 import { useEffect, useState } from "react"
 import axios from "axios"
 import { useQuery } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "../context/AuthContext";
 import AddProductPopup from "./AddProduct";
+import { ImportProductsModal } from "./ImportProductsModal";
+import { SuccessDialog } from "./SuccesDialog";
+import { ErrorDialog } from "./ErrorDialog";
 
 
 export default function Products() {
@@ -17,9 +21,15 @@ export default function Products() {
   const id = user?.userId;
   const [profile, setProfile] = useState(null)
   const API_URL = import.meta.env.VITE_API_URL;
+  const queryClient = useQueryClient();
   const navigate = useNavigate();
   const [openForm,setOpenForm] = useState(false);
-
+  const [loadingImport, setLoadingImport] = useState(false);
+  const [errorOpen,setErrorOpen] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [succesOpen,setSuccessOpen] = useState(false);
+  const [successMessgae, setSuccessMessage] = useState("");
+  const [openProductModal,setopenProductModal] = useState(false);
     const fetchStats = async () => {
       try {
         const res = await axios.get(`${API_URL}/api/products/${id}/stats`, {
@@ -45,6 +55,58 @@ export default function Products() {
         throw err;
       }
     }
+
+    const handleFileChange = async (file) => {
+  if (!file) return;
+  const formData = new FormData();
+  formData.append("file", file);
+  try {
+    setLoadingImport(true);
+    const res = await axios.post(
+      `${API_URL}/api/products/import/${id}`,
+      formData,
+      {headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "multipart/form-data",
+        },}
+    );
+    queryClient.invalidateQueries(["productsStats", id]);
+    queryClient.invalidateQueries(["productlist", id]);
+    const { created, failed, errors } = res.data;
+  if (failed > 0) {
+    const issues = errors.map((err) => {
+        return `${err.orderRef || "Row"}: ${err.message}`;
+      }).join("\n");
+
+    setSuccessMessage(
+      `Import completed.\n\n${created} Product created.\n ${failed} issues found:\n${issues}`
+    );
+  } else {
+    setSuccessMessage(
+      `Import completed successfully. ${created} Products created.`
+    );
+  }
+   setopenProductModal(false);
+   setSuccessOpen(true);
+  } catch (err) {
+    console.log(err.response?.data?.errors || "no error");
+    const errors = err.response?.data?.errors || [];
+    const errorMessage = errors
+    .map((error) => {
+      if (error.row) {
+        return `Row error: ${error.message}`;
+      }
+
+      return `${error.orderRef}: ${error.message}`;
+    })
+    .join("\n");
+    setopenProductModal(false);
+    setErrorMessage(errorMessage || "Import failed");
+    setErrorOpen(true);
+  } finally {
+    setLoadingImport(false);
+  }
+};
 const [search, setSearch] = useState("");
 const [debouncedSearch, setDebouncedSearch] = useState(search);
  const [open,setOpen] = useState(false);
@@ -79,9 +141,9 @@ const {  data: productlist, isLoading, error } = useQuery({ queryKey: ["productl
   const products = productlist.productslist.products;
   const rowsPerPage = 10;
   const totalproducts = productlist.productslist.total;
-const totalPages = Math.max(1, Math.ceil(totalproducts / rowsPerPage));
+  const totalPages = Math.max(1, Math.ceil(totalproducts / rowsPerPage));
   const start = (currentPage - 1) * rowsPerPage + 1;
-const end = Math.min(currentPage * rowsPerPage,totalproducts);
+  const end = Math.min(currentPage * rowsPerPage,totalproducts);
   return (
 
     
@@ -143,7 +205,10 @@ const end = Math.min(currentPage * rowsPerPage,totalproducts);
   )}
               </div>
             </div>
-            
+        <Button  onClick={()=> setopenProductModal(true)}
+  className="px-4 py-2 bg-green-600 text-white rounded-lg">
+  {loadingImport ? "Importing..." : "Import Excel"}<Download className="w-4 h-4 mr-2" />
+            </Button>    
         <Button  onClick={()=> setOpenForm(true)}
   className="px-4 py-2 bg-green-600 text-white rounded-lg">
    <Plus className="w-4 h-4" />Add Product
@@ -243,6 +308,26 @@ const end = Math.min(currentPage * rowsPerPage,totalproducts);
         setOpen={setOpenForm}
         mode="create"
       />
+  <ImportProductsModal
+       open={openProductModal} 
+       onClose={()=> setopenProductModal(false)}
+       onUpload={handleFileChange} />
+
+      <ErrorDialog
+            open={errorOpen}
+            title="Create Error"
+            message={errorMessage}
+            actionLabel="Okay"
+            onClose={() => setErrorOpen(false)}
+                  />
+      <SuccessDialog
+            open={succesOpen}
+            message={successMessgae}
+            onClose={() => {
+              setSuccessOpen(false);
+              setOpen(false);
+              }}
+            />    
       </div>
   );
 }

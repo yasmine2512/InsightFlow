@@ -8,7 +8,7 @@ const productSchema = new mongoose.Schema({
   stock: { type: Number, default: 0 },
   category: {type : String},
   features:{type: Array},
-  image: String, 
+  image: {type:String ,default:"https://res.cloudinary.com/dxpglsreb/image/upload/v1785442970/empty-cart_y5lpl4.avif"}, 
   sku: {type : String,required: true,unique: true},
   createdAt: { type: Date, default: Date.now },
 });

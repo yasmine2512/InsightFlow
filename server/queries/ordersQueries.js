@@ -45,7 +45,7 @@ export const getallOrders = async (orgId, query) => {
   pipeline.push({
     $facet: {
       orders: [
-        {$sort: {createdAt: -1}},
+        {$sort: {createdAt: -1,_id: -1}},
         {$skip: skip},
         {$limit: limit},
         {$lookup: {

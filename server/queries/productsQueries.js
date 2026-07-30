@@ -87,7 +87,7 @@ const pipeline =[
           { $ifNull: ["$orders.products.priceAtPurchase", 0] }]},0]}},
         soldThisMonth: {$sum: {
             $cond: [ {$and: [
-          { $gte: ["$orders.createdAt", startMonth] },
+          { $gte: ["$orders.completedAt", startMonth] },
           { $eq: ["$orders.status", "completed"] }]},
           { $ifNull: ["$orders.products.quantity", 0] },0]
           }}
@@ -124,11 +124,11 @@ const stats = await Order.aggregate([
   {$unwind: "$products"},
   {$match: {"products.product": toObjectId(prodid)}},
   {$group: {_id: null,
-      revenueThisMonth: {$sum: {$cond: [{$gte: ["$createdAt",startOfThisMonth]},
+      revenueThisMonth: {$sum: {$cond: [{$gte: ["$completedAt",startOfThisMonth]},
             {$multiply: ["$products.quantity","$products.priceAtPurchase"]},  0]}},
       revenueLastMonth: {$sum: {$cond: [{$and: [
-                {$gte: ["$createdAt",startOfLastMonth]},
-                {$lte: ["$createdAt",endOfLastMonth]}  ]},
+                {$gte: ["$completedAt",startOfLastMonth]},
+                {$lte: ["$completedAt",endOfLastMonth]}  ]},
             {$multiply: ["$products.quantity","$products.priceAtPurchase"]},0]} },
       unitsSold: {$sum: "$products.quantity"}
     }}
@@ -161,9 +161,9 @@ export const getActiveProductsGrowth = async (orgId) => {
     {$match: {organization: toObjectId(orgId),status: "completed"} },
     {$unwind: "$products"},{$group: {
         _id: "$products.product",
-        current: {$sum: {$cond: [{ $gte: ["$createdAt", startCurrent] },1,0 ]}},
-        previous: { $sum: {$cond: [{$and: [{ $gte: ["$createdAt", startPrevious] },
-                  { $lte: ["$createdAt", endPrevious] }]},1,0]}}
+        current: {$sum: {$cond: [{ $gte: ["$completedAt", startCurrent] },1,0 ]}},
+        previous: { $sum: {$cond: [{$and: [{ $gte: ["$completedAt", startPrevious] },
+                  { $lte: ["$completedAt", endPrevious] }]},1,0]}}
       }},
     {$project:{isActiveCurrent:{ $gt:["$current",0] },isActivePrevious:{ $gt: ["$previous", 0]}}},
     {$group: {
