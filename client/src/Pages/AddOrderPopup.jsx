@@ -12,8 +12,22 @@ export default function AddOrderPopup2({
   open,
   setOpen,
   onSave, 
-  productsList = []
 }) {
+    if (!open) return null;
+  const [productsList,setProductsList] = useState([]);
+  const fetchProducts = async () => {
+         try {
+           const res = await axios.get(`${API_URL}/api/products/${id}/select`, {
+             headers: { Authorization: `Bearer ${token}` }
+           })
+           console.log(res.data);
+
+          return res.data;
+         } catch (err) {
+           console.error("Unauthorized or token invalid", err)
+         }
+       }
+
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const token = user?.token;
@@ -26,7 +40,6 @@ export default function AddOrderPopup2({
     status: "pending",
   });
   
-  // Multiple items state: [{ product: productId, quantity: 1, price: 0 }]
   const [orderItems, setOrderItems] = useState([
     { product: "", quantity: 1, price: 0 }
   ]);
@@ -127,7 +140,13 @@ export default function AddOrderPopup2({
     }
   };
 
-  if (!open) return null;
+    useEffect(() => {
+  const loadProducts = async () => {
+    const products = await fetchProducts();
+    setProductsList(products);
+  };
+  loadProducts();
+}, []);
 
   return (
     <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
@@ -213,13 +232,15 @@ export default function AddOrderPopup2({
               {orderItems.map((item, index) => (
                 <div key={index} className="flex gap-2 items-center">
                   <select
+
                     value={item.product}
                     onChange={(e) => handleItemChange(index, "product", e.target.value)}
                     className="flex-1 block w-full px-3 py-3 text-sm bg-white text-black border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-black"
                   >
                     <option value="" disabled>Select product SKU / name...</option>
                     {productsList.map((prod) => (
-                      <option key={prod._id} value={prod._id}>
+                      <option key={prod._id} value={prod._id} 
+                      disabled={prod.stock <= item.quantity }>
                         {prod.name} ({prod.sku}) — ${prod.price}
                       </option>
                     ))}

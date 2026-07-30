@@ -50,8 +50,8 @@ router.get("/:id",verifyTokenAndAuthorization,asyncHandler(async(req,res)=>{
 
 
 /** 
-   * @desc get all product , top selling products with revenu chart
-   * @route /api/products/:organizationId
+   * @desc get all product catalog
+   * @route /api/products/:organizationId/catalog
    * @method GET
    * @access private
    */ 
@@ -61,6 +61,18 @@ router.get("/:id/cataloge",verifyTokenAndAuthorization,asyncHandler(async(req,re
   const result = await getallproducts(orgid,req.query);
   res.status(200).json({products: result[0].products,
   total: result[0].total[0]?.count || 0,});
+  }));
+
+  /** 
+   * @desc get all product for selecting
+   * @route /api/products/:organizationId/select
+   * @method GET
+   * @access private
+   */ 
+router.get("/:id/select",verifyTokenAndAuthorization,asyncHandler(async(req,res)=>{
+    const orgid = req.params.id;
+  const products = await Product.find({ organization: orgid }).select("name price stock sku");
+  res.status(200).json(products);
   }));
 
 /** 

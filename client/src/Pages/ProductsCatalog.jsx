@@ -27,7 +27,7 @@ export default function ProductsCatalog() {
              headers: { Authorization: `Bearer ${token}` },
              params: { page,limit: 12,search}
            })
-           console.log(res.data)
+           console.log(res.data);
           return res.data;
          } catch (err) {
            console.error("Unauthorized or token invalid", err)
@@ -45,7 +45,7 @@ useEffect(() => {
 useEffect(() => {
   setCurrentPage(1);
 }, [debouncedSearch]); 
-  const { data, isLoading, error } = useQuery({ queryKey: ["catalog", id,Currency,debouncedSearch], queryFn:() =>
+  const { data, isLoading, error } = useQuery({ queryKey: ["catalog", id,currentPage,debouncedSearch], queryFn:() => 
     fetchProducts({page:currentPage, search:debouncedSearch}),staleTime: 1000 * 60 * 5 });
 
   if (isLoading) return <div>Loading...</div>

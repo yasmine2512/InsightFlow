@@ -97,24 +97,6 @@ export default function Orders() {
   const [successMessgae, setSuccessMessage] = useState("");
   const [openOrderModal,setopenOrderModal] = useState(false);
    const [openOrderForm,setopenOrderForm] = useState(false);
-    const  productsList = [{
-    _id: "64a7f2b1c9e8a1234567890a",
-    sku: "PROD-001",                  
-    name: "Wireless Mouse",            
-    price: 25.99                       
-  },
-  {
-    _id: "64a7f2b1c9e8a1234567890b",
-    sku: "PROD-002",
-    name: "Mechanical Keyboard",
-    price: 89.99
-  },
-  {
-    _id: "64a7f2b1c9e8a1234567890c",
-    sku: "PROD-003",
-    name: "USB-C Hub Adapter",
-    price: 19.99
-  }];
   const handleDeleteConfirm = async () => {
   try {
     await axios.delete(`${API_URL}/api/orders/${id}/${deleteTarget}`, {
@@ -495,7 +477,6 @@ const colors = [
     <AddOrderPopup2
     open={openOrderForm}
     setOpen={setopenOrderForm}
-    productsList={productsList}
     />     
     <ImportOrdersModal
      open={openOrderModal} 

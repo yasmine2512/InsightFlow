@@ -6,8 +6,8 @@ import Dashboard from "./Pages/Dashboard"
 import Login from "./Pages/Login"
 import NotFound from "./Pages/NotFound"
 import Orders from "./Pages/Orders"
-import ProductsDetailsAdmin from "./Pages/ProductDetailsAdmin"
-import ProductsCataloge from "./Pages/ProductsAdmin"
+import ProductsDetail from "./Pages/ProductDetail"
+import ProductsCatalog from "./Pages/ProductsCatalog"
 import Products from "./Pages/Products"
 import Register from "./Pages/Register"
 import Settings from "./Pages/Settings"
@@ -31,9 +31,9 @@ function App() {
 <Route element={<DashboardLayout />}>
 <Route path="/dashboard" element={<Dashboard/>} />
 <Route path="/customers" element={<Customers/>} />
-<Route path="/catalog" element={<ProductsCataloge />} />
+<Route path="/catalog" element={<ProductsCatalog />} />
 <Route path="/products" element={<Products/>} />
-<Route path="/catalog/:productid" element={<ProductsDetailsAdmin />} />
+<Route path="/catalog/:productid" element={<ProductsDetail />} />
 <Route path="/orders" element={<Orders/>} />
 <Route path="/settings" element={<Settings/>} />
 <Route path="/subscriptions" element={<Subscriptions/>} />
