@@ -198,16 +198,14 @@ router.post("/import/:id",verifyTokenAndAuthorization,upload.single("file"),
     const errors = [];
     const ordersMap = {};
     for (const row of rows) {
-      const {
-        "Order ID": orderRef,
-        "Full Name": Fullname,
-        "Email": email,
-        "Phone": phone,
-        "Address": address,
-        "Product SKU": productSKU,
-        "Quantity": quantity,
-        "Date": date,
-      } = row;
+      const orderRef = cleanString(row["Order ID"]);
+      const Fullname = cleanString(row["Full Name"]);
+      const email = cleanEmail(row["Email"]);
+      const phone = cleanString(row["Phone"]);
+      const address = cleanString(row["Address"]);
+      const productSKU = cleanString(row["Product SKU"]);
+      const quantity = cleanNumber(row["Quantity"]);
+      const date = row["Date"];
       if (!orderRef || !productSKU) {
         errors.push({row,message: "Missing required fields"});
         continue;
@@ -220,6 +218,9 @@ router.post("/import/:id",verifyTokenAndAuthorization,upload.single("file"),
         });
         continue;
       }
+      if (quantity <= 0) {
+    errors.push({row,message: "Quantity must be greater than 0"});
+    continue;}
         ordersMap[orderRef] = {
           customer: {
             Fullname,
@@ -312,6 +313,23 @@ router.post("/import/:id",verifyTokenAndAuthorization,upload.single("file"),
     });
   })
 );
+
+//helper functions
+const cleanString = (value) => {
+  if (value === null || value === undefined) return "";
+
+  return String(value)
+    .replace(/\u00A0/g, " ") // replace non-breaking spaces
+    .trim();
+};
+
+const cleanEmail = (value) =>
+  cleanString(value).toLowerCase();
+
+const cleanNumber = (value, defaultValue = 1) => {
+  const n = Number(value);
+  return Number.isFinite(n) && n > 0 ? n : defaultValue;
+};
 
 function parseExcelDate(value) {
   if (!value) return null;

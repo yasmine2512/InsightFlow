@@ -107,8 +107,8 @@ export default function AddOrderPopup2({
       const body = {
         customer: {
           name: form.customerName,
-          email: form.customerEmail,
-          phone: form.customerPhone,
+          email: form.customerEmail.toLowerCase().trim(),
+          phone: form.customerPhone.trim(),
           address: form.customerAddress,
         },
         products: orderItems.map((item) => ({

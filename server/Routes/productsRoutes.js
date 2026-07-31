@@ -102,27 +102,37 @@ router.post("/:id/new-product", verifyTokenAndAuthorization, (req, res, next) =>
 const {name,price,desc,category,stock,sku} = req.body;
 let features = []
     try {
-      features = JSON.parse(req.body.features)
+      const parsed = JSON.parse(req.body.features ?? "[]");
+      if (!Array.isArray(parsed)) {
+        return res.status(400).json({message: "Features must be an array",});
+      }
+      features = parsed
+        .map(feature => String(feature).trim())
+        .filter(Boolean);
     } catch (err) {
-      return res.status(400).json({ message: "Features must be JSON array" })
+      return res.status(400).json({ message: "Invalid features format" })
     }
-if (!req.file) return res.status(400).json({ message: "Image is required" });
+
  if (!name || !desc ||  price === undefined ||stock === undefined ){
     return res.status(400).json({ message: "Missing required fields" });
   }
-const newproduct = new Product({
-    organization: orgid,
-    name,
-    price,
-    category,
-    description : desc,
-    features,
-    stock,
-    sku,
-    image :req.file.path,
-})
 
-await newproduct.save();
+  const newProductData = {
+  organization: orgid,
+  name,
+  price,
+  category,
+  description: desc,
+  features,
+  stock,
+  sku,
+};
+if (req.file) {
+  newProductData.image = req.file.path;
+}
+
+const newProduct = new Product(newProductData);
+await newProduct.save();
 return res.status(201).json({message: "Product added successfully"});
 
 }))
@@ -142,7 +152,6 @@ return res.status(201).json({message: "Product added successfully"});
     if (usedInOrders) {return res.status(400).json({message:
           "Cannot delete product because it exists in orders",});
     }
-  // URL looks like: https://res.cloudinary.com/yourcloud/image/upload/v123/products/abc123.jpg
   const urlParts = product.image.split("/");
   const publicId = `products/${urlParts[urlParts.length - 1].split(".")[0]}`;
   await cloudinary.uploader.destroy(publicId);
@@ -227,16 +236,14 @@ router.post("/import/:id",verifyTokenAndAuthorization,upload.single("file"),
     const errors = [];
     const createdProducts = [];
     for (const row of rows) {
-      const {
-        "SKU": sku,
-        "Product Name": name,
-        "Price": price,
-        "Stock": stock,
-        "Category": category,
-        "Description": description,
-        "Features": features,
-        "Image URL": image,
-      } = row;
+      const sku = cleanString(row["SKU"]);
+      const name = cleanString(row["Product Name"]);
+      const price = cleanNumber(row["Price"]);
+      const stock = cleanNumber(row["Stock"]);
+      const category = cleanString(row["Category"]);
+      const description = cleanString(row["Description"]);
+      const features = cleanString(row["Features"]);
+      const image = cleanString(row["Image URL"]);
       try {
         if (!sku || !name || price === undefined || stock === undefined) {
           errors.push({
@@ -245,6 +252,21 @@ router.post("/import/:id",verifyTokenAndAuthorization,upload.single("file"),
           });
           continue;
         }
+        if (Number.isNaN(price) || price < 0) {
+          errors.push({
+            sku: sku || "unknown",
+            message: "Invalid price"
+          });
+          continue;
+        }
+        if (!Number.isInteger(stock) || stock < 0) {
+          errors.push({
+            sku: sku || "unknown",
+            message: "Invalid stock"
+          });
+          continue;
+        }
+
         const existing = await Product.findOne({
           organization: orgId,
           sku,
@@ -257,7 +279,12 @@ router.post("/import/:id",verifyTokenAndAuthorization,upload.single("file"),
           continue;
         }
         const productFeatures = features
-          ? features.split(",").map(f => f.trim())
+          ? [...new Set(
+              features
+                .split(",")
+                .map(f => f.trim())
+                .filter(Boolean)
+            )]
           : [];
         const productData = {
           organization: orgId,
@@ -292,5 +319,18 @@ router.post("/import/:id",verifyTokenAndAuthorization,upload.single("file"),
     });
   })
 );
+
+//helper functions
+const cleanString = (value) => {
+  if (value === null || value === undefined) return "";
+  return String(value).replace(/\u00A0/g, " ").trim();
+};
+
+const cleanNumber = (value) => {
+  if (value === null || value === undefined || value === "") return NaN;
+  return Number(
+    String(value).replace(",", ".").trim()
+  );
+};
 
 export default router;

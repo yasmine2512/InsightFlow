@@ -55,7 +55,7 @@ export default function AddProductPopup({ open, setOpen, onSave, mode, initialDa
   const handleSubmit = async () => {
     const product = {
       ...form,
-      features: form.features.split("\n"),
+      features: form.features.split("\n").map(f => f.trim()).filter(Boolean),
     };
     const data = new FormData();
 
@@ -66,7 +66,7 @@ export default function AddProductPopup({ open, setOpen, onSave, mode, initialDa
     data.append("desc", product.description);
     data.append("features", JSON.stringify(product.features));
     data.append("image", form.image);
-    data.append("sku", product.sku);
+    data.append("sku", product.sku.trim().toUpperCase());
     
     try {
       await axios.post(`${API_URL}/api/products/${id}/new-product`, data, {
