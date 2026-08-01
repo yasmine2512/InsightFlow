@@ -13,6 +13,12 @@ test.describe("Import Products", () => {
     const filePath = path.join(process.cwd(),"tests","fixtures","test-products.xlsx");
     await dialog.locator('input[type="file"]').setInputFiles(filePath);
     const successDialog = page.getByRole("dialog", {name: "Success!"});
+    const errorPopup = page.getByRole("dialog", { name: /error/i });
+    await page.waitForTimeout(500);
+    if (await errorPopup.isVisible()) {
+    console.log("ERROR POPUP TEXT:");
+    console.log(await errorPopup.innerText());
+    }
     await expect(successDialog).toBeVisible();
     await expect(successDialog.getByText("Import completed successfully. 2 Products created.")).toBeVisible();
     await successDialog.getByRole("button", {name: /Continu/i}).click();
@@ -24,6 +30,11 @@ test.describe("Import Products", () => {
     await page.getByRole("button", {name: "Delete product"}).click();
     let deleteDialog = page.getByRole("dialog", { name: "Delete The Product"});
     await deleteDialog.getByRole("button", { name: "Delete"}).click();
+    await page.waitForTimeout(500);
+    if (await errorPopup.isVisible()) {
+    console.log("ERROR POPUP TEXT:");
+    console.log(await errorPopup.innerText());
+    }
     await successDialog.getByRole("button", { name: /Continu/i }).click();
     await expect(page).toHaveURL(/\/catalog$/);
     await expect(page.getByRole("link", {name: /TEST-PROD-1/i,})).not.toBeVisible();
@@ -32,6 +43,11 @@ test.describe("Import Products", () => {
     await page.getByRole("button", {name: "Delete product"}).click();
     deleteDialog = page.getByRole("dialog", { name: "Delete The Product"});
     await deleteDialog.getByRole("button", { name: "Delete"}).click();
+    await page.waitForTimeout(500);
+    if (await errorPopup.isVisible()) {
+    console.log("ERROR POPUP TEXT:");
+    console.log(await errorPopup.innerText());
+    }
     await successDialog.getByRole("button", { name: /Continu/i }).click();
     await expect(page).toHaveURL(/\/catalog$/);
     await expect(page.getByRole("link", {name: /TEST-PROD-2/i,})).not.toBeVisible();

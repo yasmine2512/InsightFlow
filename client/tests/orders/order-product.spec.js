@@ -14,6 +14,12 @@ test.describe("Create Order From Product", () => {
     await dialog.getByLabel("Customer Address").fill("Playwright Test Address");
     await dialog.getByRole("button", {name: "Create Order"}).click();
     const successDialog = page.getByRole("dialog", {name: "Success!"});
+    const errorPopup = page.getByRole("dialog", { name: /error/i });
+    await page.waitForTimeout(500);
+    if (await errorPopup.isVisible()) {
+    console.log("ERROR POPUP TEXT:");
+    console.log(await errorPopup.innerText());
+    }
     await expect(successDialog).toBeVisible();
     await successDialog.getByRole("button", {name: /Continu/i}).click();
     // Delete Order

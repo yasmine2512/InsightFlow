@@ -15,6 +15,12 @@ test.describe("Product Operations", () => {
     await dialog.getByLabel("Features").fill("Feature 1\nFeature 2");
     await dialog.getByRole("button", {  name: "Add Product",}).click();
     const successDialog = page.getByRole("dialog", {name: "Success!",});
+    const errorPopup = page.getByRole("dialog", { name: /error/i });
+    await page.waitForTimeout(500);
+    if (await errorPopup.isVisible()) {
+    console.log("ERROR POPUP TEXT:");
+    console.log(await errorPopup.innerText());
+    }
     await expect(successDialog).toBeVisible();
     await successDialog.getByRole("button", { name: /Continu/i }).click();
     await expect(page.getByText("Playwright Product")).toBeVisible();
@@ -27,6 +33,11 @@ test.describe("Product Operations", () => {
     const editDialog = page.getByRole("dialog", {name: "Edit Product",});
     await editDialog.getByLabel("Product Name").fill("Updated Playwright Product");
     await editDialog.getByRole("button", {name: /Update Product/i}).click();
+    await page.waitForTimeout(500);
+    if (await errorPopup.isVisible()) {
+    console.log("ERROR POPUP TEXT:");
+    console.log(await errorPopup.innerText());
+    }
     await successDialog.getByRole("button", { name: /Continu/i }).click();
     await expect(page.getByText("Updated Playwright Product")).toBeVisible();
 
@@ -34,6 +45,11 @@ test.describe("Product Operations", () => {
     await page.getByRole("button", {name: "Delete product"}).click();
     const deleteDialog = page.getByRole("dialog", { name: "Delete The Product"});
     await deleteDialog.getByRole("button", { name: "Delete"}).click();
+    await page.waitForTimeout(500);
+    if (await errorPopup.isVisible()) {
+    console.log("ERROR POPUP TEXT:");
+    console.log(await errorPopup.innerText());
+    }
     await successDialog.getByRole("button", { name: /Continu/i }).click();
     await expect(page).toHaveURL(/\/catalog$/);
     await expect(page.getByRole("link", {name: /Updated Playwright Product/i,})).not.toBeVisible();

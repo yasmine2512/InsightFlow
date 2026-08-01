@@ -20,6 +20,12 @@ test.describe("Create Order", () => {
     await quantities.nth(1).fill("1");
     await dialog.getByRole("button", {name: "Create Order"}).click();
     const successDialog = page.getByRole("dialog", {name: "Success!"});
+    const errorPopup = page.getByRole("dialog", { name: /error/i });
+    await page.waitForTimeout(500);
+    if (await errorPopup.isVisible()) {
+    console.log("ERROR POPUP TEXT:");
+    console.log(await errorPopup.innerText());
+    }
     await expect(successDialog).toBeVisible();
     await successDialog.getByRole("button", {name: /Continu/i}).click();
 
@@ -28,6 +34,12 @@ test.describe("Create Order", () => {
     await order.getByRole("button", { name: "Delete order" }).click();
     const deleteDialog = page.getByRole("dialog", {name: "Delete The Order"});
     await deleteDialog.getByRole("button", {name: "Delete"}).click();
+    await page.waitForTimeout(500);
+    if (await errorPopup.isVisible()) {
+    console.log("ERROR POPUP TEXT:");
+    console.log(await errorPopup.innerText());
+    }
+    await successDialog.getByRole("button", {name: /Continu/i}).click();
     await expect(page.getByText("Playwright Customer")).not.toBeVisible();
   });
 })

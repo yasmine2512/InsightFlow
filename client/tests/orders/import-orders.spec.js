@@ -13,6 +13,12 @@ test.describe("Import Orders", () => {
     const filePath = path.join(process.cwd(),"tests","fixtures","test-orders.xlsx");
     await dialog.locator('input[type="file"]').setInputFiles(filePath);
     const successDialog = page.getByRole("dialog", {name: "Success!"});
+    const errorPopup = page.getByRole("dialog", { name: /error/i });
+    await page.waitForTimeout(500);
+    if (await errorPopup.isVisible()) {
+    console.log("ERROR POPUP TEXT:");
+    console.log(await errorPopup.innerText());
+    }
     await expect(successDialog).toBeVisible();
     await expect(successDialog.getByText("Import completed successfully. 2 orders created.")).toBeVisible();
     await successDialog.getByRole("button", {name: /Continu/i}).click();
@@ -23,11 +29,21 @@ test.describe("Import Orders", () => {
     await order.getByRole("button", { name: "Delete order" }).click();
     let deleteDialog = page.getByRole("dialog", {name: "Delete The Order"});
     await deleteDialog.getByRole("button", {name: "Delete"}).click();
+    await page.waitForTimeout(500);
+    if (await errorPopup.isVisible()) {
+    console.log("ERROR POPUP TEXT:");
+    console.log(await errorPopup.innerText());
+    }
     await successDialog.getByRole("button", {name: /Continu/i}).click();
     order = page.getByRole("row").filter({ hasText: "Jane Smith" });
     await order.getByRole("button", { name: "Delete order" }).click();
     deleteDialog = page.getByRole("dialog", {name: "Delete The Order"});
     await deleteDialog.getByRole("button", {name: "Delete"}).click();
+    await page.waitForTimeout(500);
+    if (await errorPopup.isVisible()) {
+    console.log("ERROR POPUP TEXT:");
+    console.log(await errorPopup.innerText());
+    }
     await successDialog.getByRole("button", {name: /Continu/i}).click();
     
   });
