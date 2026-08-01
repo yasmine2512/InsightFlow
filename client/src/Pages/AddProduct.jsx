@@ -228,7 +228,9 @@ export default function AddProductPopup({ open, setOpen, onSave, mode, initialDa
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
+    <div role="dialog" 
+     aria-labelledby="product-dialog-title"
+    className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
       <div className="bg-white w-[750px] max-h-[92vh] rounded-2xl overflow-y-auto shadow-xl p-6 flex flex-col border border-border">
 
         {/* Header with Icon */}
@@ -237,7 +239,7 @@ export default function AddProductPopup({ open, setOpen, onSave, mode, initialDa
             <Package size={20} className="text-primary" />
           </div>
           <div className="flex flex-col items-start text-left justify-center">
-            <h2 className="text-xl font-semibold">
+            <h2 id="product-dialog-title" className="text-xl font-semibold">
               {mode === "create" ? "Add Product" : "Edit Product"}
             </h2>
             <p className="text-xs text-muted-foreground">Fill in the specifications and inventory data for this product.</p>
@@ -248,8 +250,10 @@ export default function AddProductPopup({ open, setOpen, onSave, mode, initialDa
           
           {/* Product Name */}
           <div className="flex flex-col">
-            <label className="text-xs font-medium text-muted-foreground mb-1 ml-1">Product Name</label>
+            <label htmlFor="product-name"
+            className="text-xs font-medium text-muted-foreground mb-1 ml-1">Product Name</label>
             <input
+              id="product-name"
               name="name"
               value={form?.name}
               placeholder="Product name"
@@ -260,8 +264,10 @@ export default function AddProductPopup({ open, setOpen, onSave, mode, initialDa
 
           {/* Price */}
           <div className="flex flex-col">
-            <label className="text-xs font-medium text-muted-foreground mb-1 ml-1">Price</label>
+            <label htmlFor="product-price"
+             className="text-xs font-medium text-muted-foreground mb-1 ml-1">Price</label>
             <input
+              id="product-price"
               value={form?.price}
               name="price"
               placeholder="Price (ex: $49/mo)"
@@ -272,8 +278,10 @@ export default function AddProductPopup({ open, setOpen, onSave, mode, initialDa
 
           {/* Category */}
           <div className="flex flex-col">
-            <label className="text-xs font-medium text-muted-foreground mb-1 ml-1">Category</label>
+            <label htmlFor="product-category"
+            className="text-xs font-medium text-muted-foreground mb-1 ml-1">Category</label>
             <input
+              id="product-category"
               value={form?.category}
               name="category"
               placeholder="Category"
@@ -284,8 +292,10 @@ export default function AddProductPopup({ open, setOpen, onSave, mode, initialDa
 
           {/* Stock */}
           <div className="flex flex-col">
-            <label className="text-xs font-medium text-muted-foreground mb-1 ml-1">Stock</label>
+            <label htmlFor="product-stock"
+            className="text-xs font-medium text-muted-foreground mb-1 ml-1">Stock</label>
             <input
+              id="product-stock"
               value={form?.stock}
               name="stock"
               type="number"
@@ -297,8 +307,10 @@ export default function AddProductPopup({ open, setOpen, onSave, mode, initialDa
 
           {/* Sku */}
           <div className="flex flex-col col-span-2">
-            <label className="text-xs font-medium text-muted-foreground mb-1 ml-1">Sku</label>
+            <label htmlFor="product-sku"
+            className="text-xs font-medium text-muted-foreground mb-1 ml-1">Sku</label>
             <input
+              id="product-sku"
               value={form?.sku}
               name="sku"
               placeholder="Product Sku"
@@ -309,8 +321,9 @@ export default function AddProductPopup({ open, setOpen, onSave, mode, initialDa
 
           {/* Description */}
           <div className="flex flex-col col-span-2">
-            <label className="text-xs font-medium text-muted-foreground mb-1 ml-1">Description</label>
+            <label htmlFor="product-desc" className="text-xs font-medium text-muted-foreground mb-1 ml-1">Description</label>
             <textarea
+              id="product-desc"
               value={form?.description}
               name="description"
               placeholder="Description"
@@ -322,8 +335,10 @@ export default function AddProductPopup({ open, setOpen, onSave, mode, initialDa
 
           {/* Features */}
           <div className="flex flex-col col-span-2">
-            <label className="text-xs font-medium text-muted-foreground mb-1 ml-1">Features</label>
+            <label htmlFor="product-features"
+            className="text-xs font-medium text-muted-foreground mb-1 ml-1">Features</label>
             <textarea
+              id="product-features"
               value={form?.features}
               name="features"
               placeholder="Features (one per line)"
@@ -335,8 +350,10 @@ export default function AddProductPopup({ open, setOpen, onSave, mode, initialDa
 
           {/* Image */}
           <div className="flex flex-col col-span-2">
-            <label className="text-xs font-medium text-muted-foreground mb-1 ml-1">Image</label>
+            <label htmlFor="product-image"
+            className="text-xs font-medium text-muted-foreground mb-1 ml-1">Image</label>
             <input
+              id="product-image"
               type="file"
               name="image"
               accept="image/*"

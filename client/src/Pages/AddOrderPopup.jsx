@@ -184,7 +184,9 @@ export default function AddOrderPopup2({
 }, []);
 
   return (
-    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
+    <div role="dialog" 
+     aria-labelledby="order-dialog-title2"
+    className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
       <div className="bg-white w-[750px] max-h-[92vh] rounded-2xl overflow-y-auto shadow-xl p-6 flex flex-col border border-border">
         
         <div className="flex items-center gap-3 mb-6">
@@ -192,7 +194,7 @@ export default function AddOrderPopup2({
             <ShoppingCart size={20} className="text-primary" />
           </div>
           <div className="flex flex-col items-start text-left justify-center">
-            <h2 className="text-xl font-semibold">Create New Order</h2>
+            <h2 id="order-dialog-title2" className="text-xl font-semibold">Create New Order</h2>
             <p className="text-xs text-muted-foreground">Fill in customer details and pick products.</p>
           </div>
         </div>
@@ -200,8 +202,10 @@ export default function AddOrderPopup2({
         <div className="grid grid-cols-2 gap-4">
           {/* Customer Name */}
           <div className="flex flex-col">
-            <label className="text-xs font-medium text-muted-foreground mb-1 ml-1">Customer Name</label>
+            <label htmlFor="customer-name"
+            className="text-xs font-medium text-muted-foreground mb-1 ml-1">Customer Name</label>
             <input
+              id="customer-name"
               type="text"
               name="customerName"
               value={form.customerName}
@@ -213,8 +217,10 @@ export default function AddOrderPopup2({
 
           {/* Customer Email */}
           <div className="flex flex-col">
-            <label className="text-xs font-medium text-muted-foreground mb-1 ml-1">Customer Email</label>
+            <label htmlFor="customer-email"
+             className="text-xs font-medium text-muted-foreground mb-1 ml-1">Customer Email</label>
             <input
+              id="customer-email"
               type="email"
               name="customerEmail"
               value={form.customerEmail}
@@ -226,8 +232,10 @@ export default function AddOrderPopup2({
 
           {/* Customer Phone */}
           <div className="flex flex-col">
-            <label className="text-xs font-medium text-muted-foreground mb-1 ml-1">Customer Phone</label>
+            <label htmlFor="customer-phone"
+             className="text-xs font-medium text-muted-foreground mb-1 ml-1">Customer Phone</label>
             <input
+              id="customer-phone"
               type="text"
               name="customerPhone"
               value={form.customerPhone}
@@ -239,8 +247,10 @@ export default function AddOrderPopup2({
 
           {/* Address */}
           <div className="flex flex-col">
-            <label className="text-xs font-medium text-muted-foreground mb-1 ml-1">Customer Address</label>
+            <label htmlFor="customer-address"
+             className="text-xs font-medium text-muted-foreground mb-1 ml-1">Customer Address</label>
             <input
+              id="customer-address"
               type="text"
               name="customerAddress"
               value={form.customerAddress}
@@ -253,7 +263,7 @@ export default function AddOrderPopup2({
           {/* Products Multi-Select Section */}
           <div className="col-span-2 mt-2">
             <div className="flex justify-between items-center mb-2">
-              <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Order Items</label>
+              <label htmlFor="order-items" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Order Items</label>
               <button
                 type="button"
                 onClick={handleAddItem}
@@ -267,7 +277,7 @@ export default function AddOrderPopup2({
               {orderItems.map((item, index) => (
                 <div key={index} className="flex gap-2 items-center">
                   <select
-
+                    id="order-items"
                     value={item.product}
                     onChange={(e) => handleItemChange(index, "product", e.target.value)}
                     className="flex-1 block w-full px-3 py-3 text-sm bg-white text-black border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-black"
@@ -282,6 +292,7 @@ export default function AddOrderPopup2({
                   </select>
 
                   <input
+                    id="order-items"
                     type="number"
                     min="1"
                     value={item.quantity}

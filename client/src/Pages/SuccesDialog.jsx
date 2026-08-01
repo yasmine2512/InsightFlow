@@ -4,13 +4,16 @@ export function SuccessDialog({ open, onClose, title = "Success!", message, acti
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
+    <div role="dialog"
+     aria-labelledby="success-dialog-title"
+     className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
       <div className="relative bg-card border border-border rounded-2xl shadow-xl p-6 w-full max-w-sm mx-4">
         <div className="flex items-center justify-center w-12 h-12 rounded-full bg-emerald-500/10 mx-auto mb-4">
           <CheckCircle2 size={22} className="text-emerald-500" />
         </div>
-        <h2 className="text-base font-semibold text-center mb-1">{title}</h2>
+        <h2 id="success-dialog-title" 
+        className="text-base font-semibold text-center mb-1">{title}</h2>
         <p className="text-sm text-muted-foreground text-center mb-6">
          {message}
         </p>

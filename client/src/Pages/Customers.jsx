@@ -244,12 +244,14 @@ const end = Math.min(currentPage * rowsPerPage,totalcustomers);
                       <span className="px-2 py-1 rounded-full text-xs font-medium">{o.address}</span>
                     </td>
                     <td>
-                      <button onClick={() =>{ 
+                      <button aria-label="Edit customer"
+                        onClick={() =>{ 
                         setMode("edit");
                         setSelectedCustomer(o);
                         setOpen(true);
                       }}><UserPen size={15}/></button> &nbsp;
-                    <button  onClick={() => setDeleteTarget(o._id)}
+                    <button  aria-label="Delete customer"
+                      onClick={() => setDeleteTarget(o._id)}
                       className=" text-destructive p-2 hover:bg-destructive/10 rounded-lg transition-colors">
                       <Trash2 size={15}/></button></td>
                   </tr>

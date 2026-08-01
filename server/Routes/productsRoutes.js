@@ -113,9 +113,16 @@ let features = []
       return res.status(400).json({ message: "Invalid features format" })
     }
 
- if (!name || !desc ||  price === undefined ||stock === undefined ){
-    return res.status(400).json({ message: "Missing required fields" });
-  }
+  if (!name ||  price === undefined ||stock === undefined ){
+      return res.status(400).json({ message: "Missing required fields" });
+    }
+    
+  const existingProduct = await Product.findOne({organization: orgid,sku: sku});
+  if (existingProduct) {
+    return res.status(409).json({
+      message: "A product with this SKU already exists in your organization"
+    });
+  } 
 
   const newProductData = {
   organization: orgid,

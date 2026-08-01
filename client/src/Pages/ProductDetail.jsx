@@ -11,6 +11,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import AddOrderPopup from "./CreateOrder";
 import { DeleteDialog } from "./DeleteDialog";
 import { ErrorDialog } from "./ErrorDialog";
+import { SuccessDialog } from "./SuccesDialog";
 import AddProductPopup from "./AddProduct";
 
 export default function ProductDetail() {
@@ -27,6 +28,8 @@ export default function ProductDetail() {
   const [stats,setstats] = useState(null);
   const API_URL = import.meta.env.VITE_API_URL;
   const [deleteTarget, setDeleteTarget] = useState(null);
+  const [succesOpen, setSuccessOpen] = useState(false);
+  const [successMessgae, setSuccessMessage] = useState("");
   const [errorOpen,setErrorOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const fetchProduct = async () => {
@@ -50,13 +53,14 @@ export default function ProductDetail() {
        if (!product) return <div>Loading...</div>
     const handleDeleteConfirm = async () => {
   try {
-    await axios.delete(`${API_URL}/api/products/${userId}/product/${deleteTarget}`, {
+    const res = await axios.delete(`${API_URL}/api/products/${userId}/product/${deleteTarget}`, {
       headers: { Authorization: `Bearer ${token}` }
     });
     setDeleteTarget(null);
-    queryClient.invalidateQueries(["productsStats", id]);
-    queryClient.invalidateQueries(["productlist", id]);
-    navigate(-1);
+    queryClient.invalidateQueries(["productsStats",userId]);
+    queryClient.invalidateQueries(["productlist",userId]);
+    setSuccessMessage(res.data.message);
+    setSuccessOpen(true);
   } catch (err) {
    console.error("Failed to delete product", err);
    setDeleteTarget(null);
@@ -103,7 +107,8 @@ export default function ProductDetail() {
                       initialData = {product}
                       onSave={fetchProduct}
                     /></>
-                      <Button variant="outline" size="sm" className="text-destructive hover:bg-destructive hover:text-destructive-foreground"
+                      <Button variant="outline" size="sm" aria-label="Delete product"
+                       className="text-destructive hover:bg-destructive hover:text-destructive-foreground"
                       onClick={() => setDeleteTarget(product._id)}><Trash2 className="w-3 h-3" /></Button>
                     </div>
                   </div>
@@ -112,6 +117,7 @@ export default function ProductDetail() {
                 </div>
               </div>
               <p className="text-sm text-muted-foreground leading-relaxed">{product.description}</p>
+              <span  className="font-heading font-semibold mb-4">SKU : {product.sku}</span>
             </div>
 
             <div className="bg-card rounded-xl border border-border p-6 shadow-soft">
@@ -169,7 +175,15 @@ export default function ProductDetail() {
               message={errorMessage}
               actionLabel="Okay"
               onClose={() => setErrorOpen(false)}
-                    />    
+                    />
+        <SuccessDialog
+                open={succesOpen}
+                message={successMessgae}
+                onClose={() => {
+                  setSuccessOpen(false);
+                  navigate(-1);
+                }}
+              />                  
       </div>
   );
 }

@@ -163,7 +163,9 @@ export default function AddCustomerPopup({ open, setOpen, mode, initialData }) {
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
+    <div role="dialog" 
+     aria-labelledby="customer-dialog-title"
+     className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
       <div className="bg-white w-[750px] max-h-[92vh] rounded-2xl overflow-y-auto shadow-xl p-6 flex flex-col border border-border">
         
         {/* Header with Icon */}
@@ -172,7 +174,7 @@ export default function AddCustomerPopup({ open, setOpen, mode, initialData }) {
             <Users size={20} className="text-primary" />
           </div>
           <div className="flex flex-col items-start text-left justify-center">
-            <h2 className="text-xl font-semibold leading-tight">
+            <h2  id="customer-dialog-title" className="text-xl font-semibold leading-tight">
               {mode === "create" ? "Add Customer" : "Edit Customer"}
             </h2>
             <p className="text-xs text-muted-foreground mt-0.5">Fill in the contact and profile information for this customer.</p>
@@ -188,10 +190,11 @@ export default function AddCustomerPopup({ open, setOpen, mode, initialData }) {
         <div className="grid grid-cols-2 gap-4">
           {/* Name */}
           <div className="flex flex-col">
-            <label className="text-xs font-medium text-muted-foreground mb-1 ml-1">
+            <label htmlFor="customer-name" className="text-xs font-medium text-muted-foreground mb-1 ml-1">
               Name
             </label>
             <input
+              id="customer-name"
               type="text"
               name="name"
               value={form.name}
@@ -203,10 +206,11 @@ export default function AddCustomerPopup({ open, setOpen, mode, initialData }) {
 
           {/* Email */}
           <div className="flex flex-col">
-            <label className="text-xs font-medium text-muted-foreground mb-1 ml-1">
+            <label htmlFor="customer-email" className="text-xs font-medium text-muted-foreground mb-1 ml-1">
               Email
             </label>
             <input
+              id="customer-email"
               type="email"
               name="email"
               value={form.email}
@@ -218,10 +222,11 @@ export default function AddCustomerPopup({ open, setOpen, mode, initialData }) {
 
           {/* Phone */}
           <div className="flex flex-col">
-            <label className="text-xs font-medium text-muted-foreground mb-1 ml-1">
+            <label htmlFor="customer-phone" className="text-xs font-medium text-muted-foreground mb-1 ml-1">
               Phone
             </label>
             <input
+              id="customer-phone"
               type="text"
               name="phone"
               value={form.phone}
@@ -233,10 +238,11 @@ export default function AddCustomerPopup({ open, setOpen, mode, initialData }) {
 
           {/* Address */}
           <div className="flex flex-col">
-            <label className="text-xs font-medium text-muted-foreground mb-1 ml-1">
+            <label htmlFor="customer-address" className="text-xs font-medium text-muted-foreground mb-1 ml-1">
               Address
             </label>
             <input
+              id="customer-address"
               type="text"
               name="address"
               value={form.address}

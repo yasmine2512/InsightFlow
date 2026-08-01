@@ -90,18 +90,19 @@ const pipeline =[
           { $gte: ["$orders.completedAt", startMonth] },
           { $eq: ["$orders.status", "completed"] }]},
           { $ifNull: ["$orders.products.quantity", 0] },0]
-          }}
+          }},
+        createdAt: { $first: "$createdAt" },  
       }},
     {$addFields: {isActive: {$gt: ["$soldThisMonth",0]}}},
     {$match: query.filter === "active" ? { isActive: true } : {}},
     {$facet: {
     products: [{$sort: (() => {
           switch (query.sort) {
-            case "price_asc":return { price: 1 };
-            case "price_desc":return { price: -1 };
-            case "sold_desc":return { sold: -1 };
-            case "revenue_desc":
-            default:return { revenue: -1 };
+            case "price_asc":return { price: 1 , _id: 1 };
+            case "price_desc":return { price: -1 , _id: 1 };
+            case "sold_desc":return { sold: -1 , _id: 1 };
+            case "revenue_desc":return { revenue: -1, _id: 1 };
+            default:return { createdAt: -1 , _id: 1 };
           }})()
       },
       {$skip: skip},

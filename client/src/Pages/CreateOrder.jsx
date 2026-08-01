@@ -91,7 +91,9 @@ export default function AddOrderPopup({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
+    <div role="dialog" 
+     aria-labelledby="order-dialog-title"
+    className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
       <div className="bg-white w-[750px] max-h-[92vh] rounded-2xl overflow-y-auto shadow-xl p-6 flex flex-col border border-border">
         
         {/* Header with Icon */}
@@ -100,7 +102,7 @@ export default function AddOrderPopup({
             <ShoppingCart size={20} className="text-primary" />
           </div>
           <div className="flex flex-col items-start text-left justify-center">
-            <h2 className="text-xl font-semibold">Create Order</h2>
+            <h2 id="order-dialog-title" className="text-xl font-semibold">Create Order</h2>
             <p className="text-xs text-muted-foreground">Fill in customer details and order quantity.</p>
           </div>
         </div>
@@ -108,10 +110,12 @@ export default function AddOrderPopup({
         <div className="grid grid-cols-2 gap-4">
           {/* Customer Name */}
           <div className="flex flex-col">
-            <label className="text-xs font-medium text-muted-foreground mb-1 ml-1">
+            <label htmlFor="customer-name"
+             className="text-xs font-medium text-muted-foreground mb-1 ml-1">
               Customer Name
             </label>
             <input
+              id="customer-name"
               type="text"
               name="customerName"
               value={form.customerName}
@@ -123,10 +127,12 @@ export default function AddOrderPopup({
 
           {/* Customer Email */}
           <div className="flex flex-col">
-            <label className="text-xs font-medium text-muted-foreground mb-1 ml-1">
+            <label htmlFor="customer-email" 
+            className="text-xs font-medium text-muted-foreground mb-1 ml-1">
               Customer Email
             </label>
             <input
+              id="customer-email"
               type="email"
               name="customerEmail"
               value={form.customerEmail}
@@ -137,11 +143,13 @@ export default function AddOrderPopup({
           </div>
 
           {/* Customer Phone */}
-          <div className="flex flex-col">
-            <label className="text-xs font-medium text-muted-foreground mb-1 ml-1">
+          <div 
+          className="flex flex-col">
+            <label htmlFor="customer-phone" className="text-xs font-medium text-muted-foreground mb-1 ml-1">
               Customer Phone
             </label>
             <input
+              id="customer-phone"
               type="text"
               name="customerPhone"
               value={form.customerPhone}
@@ -153,10 +161,11 @@ export default function AddOrderPopup({
 
           {/* Quantity */}
           <div className="flex flex-col">
-            <label className="text-xs font-medium text-muted-foreground mb-1 ml-1">
+            <label htmlFor="product-quantity" className="text-xs font-medium text-muted-foreground mb-1 ml-1">
               Quantity
             </label>
             <input
+              id="product-quantity"
               type="number"
               min="1"
               name="quantity"
@@ -169,10 +178,12 @@ export default function AddOrderPopup({
 
           {/* Address */}
           <div className="flex flex-col col-span-2">
-            <label className="text-xs font-medium text-muted-foreground mb-1 ml-1">
+            <label htmlFor="customer-address"
+            className="text-xs font-medium text-muted-foreground mb-1 ml-1">
               Customer Address
             </label>
             <textarea
+              id="customer-address"
               name="customerAddress"
               value={form.customerAddress}
               onChange={handleChange}

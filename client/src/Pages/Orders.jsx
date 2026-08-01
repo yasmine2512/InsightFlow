@@ -414,7 +414,8 @@ const colors = [
           : "bg-warning/10 text-warning" }`} >{o.status}</span>)}
                     </td>
                     <td>
-    {o.status != "completed" && <button  onClick={() => setDeleteTarget(o._id)}
+    {o.status != "completed" && <button aria-label="Delete order"
+      onClick={() => setDeleteTarget(o._id)}
      className=" text-destructive p-2 hover:bg-destructive/10 rounded-lg transition-colors">
     <Trash2 size={15}/></button>}</td>
                   </tr>
