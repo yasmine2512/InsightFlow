@@ -65,10 +65,6 @@ const {login}= useAuth();
     try{
      const response= await axios.post(`${API_URL}/api/auth/register`,{name,email,password});
      setSuccess(response.data.message);
-    //  const {token,user} = response.data;
-    //    login(token, user);
-    //    console.log(user)
-    // navigate(`/dashboard`);
     }catch(err){
       if (axios.isAxiosError(err)) {
       if (err.response?.status === 400) {

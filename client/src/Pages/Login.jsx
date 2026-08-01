@@ -14,11 +14,24 @@ export default function Login() {
  const navigate = useNavigate()
  const { login } = useAuth();
  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const API_URL = import.meta.env.VITE_API_URL;
-
+ const [password, setPassword] = useState("");
+ const API_URL = import.meta.env.VITE_API_URL;
+ const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   async function handleLogin(){
     setError("");
+    if(!email){
+      setError("Email is required");
+      return;
+    }
+    if(!password){
+      setError("Password is required");
+      return;
+    }
+
+  if (!emailRegex.test(email)) {
+    setError("Please enter a valid email address.");
+    return;
+  }
     try{
      const response= await axios.post(`${API_URL}/api/auth/login`,{email,password});
      const {token,user} = response.data;
