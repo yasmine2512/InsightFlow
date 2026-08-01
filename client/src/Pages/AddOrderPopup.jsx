@@ -87,12 +87,41 @@ export default function AddOrderPopup2({
   }, 0);
 
   const isValidEmail = (email) => {
-    return email === "" || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   };
 
   const handleSubmit = async () => {
-    if (!isValidEmail(form.customerEmail)) {
+    const customerName = form.customerName.trim();
+    const customerEmail = form.customerEmail.trim().toLowerCase();
+    const customerPhone = form.customerPhone.trim();
+    const customerAddress = form.customerAddress.trim();
+
+    if (!customerName) {
+      setErrorMessage("Customer name is required.");
+      setErrorOpen(true);
+      return;
+    }
+
+    if (!customerEmail) {
+      setErrorMessage("Customer email is required.");
+      setErrorOpen(true);
+      return;
+    }
+
+    if (!isValidEmail(customerEmail)) {
       setErrorMessage("Please enter a valid email address.");
+      setErrorOpen(true);
+      return;
+    }
+
+    if (!customerPhone) {
+      setErrorMessage("Customer phone number is required.");
+      setErrorOpen(true);
+      return;
+    }
+
+    if (!customerAddress) {
+      setErrorMessage("Customer address is required.");
       setErrorOpen(true);
       return;
     }
@@ -102,6 +131,12 @@ export default function AddOrderPopup2({
       setErrorOpen(true);
       return;
     }
+
+    if (orderItems.some(item => !item.product)) {
+    setErrorMessage("Please select a valid product for every order item.");
+    setErrorOpen(true);
+    return;
+  }
 
     try {
       const body = {

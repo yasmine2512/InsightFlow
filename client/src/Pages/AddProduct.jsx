@@ -53,21 +53,73 @@ export default function AddProductPopup({ open, setOpen, onSave, mode, initialDa
   };
 
   const handleSubmit = async () => {
-    const product = {
-      ...form,
-      features: form.features.split("\n").map(f => f.trim()).filter(Boolean),
-    };
-    const data = new FormData();
+    const name = form.name.trim();
+    const sku = form.sku.trim();
+    const category = form.category.trim();
+    const description = form.description.trim();
 
-    data.append("name", product.name);
-    data.append("price", product.price);
-    data.append("category", product.category);
-    data.append("stock", product.stock);
-    data.append("desc", product.description);
-    data.append("features", JSON.stringify(product.features));
-    data.append("image", form.image);
-    data.append("sku", product.sku.trim().toUpperCase());
-    
+    const price = Number(form.price);
+    const stock = Number(form.stock);
+
+    const features = form.features
+      .split("\n")
+      .map((feature) => feature.trim())
+      .filter(Boolean);
+
+    if (!name) {
+      setErrorMessage("Product name is required.");
+      setErrorOpen(true);
+      return;
+    }
+
+    if (!sku) {
+      setErrorMessage("SKU is required.");
+      setErrorOpen(true);
+      return;
+    }
+
+    if (
+      form.price === "" ||
+      !Number.isFinite(price) ||
+      price < 0
+    ) {
+      setErrorMessage("Please enter a valid price.");
+      setErrorOpen(true);
+      return;
+    }
+
+    if (
+      form.stock === "" ||
+      !Number.isInteger(stock) ||
+      stock < 0
+    ) {
+      setErrorMessage("Please enter a valid stock quantity.");
+      setErrorOpen(true);
+      return;
+    }
+
+    const data = new FormData();
+    data.append("name", name);
+    data.append("price", price);
+    data.append("stock", stock);
+    data.append("sku", sku);
+
+    if (category) {
+      data.append("category", category);
+    }
+
+    if (description) {
+      data.append("desc", description);
+    }
+
+    if (features.length > 0) {
+      data.append("features", JSON.stringify(features));
+    }
+
+    if (form.image instanceof File) {
+      data.append("image", form.image);
+    }
+
     try {
       await axios.post(`${API_URL}/api/products/${id}/new-product`, data, {
         headers: {
@@ -86,22 +138,72 @@ export default function AddProductPopup({ open, setOpen, onSave, mode, initialDa
   };
 
   const handleUpdate = async () => {
-    const product = {
-      ...form,
-      features: form.features.split("\n"),
-    };
-    const data = new FormData();
+    const name = form.name.trim();
+    const sku = form.sku.trim();
+    const category = form.category.trim();
+    const description = form.description.trim();
 
-    data.append("name", product.name);
-    data.append("price", product.price);
-    data.append("category", product.category);
-    data.append("stock", product.stock);
-    data.append("desc", product.description);
-    data.append("features", JSON.stringify(product.features));
+    const price = Number(form.price);
+    const stock = Number(form.stock);
+
+    const features = form.features
+      .split("\n")
+      .map((feature) => feature.trim())
+      .filter(Boolean);
+
+    if (!name) {
+      setErrorMessage("Product name is required.");
+      setErrorOpen(true);
+      return;
+    }
+
+    if (!sku) {
+      setErrorMessage("SKU is required.");
+      setErrorOpen(true);
+      return;
+    }
+
+    if (
+      form.price === "" ||
+      !Number.isFinite(price) ||
+      price < 0
+    ) {
+      setErrorMessage("Please enter a valid price.");
+      setErrorOpen(true);
+      return;
+    }
+
+    if (
+      form.stock === "" ||
+      !Number.isInteger(stock) ||
+      stock < 0
+    ) {
+      setErrorMessage("Please enter a valid stock quantity.");
+      setErrorOpen(true);
+      return;
+    }
+
+    const data = new FormData();
+    data.append("name", name);
+    data.append("price", price);
+    data.append("stock", stock);
+    data.append("sku", sku);
+
+    if (category) {
+      data.append("category", category);
+    }
+
+    if (description) {
+      data.append("desc", description);
+    }
+
+    if (features.length > 0) {
+      data.append("features", JSON.stringify(features));
+    }
+
     if (form.image instanceof File) {
       data.append("image", form.image);
     }
-    data.append("sku", product.sku);
     
     try {
       await axios.put(`${API_URL}/api/products/${id}/product/${initialData._id}`, data, {

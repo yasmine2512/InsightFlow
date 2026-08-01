@@ -55,18 +55,34 @@ export default function AddCustomerPopup({ open, setOpen, mode, initialData }) {
   };
 
   const handleSubmit = async () => {
-    if (!isValidEmail(form.email)) {
-      setErrorMessage("Please enter a valid email address.");
-      setErrorOpen(true);
-      return;
-    }
-    try {
-      const cleanedForm = {
+    const cleanedForm = {
         name: form.name.trim(),
         email: form.email.trim().toLowerCase(),
         phone: form.phone.trim(),
         address: form.address,
       };
+
+    const requiredFields = [
+    ["name", "Name"],
+    ["email", "Email"],
+    ["phone", "Phone"],
+    ["address", "Address"],
+  ];
+
+  for (const [field, label] of requiredFields) {
+    if (!cleanedForm[field]) {
+      setErrorMessage(`${label} is required.`);
+      setErrorOpen(true);
+      return;
+    }
+  }
+
+    if (!isValidEmail(cleanedForm.email)) {
+      setErrorMessage("Please enter a valid email address.");
+      setErrorOpen(true);
+      return;
+    }
+    try {
       const res = await axios.post(
         `${API_URL}/api/customers/${id}`,
         cleanedForm,
@@ -89,7 +105,29 @@ export default function AddCustomerPopup({ open, setOpen, mode, initialData }) {
   };
 
   const handleUpdate = async () => {
-    if (!isValidEmail(form.email)) {
+    const cleanedForm = {
+        name: form.name.trim(),
+        email: form.email.trim().toLowerCase(),
+        phone: form.phone.trim(),
+        address: form.address,
+      };
+
+    const requiredFields = [
+    ["name", "Name"],
+    ["email", "Email"],
+    ["phone", "Phone"],
+    ["address", "Address"],
+  ];
+
+  for (const [field, label] of requiredFields) {
+    if (!cleanedForm[field]) {
+      setErrorMessage(`${label} is required.`);
+      setErrorOpen(true);
+      return;
+    }
+  }
+
+    if (!isValidEmail(cleanedForm.email)) {
       setErrorMessage("Please enter a valid email address.");
       setErrorOpen(true);
       return;
