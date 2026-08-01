@@ -168,6 +168,7 @@ const verifyUrl =`${process.env.SERVER_URL}/api/auth/verify-email/${verification
         `});
   } catch(error) {
     console.error("Email sending failed:", error.message);
+    console.error("Email sending failed:", error);
     await User.findByIdAndDelete(newUser._id);
     await Counter.findByIdAndDelete(newUser._id);
     throw new Error("Failed to send verification email");

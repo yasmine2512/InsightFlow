@@ -6,7 +6,14 @@ import User from "../Models/User.js";
 import Subscription from "../Models/Subscription.js";
 import dotenv from "dotenv";
 dotenv.config();
+
+let stripe;
+const getStripe = () => {
+  if (!stripe) {
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+  }
+  return stripe;
+}
 
 /**
  * @desc create subscription checkout session
@@ -15,6 +22,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
  * @access private
  */
 router.post("/:id/create-checkout-session",verifyTokenAndAuthorization,async (req, res) => {
+    const stripe = getStripe();
     try {
       const { id } = req.params;
       const existing = await Subscription.findOne({organization: id,status: "active",}).lean();
@@ -57,6 +65,7 @@ router.post("/:id/create-checkout-session",verifyTokenAndAuthorization,async (re
  * @access public (verified via Stripe signature)
  */
 router.post("/webhook", express.raw({ type: "application/json" }), async (req, res) => {
+    const stripe = getStripe();
     const sig = req.headers["stripe-signature"];
     let event;
     try {
@@ -166,6 +175,7 @@ router.get("/:id", verifyTokenAndAuthorization, async (req, res) => {
  * @access private
  */
 router.post("/:id/cancel", verifyTokenAndAuthorization, async (req, res) => {
+  const stripe = getStripe();
   try {
     const subscription = await Subscription.findOne({
       organization: req.params.id,
@@ -200,6 +210,7 @@ router.post("/:id/cancel", verifyTokenAndAuthorization, async (req, res) => {
  * @access private
  */
 router.post("/:id/resume", verifyTokenAndAuthorization, async (req, res) => {
+  const stripe = getStripe();
   try {
     const subscription = await Subscription.findOne({
       organization: req.params.id,

@@ -1,9 +1,14 @@
 import Stripe from "stripe";
 
+let stripe;
+const getStripe = () => {
+  if (!stripe) {
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
-
+  }
+  return stripe;
+}
 router.post("/create-checkout-session", verifyToken, async (req, res) => {
-
+  const stripe = getStripe();
   const session = await stripe.checkout.sessions.create({
     mode: "subscription",
     payment_method_types: ["card"],

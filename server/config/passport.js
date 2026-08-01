@@ -4,6 +4,10 @@ import User from "../Models/User.js";
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
 dotenv.config();
+if (
+  process.env.GOOGLE_CLIENT_ID &&
+  process.env.GOOGLE_CLIENT_SECRET
+) {
 passport.use(
   new GoogleStrategy(
     {
@@ -42,4 +46,5 @@ passport.use(
   
   )
 );
+}
 export default passport;
