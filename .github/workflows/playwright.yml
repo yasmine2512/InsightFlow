@@ -12,6 +12,16 @@ jobs:
     timeout-minutes: 60
     runs-on: ubuntu-latest
 
+    env:
+          MONGO_URI: ${{ secrets.MONGO_URI }}
+          JWT_SECRET_KEY: ${{ secrets.JWT_SECRET_KEY }}
+          CLOUDINARY_CLOUD_NAME: ${{ secrets.CLOUDINARY_CLOUD_NAME }}
+          CLOUDINARY_API_KEY: ${{ secrets.CLOUDINARY_API_KEY }}
+          CLOUDINARY_API_SECRET: ${{ secrets.CLOUDINARY_API_SECRET }}
+          CLIENT_URL: http://localhost:5173
+          SERVER_URL: http://localhost:5000
+          PORT: 5000
+          
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -33,8 +43,8 @@ jobs:
         working-directory: server
 
       - name: Install Playwright browsers
-        run: npx playwright install --with-deps
         working-directory: client
+        run: npx playwright install 
 
       - name: Run Playwright tests
         run: npx playwright test
