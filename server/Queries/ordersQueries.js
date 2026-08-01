@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import Order from "../models/Order.js";
+import Order from "../Models/Order.js";
 
 const toObjectId = (id) =>
   new mongoose.Types.ObjectId(id);
