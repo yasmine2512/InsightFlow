@@ -25,7 +25,9 @@ worksheet["H2"].z = "dd/mm/yyyy";
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
+    <div role="dialog" 
+     aria-labelledby="import-order-title"
+    className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
       
       <div className="relative bg-card border border-border rounded-2xl shadow-xl p-6 w-full max-w-md mx-4">
@@ -35,7 +37,7 @@ worksheet["H2"].z = "dd/mm/yyyy";
             <div className="flex items-center justify-center w-10 h-10 rounded-full bg-primary/10">
               <Upload size={20} className="text-primary" />
             </div>
-            <h2 className="text-base font-semibold">Import Orders</h2>
+            <h2 id="import-order-title" className="text-base font-semibold">Import Orders</h2>
           </div>
           <button onClick={onClose} className="text-muted-foreground hover:text-foreground">
             <X size={20} />

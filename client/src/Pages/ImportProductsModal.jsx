@@ -16,7 +16,7 @@ export function ImportProductsModal({ open, onClose, onUpload }) {
         "Category": "Peripherals",
         "Description":"Vertical design for reduced wrist strain",
         "Features":"Feature 1,Feature 2,Feature 3",
-        "Image URL": " https://en.wikipedia.org/wiki/Computer_mouse" ,
+        "Image URL": "https://upload.wikimedia.org/wikipedia/commons/2/22/3-Tasten-Maus_Microsoft.jpg" ,
       },
       { 
         "SKU": "PROD-002", 
@@ -41,7 +41,9 @@ export function ImportProductsModal({ open, onClose, onUpload }) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
+    <div role="dialog" 
+     aria-labelledby="import-product-title"
+    className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
       
       <div className="relative bg-card border border-border rounded-2xl shadow-xl p-6 w-full max-w-md mx-4">
@@ -51,7 +53,7 @@ export function ImportProductsModal({ open, onClose, onUpload }) {
             <div className="flex items-center justify-center w-10 h-10 rounded-full bg-primary/10">
               <Upload size={20} className="text-primary" />
             </div>
-            <h2 className="text-base font-semibold">Import Products</h2>
+            <h2 id="import-product-title" className="text-base font-semibold">Import Products</h2>
           </div>
           <button onClick={onClose} className="text-muted-foreground hover:text-foreground">
             <X size={20} />
