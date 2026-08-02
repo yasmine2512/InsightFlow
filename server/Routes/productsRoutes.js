@@ -165,8 +165,6 @@ return res.status(201).json({message: "Product added successfully"});
   await cloudinary.uploader.destroy(publicId);
   await Product.deleteOne({ _id: req.params.productid ,organization:orgid});
   }catch(err){
-    console.error("delete product error:", err.response?.data);
-    console.error("Full error:", err);
     return res.status(400).json({message: "a probleme happened during deleting"});
   }
   return res.status(200).json({ message: "Product deleted successfully" });

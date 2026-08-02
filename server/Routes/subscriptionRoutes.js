@@ -10,7 +10,7 @@ dotenv.config();
 let stripe;
 const getStripe = () => {
   if (!stripe) {
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+    stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
   }
   return stripe;
 }
@@ -134,7 +134,6 @@ router.post("/webhook", express.raw({ type: "application/json" }), async (req, r
         default:
           break;
       }
-
       res.json({ received: true });
     } catch (err) {
       console.error("Webhook handler error:", err.message);
@@ -227,9 +226,7 @@ router.post("/:id/resume", verifyTokenAndAuthorization, async (req, res) => {
     res.json({ success: true });
   } catch (err) {
     console.error("Resume subscription error:", err.message);
-    res
-      .status(500)
-      .json({ message: "Couldn't resume your subscription. Please try again." });
+    res.status(500).json({ message: `Resume subscription error: ${err.message}` });
   }
 });
 

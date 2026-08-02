@@ -15,6 +15,9 @@ const app = express();
 
 connectDB();
 app.use(cors());
+app.get("/health", (req, res) => {
+  res.status(200).json({ status: "ok" });
+});
 app.use("/api/subscription",subscriptionRoutes);
 app.use(passport.initialize());
 app.use(express.json());

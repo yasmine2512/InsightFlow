@@ -67,8 +67,6 @@ res.status(200).json({ user :other, token });
    */  
 
   router.post("/register", asyncHandler(async (req, res) => {
-  console.log(req.body); 
-
   const { name,email, password} = req.body;
 
   if (!name ||!email || !password) {
@@ -167,7 +165,6 @@ const verifyUrl =`${process.env.SERVER_URL}/api/auth/verify-email/${verification
   </html>
         `});
   } catch(error) {
-    console.error("Email sending failed:", error.message);
     console.error("Email sending failed:", error);
     await User.findByIdAndDelete(newUser._id);
     await Counter.findByIdAndDelete(newUser._id);

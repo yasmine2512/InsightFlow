@@ -15,7 +15,6 @@ useEffect(() => {
     axios.get(`${API_URL}/api/auth/me`, {headers:{Authorization:`Bearer ${token}`}
     })
     .then(res=>{
-        console.log(res.data.user);
     login(token, res.data.user);
     navigate("/dashboard");
     });

@@ -52,7 +52,6 @@ export default function Dashboard() {
         const res = await axios.get(`${API_URL}/api/dashboard/${id}`, {
           headers: { Authorization: `Bearer ${token}` }
         })
-        console.log(res.data);
         return res.data;
       } catch (err) {
         console.error("Unauthorized or token invalid", err)

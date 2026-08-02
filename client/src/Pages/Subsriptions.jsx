@@ -33,10 +33,7 @@ export default function SubscriptionPage() {
         headers: { Authorization: `Bearer ${token}` },
       });
       setSubscription(response.data);
-     
-      // Keep the auth context's plan in sync with the source of truth.
       updateUser({ plan: response.data.plan });
-       console.log(user.plan)
     } catch (err) {
       console.error("Failed to fetch subscription status", err);
       setError("Couldn't load your subscription status.");
@@ -49,15 +46,6 @@ export default function SubscriptionPage() {
   useEffect(() => {
     fetchSubscription();
   }, [fetchSubscription]);
-
-  // Only redirect to the success page on a fresh, active (non-cancelling) Pro plan.
-  // Someone who already cancelled and is just viewing this page mid-period
-  // shouldn't be bounced away.
-  // useEffect(() => {
-  //   if (isPro && subscription?.status === "active" && !statusLoading) {
-  //     navigate("/subscription-success");
-  //   }
-  // }, [isPro, subscription?.status, statusLoading, navigate]);
 
   const handleUpgrade = async () => {
     setError(null);
@@ -72,11 +60,7 @@ export default function SubscriptionPage() {
       );
       window.location.href = response.data.url;
     } catch (err) {
-      console.error("Failed to start checkout session", err);
-      setError(
-        err.response?.data?.message ||
-        "Couldn't start checkout. Please try again."
-      );
+      setError(err.response?.data?.message ||"Couldn't start checkout. Please try again.");
       setUpgradeLoading(false);
     }
   };
@@ -92,8 +76,6 @@ export default function SubscriptionPage() {
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      // User keeps Pro access until period end, so plan stays "pro" —
-      // only the status changes to "cancelling".
       setSubscription((prev) => ({
         ...prev,
         status: "cancelling",
@@ -101,7 +83,6 @@ export default function SubscriptionPage() {
       }));
       setShowCancelConfirm(false);
     } catch (err) {
-      console.error("Failed to cancel subscription", err);
       setError(
         err.response?.data?.message ||
         "Couldn't cancel your subscription. Please try again."
@@ -124,7 +105,6 @@ export default function SubscriptionPage() {
       );
       setSubscription((prev) => ({ ...prev, status: "active" }));
     } catch (err) {
-      console.error("Failed to resume subscription", err);
       setError(
         err.response?.data?.message ||
         "Couldn't resume your subscription. Please try again."

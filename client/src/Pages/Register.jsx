@@ -75,7 +75,6 @@ const {login}= useAuth();
     } else {
       setError("Something went wrong. Please try again");
     }
-  console.log(err);
     }finally {
     setLoading(false);
   }

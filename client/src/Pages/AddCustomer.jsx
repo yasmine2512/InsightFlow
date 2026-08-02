@@ -98,7 +98,6 @@ export default function AddCustomerPopup({ open, setOpen, mode, initialData }) {
       queryClient.invalidateQueries(["customer", id]);
       setForm({ name: "", email: "", phone: "", address: "" });
     } catch (error) {
-      console.log(error.response);
       setErrorMessage(error.response?.data?.message);
       setErrorOpen(true);
     }

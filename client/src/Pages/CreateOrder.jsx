@@ -82,7 +82,6 @@ export default function AddOrderPopup({
         onSave();
       }
     } catch (error) {
-      console.log(error.response.data);
       setErrorMessage(error.response?.data.message);
       setErrorOpen(true);
     }

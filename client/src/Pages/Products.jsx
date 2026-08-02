@@ -19,6 +19,7 @@ export default function Products() {
   const { user} = useAuth();
   const token = user?.token;
   const id = user?.userId;
+  const plan = user.plan;
   const [profile, setProfile] = useState(null)
   const API_URL = import.meta.env.VITE_API_URL;
   const queryClient = useQueryClient();
@@ -35,7 +36,6 @@ export default function Products() {
         const res = await axios.get(`${API_URL}/api/products/${id}/stats`, {
           headers: { Authorization: `Bearer ${token}` },
         })
-        console.log(res.data);
         return res.data;
       } catch (err) {
         console.error("Unauthorized or token invalid", err);
@@ -48,13 +48,20 @@ export default function Products() {
           headers: { Authorization: `Bearer ${token}` },
            params: { page,limit: 10,search,filter}
         })
-        console.log(res.data);
         return res.data;
       } catch (err) {
         console.error("Unauthorized or token invalid", err);
         throw err;
       }
     }
+
+  const handleImport =()=>{
+  if(!plan ||plan === "free"){
+    navigate("/subscriptions");
+  }else{
+  setopenProductModal(true);
+  }
+  }
 
     const handleFileChange = async (file) => {
   if (!file) return;
@@ -89,7 +96,6 @@ export default function Products() {
    setopenProductModal(false);
    setSuccessOpen(true);
   } catch (err) {
-    console.log(err.response?.data?.errors || "no error");
     const errors = err.response?.data?.errors || [];
     const errorMessage = errors
     .map((error) => {
@@ -205,7 +211,7 @@ const {  data: productlist, isLoading, error } = useQuery({ queryKey: ["productl
   )}
               </div>
             </div>
-        <Button  onClick={()=> setopenProductModal(true)}
+        <Button  onClick={handleImport}
   className="px-4 py-2 bg-green-600 text-white rounded-lg">
   {loadingImport ? "Importing..." : "Import Excel"}<Download className="w-4 h-4 mr-2" />
             </Button>    

@@ -109,7 +109,6 @@ found = await Customer.create({organization: orgid,...customer});
   await order.save();
   return res.status(201).json({ message: "Order and customer created", order });
   }catch(error){
-  console.log(error);
   return res.status(500).json({message: "Error saving order"});
 }
 }));

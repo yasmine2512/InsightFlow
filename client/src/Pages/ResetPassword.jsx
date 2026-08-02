@@ -30,7 +30,6 @@ function ResetPassword() {
         navigate("/login");
       }, 2000);
     } catch (err) {
-        console.log(err);
       setError(
         err.response?.data?.message ||
         "Something went wrong"

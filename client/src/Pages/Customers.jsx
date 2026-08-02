@@ -73,7 +73,6 @@ export default function Customers() {
     setSuccessMessage("Customer deleted successfully");
     setSuccessOpen(true);
   } catch(err) {
-     console.error("Failed to delete customer", err);
     setDeleteTarget(null);
     setErrorMessage(err.response?.data?.message ||"Failed to delete customer" );
     setErrorOpen(true);
@@ -84,8 +83,6 @@ export default function Customers() {
         const res = await axios.get(`${API_URL}/api/customers/${id}/stats`, {
           headers: { Authorization: `Bearer ${token}` },
         })
-        // setProfile(res.data)
-        console.log(res.data);
         return res.data;
       } catch (err) {
         console.error("Unauthorized or token invalid", err)
@@ -98,8 +95,6 @@ export default function Customers() {
           headers: { Authorization: `Bearer ${token}` },
            params: { page,limit: 10,search}
         })
-        // setProfile(res.data)
-        console.log(res.data);
         return res.data;
       } catch (err) {
         console.error("Unauthorized or token invalid", err)

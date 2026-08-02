@@ -22,12 +22,10 @@ export default function ProductsCatalog() {
   
        const fetchProducts = async ({page,search}) => {
          try {
-          console.log(search)
            const res = await axios.get(`${API_URL}/api/products/${id}/cataloge`, {
              headers: { Authorization: `Bearer ${token}` },
              params: { page,limit: 12,search}
            })
-           console.log(res.data);
           return res.data;
          } catch (err) {
            console.error("Unauthorized or token invalid", err)
@@ -86,9 +84,8 @@ useEffect(() => {
             <Link key={p._id} to={`/catalog/${p._id}`} className="group">
               <div className="bg-card rounded-xl border border-border p-5 shadow-soft hover:shadow-elevated transition-all">
                 <div className="flex items-start justify-between mb-4 ">
-                  {/* <div className="w-12 h-12 rounded-xl bg-muted flex items-center justify-center text-2xl">{p.image}</div> */}
                   <img src={p.image} className="w-full h-40 object-cover rounded-lg"/>
-                  <button className="text-muted-foreground hover:text-foreground"><MoreHorizontal className="w-4 h-4" /></button>
+                  {/* <button className="text-muted-foreground hover:text-foreground"><MoreHorizontal className="w-4 h-4" /></button> */}
                 </div>
                 <h3 className="font-heading font-semibold group-hover:text-primary transition-colors">{p.name}</h3>
                 <p className="text-xs text-muted-foreground mb-3">{p.category}</p>

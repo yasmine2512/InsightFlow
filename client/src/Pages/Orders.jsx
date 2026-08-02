@@ -132,7 +132,8 @@ export default function Orders() {
   const [succesOpen,setSuccessOpen] = useState(false);
   const [successMessgae, setSuccessMessage] = useState("");
   const [openOrderModal,setopenOrderModal] = useState(false);
-   const [openOrderForm,setopenOrderForm] = useState(false);
+  const [openOrderForm,setopenOrderForm] = useState(false);
+  const [errorTitle, setErrorTitle] = useState("");
   const handleDeleteConfirm = async () => {
   try {
     await axios.delete(`${API_URL}/api/orders/${id}/${deleteTarget}`, {
@@ -145,6 +146,7 @@ export default function Orders() {
     setSuccessOpen(true);
   } catch (err) {
     setDeleteTarget(null);
+    setErrorTitle("Delete Error");
     setErrorMessage(err.response.data.message);
     setErrorOpen(true);
   }
@@ -155,7 +157,6 @@ export default function Orders() {
         const res = await axios.get(`${API_URL}/api/orders/${id}/stats`, {
           headers: { Authorization: `Bearer ${token}` }
         })
-        console.log(res.data);
         return res.data;
       } catch (err) {
         console.error("Unauthorized or token invalid", err)
@@ -168,22 +169,22 @@ const fetchOrders= async ({page,search,status}) => {
           headers: { Authorization: `Bearer ${token}` },
            params: { page,limit: 10,search,status}
         })
-        console.log(res.data);
         return res.data;
       } catch (err) {
         console.error("Unauthorized or token invalid", err)
         throw err;
       }
     }
+const handleImport =()=>{
+  if(!plan || plan === "free"){
+    navigate("/subscriptions");
+}else{
+setopenOrderModal(true);
+}
+}
+
 const fileInputRef = useRef(null);
 const [loadingImport, setLoadingImport] = useState(false);
-// const handleImportClick = () => {
-//   if(!plan ||plan === "free"){
-//     navigate("/subscriptions");
-//   }else{
-//   fileInputRef.current.click();
-// }
-// };
 const handleFileChange = async (file) => {
   if (!file) return;
   const formData = new FormData();
@@ -221,7 +222,6 @@ const handleFileChange = async (file) => {
    setopenOrderModal(false);
    setSuccessOpen(true);
   } catch (err) {
-    console.log(err.response?.data?.errors || "no error");
     const errors = err.response?.data?.errors || [];
     const errorMessage = errors
     .map((error) => {
@@ -233,6 +233,7 @@ const handleFileChange = async (file) => {
     })
     .join("\n");
     setopenOrderModal(false);
+    setErrorTitle("Create Error");
     setErrorMessage(errorMessage || "Import failed");
     setErrorOpen(true);
   } finally {
@@ -387,7 +388,7 @@ const colors = [
     </div>
   )}</div>
             </div>
-            <Button  onClick={()=> setopenOrderModal(true)}
+            <Button  onClick={handleImport}
   className="px-4 py-2 bg-green-600 text-white rounded-lg">
   {loadingImport ? "Importing..." : "Import Excel"}<Download className="w-4 h-4 mr-2" />
             </Button>
@@ -447,7 +448,6 @@ const colors = [
                           } catch (err) {
                             setErrorMessage(err.response?.data.message);
                             setErrorOpen(true);
-                            console.error("Failed to update status", err);
                           }
                         }}
                       />):(<span
@@ -533,7 +533,7 @@ const colors = [
     />
     <ErrorDialog
           open={errorOpen}
-          title="Create Error"
+          title={errorTitle}
           message={errorMessage}
           actionLabel="Okay"
           onClose={() => setErrorOpen(false)}

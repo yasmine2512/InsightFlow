@@ -20,8 +20,6 @@ export default function AddOrderPopup2({
            const res = await axios.get(`${API_URL}/api/products/${id}/select`, {
              headers: { Authorization: `Bearer ${token}` }
            })
-           console.log(res.data);
-
           return res.data;
          } catch (err) {
            console.error("Unauthorized or token invalid", err)

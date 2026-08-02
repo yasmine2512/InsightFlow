@@ -37,9 +37,7 @@ export default function ProductDetail() {
              const res = await axios.get(`${API_URL}/api/products/${userId}/detail/${productid}`, {
           headers: { Authorization: `Bearer ${token}` },
         })
-             console.log(res.data);
              setProduct(res.data.result.product);
-             console.log(res.data.result.analytics);
              setstats(res.data.result.analytics);
            } catch (err) {
              console.error("Product not Found", err);
@@ -62,7 +60,6 @@ export default function ProductDetail() {
     setSuccessMessage(res.data.message);
     setSuccessOpen(true);
   } catch (err) {
-   console.error("Failed to delete product", err);
    setDeleteTarget(null);
    setErrorMessage(err.response?.data?.message ||"Failed to delete product" )
    setErrorOpen(true);
@@ -171,7 +168,7 @@ export default function ProductDetail() {
             />
         <ErrorDialog
               open={errorOpen}
-              title="Create Error"
+              title="Delete Error"
               message={errorMessage}
               actionLabel="Okay"
               onClose={() => setErrorOpen(false)}

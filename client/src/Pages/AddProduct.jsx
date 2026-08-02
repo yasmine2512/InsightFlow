@@ -131,7 +131,6 @@ export default function AddProductPopup({ open, setOpen, onSave, mode, initialDa
       queryClient.invalidateQueries(["productsStats", id]);
       queryClient.invalidateQueries(["productlist", id]);
     } catch (error) {
-      console.log(error.response);
       setErrorMessage(error.response?.data?.message);
       setErrorOpen(true);
     }
@@ -219,7 +218,6 @@ export default function AddProductPopup({ open, setOpen, onSave, mode, initialDa
       queryClient.invalidateQueries(["productsStats", id]);
       queryClient.invalidateQueries(["productlist", id]);
     } catch (error) {
-      console.log(error.response?.data);
       setErrorMessage(error.response?.data.message);
       setErrorOpen(true);
     }
