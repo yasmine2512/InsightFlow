@@ -11,8 +11,14 @@ test.describe("Customer Operations", () => {
     await dialog.getByLabel(/phone/i).fill("0555555557");
     await dialog.getByLabel(/Address/i).fill("test Address");
     await dialog.getByRole("button", {name: "Add Customer"}).click();
-    await expect(page.getByRole("heading", { name: /success!/i })).toBeVisible();
     const successDialog = page.getByRole("dialog", {name: "Success!"});
+    const errorPopup = page.getByRole("dialog", { name: /error/i });
+    await page.waitForTimeout(500);
+    if (await errorPopup.isVisible()) {
+    console.log("ERROR POPUP TEXT:");
+    console.log(await errorPopup.innerText());
+    }
+    await expect(successDialog).toBeVisible();
     await successDialog.getByRole("button", { name: /Continu/i }).click();
     await expect(page.getByText("playwright.customer@test.com")).toBeVisible();
 
