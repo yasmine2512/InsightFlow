@@ -39,11 +39,6 @@ test.describe("Product Operations", () => {
     console.log(await errorPopup.innerText());
     }
     await successDialog.getByRole("button", { name: /Continu/i }).click();
-    console.log("H1:", await page.locator("h1").first().innerText());
-    console.log(
-      "All headings:",
-      await page.getByRole("heading").allTextContents()
-    );
     await expect(page.getByRole("heading", { name: "Updated Playwright Product" })).toBeVisible();
 
     // Delete Product
