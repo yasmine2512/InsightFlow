@@ -9,7 +9,7 @@ test.describe("Create Order From Product", () => {
     const dialog = page.getByRole("dialog", {name: "Create Order"});
     await dialog.getByLabel("Customer Name").fill("Playwright Order Customer");
     await dialog.getByLabel("Customer Email").fill("playwright.order2@test.com");
-    await dialog.getByLabel("Customer Phone").fill("0555555555");
+    await dialog.getByLabel("Customer Phone").fill("0555555557");
     await dialog.getByLabel("Quantity").fill("1");
     await dialog.getByLabel("Customer Address").fill("Playwright Test Address");
     await dialog.getByRole("button", {name: "Create Order"}).click();
@@ -28,7 +28,14 @@ test.describe("Create Order From Product", () => {
     await order.getByRole("button", { name: "Delete order" }).click();
     const deleteDialog = page.getByRole("dialog", {name: "Delete The Order"});
     await deleteDialog.getByRole("button", {name: "Delete"}).click();
-    await expect(page.getByText("Playwright Customer")).not.toBeVisible();
+    await page.waitForTimeout(500);
+    if (await errorPopup.isVisible()) {
+    console.log("ERROR POPUP TEXT:");
+    console.log(await errorPopup.innerText());
+    }
+    await expect(successDialog).toBeVisible();
+    await successDialog.getByRole("button", {name: /Continu/i}).click();
+    await expect(page.getByText("Playwright Order Customer")).not.toBeVisible();
   });
 
 });

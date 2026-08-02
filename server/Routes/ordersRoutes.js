@@ -21,7 +21,7 @@ const router = express.Router();
     const counter = await Counter.findOneAndUpdate(
       {organization: orgId,type: "order"},
       { $inc: { seq: 1 } },
-      { new: true, upsert: true }
+      { returnDocument: "after", upsert: true }
     );
     return counter.seq;
   };
@@ -84,7 +84,7 @@ found = await Customer.create({organization: orgid,...customer});
     const updated = await Product.findOneAndUpdate(
       { _id: item.product, stock: { $gte: item.quantity } },
       { $inc: { stock: -item.quantity } },
-      { new: true }
+      { returnDocument: "after" }
     );
 
     if (!updated) {

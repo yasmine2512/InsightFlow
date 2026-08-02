@@ -284,7 +284,7 @@ router.get("/me",verifyToken,asyncHandler(async (req, res) => {
         $set: {
           ...(name && { name }),
           ...(orgname && { organizationName: orgname }),
-        },},{ new: true }  ).select("-password");
+        },},{ returnDocument: "after" }  ).select("-password");
  return res.status(200).json(user);
 }));
 

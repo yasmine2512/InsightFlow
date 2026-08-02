@@ -211,7 +211,7 @@ return res.status(201).json({message: "Product added successfully"});
   const updated = await Product.findOneAndUpdate(
     {_id:productId,organization:orgid},
     { $set: updateFields },
-    { new: true }
+    { returnDocument: "after" }
   );
 
   return res.status(200).json({ message: "Product updated successfully", product: updated });
