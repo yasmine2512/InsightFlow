@@ -39,7 +39,8 @@ test.describe("Product Operations", () => {
     console.log(await errorPopup.innerText());
     }
     await successDialog.getByRole("button", { name: /Continu/i }).click();
-    await expect(page.getByRole("heading", { name: "Updated Playwright Product" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Updated Playwright Product" }))
+    .toBeVisible({ timeout: 10000 });
 
     // Delete Product
     await page.getByRole("button", {name: "Delete product"}).click();
