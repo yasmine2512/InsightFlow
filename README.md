@@ -12,14 +12,41 @@ You get live KPIs, trend charts, and actionable insights calculated directly fro
 
 ---
 
-<!-- ## 📸 Preview
+## 📸 Preview
 
 <div align="center">
-  <img src="./" alt="Insight Flow Screen shots" width="850">
-  <p><em></em></p>
+
+### Dashboard
+<img src="./client/public/Screenshots/InsightFlow-Dasboard.png" alt="Dashboard Preview" width="850">
+<p><em>Real-time analytics and business metrics overview</em></p>
+
+---
+
+### Orders
+<img src="./client/public/Screenshots/InsightFlow-Orders.png" alt="Orders Preview" width="850">
+<p><em>Order management and fulfillment tracking table</em></p>
+
+---
+
+### Products
+<img src="./client/public/Screenshots/InsightFlow-Products.png" alt="Products Preview" width="850">
+<p><em>Inventory and stock management interface</em></p>
+
+---
+
+### Catalog
+<img src="./client/public/Screenshots/InsightFlow-Catalog.png" alt="Catalog Preview" width="850">
+<p><em>Product categorization and catalog structure</em></p>
+
+---
+
+### Customers
+<img src="./client/public/Screenshots/InsightFlow-Customers.png" alt="Customers Preview" width="850">
+<p><em>Customer relationship management and details view</em></p>
+
 </div>
 
---- -->
+---
 
 
 ## Features

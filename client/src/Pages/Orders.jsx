@@ -356,7 +356,7 @@ const colors = [
     </div>
   </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3">
             <div className="flex items-center gap-3 flex-1">
               <div className="relative flex-1 max-w-sm">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground"/>
@@ -372,7 +372,7 @@ const colors = [
                   Filter
                 </Button>
   {open && (
-    <div className="absolute mt-2 w-40 bg-white border rounded-xl shadow-lg z-50">
+    <div className="absolute right-0 sm:left-0 sm:right-auto mt-2 w-40 bg-white border rounded-xl shadow-lg z-50">
       {STATUS_OPTIONS.map((status) => (
         <button
           key={status}
@@ -388,18 +388,20 @@ const colors = [
     </div>
   )}</div>
             </div>
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
             <Button  onClick={handleImport}
-  className="px-4 py-2 bg-green-600 text-white rounded-lg">
-  {loadingImport ? "Importing..." : "Import Excel"}<Download className="w-4 h-4 mr-2" />
+  className="px-4 py-2 bg-green-600 text-white rounded-lg flex items-center justify-center gap-2">
+  <Download className="w-4 h-4 mr-2" />{loadingImport ? "Importing..." : "Import Excel"}
             </Button>
             <Button  onClick={()=> setopenOrderForm(true)}
-  className="px-4 py-2 bg-green-600 text-white rounded-lg">
+  className="px-4 py-2 bg-green-600 text-white rounded-lg flex items-center justify-center gap-2">
   <Plus className="w-4 h-4" />Add Order
             </Button>
+            </div>
         </div>
 
         <div className="bg-card rounded-xl border border-border shadow-soft overflow-hidden">
-          <div className="overflow-visible">
+          <div className="w-full overflow-x-auto">
              <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border">

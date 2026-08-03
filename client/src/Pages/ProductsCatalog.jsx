@@ -57,8 +57,8 @@ useEffect(() => {
    const end = Math.min(currentPage * rowsPerPage,totalproducts);
   return (
       <div className="space-y-6">
-        <div className="flex items-center justify-between align-center">
-          <div>
+        <div className="flex items-start justify-between">
+          <div className="flex flex-col items-start text-left">
             <h1 className="font-heading text-2xl font-bold mb-3">Products</h1>
             <p className="text-sm text-muted-foreground ">Manage your product catalog</p>
           </div>

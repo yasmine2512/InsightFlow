@@ -197,7 +197,7 @@ const end = Math.min(currentPage * rowsPerPage,totalcustomers);
             </ResponsiveContainer>
           </div>
           </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3">
           <div className="flex items-center gap-3 flex-1">
           <div className="relative flex-1 max-w-sm">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
