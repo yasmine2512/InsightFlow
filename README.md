@@ -12,6 +12,16 @@ You get live KPIs, trend charts, and actionable insights calculated directly fro
 
 ---
 
+<!-- ## 📸 Preview
+
+<div align="center">
+  <img src="./" alt="Insight Flow Screen shots" width="850">
+  <p><em></em></p>
+</div>
+
+--- -->
+
+
 ## Features
 
 ### Dashboard

@@ -23,11 +23,13 @@ passport.use(
             name: profile.displayName,
             email: profile.emails[0].value,
             googleId: profile.id,
-            password: "",
+            password: null,    
+            isVerified: true,
           });
         }
         else if (!user.googleId) {
           user.googleId = profile.id;
+          user.isVerified = true;
           await user.save();
         }
         const token = jwt.sign(

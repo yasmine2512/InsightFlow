@@ -70,7 +70,7 @@ const { data, isLoading, error } = useQuery({ queryKey: ["overview", id], queryF
   const outofstock = data?.stockAlert[0]?.outOfStock || 0;
   const Cgrowth = `${data?.customersgrowth>= 0 ? "+" : ""}${data.customersgrowth.toFixed(1)}% from last month`;
 const stats = [
-  { label: "Revenue", value: "$"+ data.revenue,change: Rgrowth, up: data.revenugrowth>= 0, icon: DollarSign },
+  { label: "Revenue", value: "$"+ data.revenue.toFixed(2),change: Rgrowth, up: data.revenugrowth>= 0, icon: DollarSign },
   { label: "Orders", value: data.orders, change: Ogrowth, up: data.ordersgrowth>= 0, icon: ShoppingCart },
   { label: "Stock Alert", value: lowstock, change:outofstock +" are out of stock",stock:outofstock > 0, icon: AlertTriangle },
   { label: "Customers", value: data.customers, change: Cgrowth, up: data.customersgrowth>= 0 , icon: Users },
