@@ -25,14 +25,14 @@ const toObjectId = (id) =>
    */  
 router.get("/:id/stats",verifyTokenAndAuthorization,asyncHandler(async(req,res)=>{
 const orgid = req.params.id;
-const[customerscount,CRR,AC,CLV,CSD,CLM,TC] = await Promise.all([
+const[customerscount,CRR,AC,CLV,CSD,CLM] = await Promise.all([
 getCustomers(orgid),
 getCRR(orgid),
 getActiveCustomers(orgid),
 getAvgCLV(orgid),
 getCSD(orgid),
 getCLM(orgid),
-getTC(orgid),
+// getTC(orgid),
 ]);
 const currentC = customerscount[0]?.currentCustomers || 0;
 const previousC = customerscount[0]?.previousCustomers || 0;
@@ -45,7 +45,7 @@ const CAC = AC.current[0]?.value;
 const PAC = AC.previous[0]?.value;
 const GAC = PAC === 0 ? 0 : ((CAC - PAC) / PAC) * 100;
 
-return res.status(200).json({newcustomers:currentC,NCgrowth:growthC,customerRetentionRate:currentCRR,CRRgrowth:CRRgrowth,activecustomers:CAC,ACgrowth:GAC,customerLiftimeValue:ALV,customersSpendingDistribution:CSD,newClast7month:CLM,topCustomers:TC});
+return res.status(200).json({newcustomers:currentC,NCgrowth:growthC,customerRetentionRate:currentCRR,CRRgrowth:CRRgrowth,activecustomers:CAC,ACgrowth:GAC,customerLiftimeValue:ALV,customersSpendingDistribution:CSD,newClast7month:CLM});
 }));
 
 router.get("/:id",verifyTokenAndAuthorization,asyncHandler(async(req,res)=>{

@@ -117,8 +117,8 @@ export const getstockalert = async (orgId) =>{
 
 //top 5 customers
 export const getTC = async (orgId) =>{
-  return Order.aggregate([{$match:{organization : toObjectId(orgId),status: "completed"}},{$group:{_id: "$customer",numorders: {$sum: 1},totalSpent: { $sum: "$totalPrice" }}},
-  {$sort :{numOrders:-1}},{$limit : 5},
+  return Order.aggregate([{$match:{organization : toObjectId(orgId),status: "completed"}},{$group:{_id: "$customer",numOrders: {$sum: 1},totalSpent: { $sum: "$totalPrice" }}},
+  {$sort :{totalSpent: -1,numOrders:-1,_id: 1}},{$limit : 5},
   {$lookup: {
       from: "customers",         
       localField: "_id",          
