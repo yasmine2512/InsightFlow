@@ -20,11 +20,13 @@ export function AuthProvider({ children }) {
 
   // LOGIN
   const login = (token, userData) => {
+    console.log(userData)
     const fullUser = {
       token,
       userId: userData._id,
       isAdmin: userData.isadmin,
       username: userData.name,
+      organization: userData.organizationName,
       plan: userData.plan,
     };
 

@@ -8,6 +8,7 @@ import ordersRoutes from './Routes/ordersRoutes.js';
 import productsRoutes from './Routes/productsRoutes.js';
 import subscriptionRoutes from './Routes/subscriptionRoutes.js';
 import customersRoutes from './Routes/customersRoutes.js';
+import chatRoutes from './Routes/chatRoutes.js'
 import connectDB from "./config/db.js"; 
 import passport from "./config/passport.js";
 
@@ -26,6 +27,7 @@ app.use("/api/customers",customersRoutes);
 app.use("/api/products",productsRoutes);
 app.use("/api/orders",ordersRoutes);
 app.use("/api/dashboard",dashboardRoutes);
+app.use("/api/chats",chatRoutes);
 // app.connectdb();
 app.use("/", (req, res) => {
   res.send("API is running...");
