@@ -3,7 +3,9 @@ import mongoose from "mongoose";
 import asyncHandler from "express-async-handler";
 import Conversation from "../Models/Conversation.js";
 import Message from "../Models/Message.js";
+import User from "../Models/User.js";
 import { verifyTokenAndAuthorization} from '../Middlewares/JWTauth.js'
+import { chatMessageLimiter } from "../Middlewares/chatLimiter.js";
 const router = express.Router();
 
 router.get("/:id",verifyTokenAndAuthorization,asyncHandler(async(req,res)=>{
@@ -33,6 +35,28 @@ router.post("/:id",verifyTokenAndAuthorization,asyncHandler(async(req,res)=>{
         message: "Chat title is required",
       });
     }
+    const chatCount = await Conversation.countDocuments({
+        organization: orgId,
+      });
+      if (chatCount >= 10) {
+        return res.status(400).json({
+          message: "You have reached the maximum of 10 conversations.",
+        });
+      }
+    const user = await User.findById(orgId).select(
+        "name organizationName plan"
+      );
+
+      if (!user) {
+        return res.status(404).json({
+          message: "User not found",
+        });
+      }
+      if (user.plan !== "pro") {
+        return res.status(404).json({
+          message: "The AI Assistant is only available for Pro users.",
+        });
+      }
     const chatId = new mongoose.Types.ObjectId();
 
     const chat = await Conversation.create({
@@ -42,7 +66,41 @@ router.post("/:id",verifyTokenAndAuthorization,asyncHandler(async(req,res)=>{
       threadId: chatId.toString(),
     });
 
-    res.status(201).json(chat);
+    const initialContext = `
+    hello this is a new conversation from 
+    Organization:${user.organizationName}
+    User: ${user.name} 
+    `;
+    const agentResponse = await fetch(
+        `${process.env.AGENT_API_URL}/api/agent/chat`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            message: initialContext,
+            organization_id: orgId,
+            thread_id: chat.threadId,
+          }),
+        }
+      );
+      if (!agentResponse.ok) {
+        await Conversation.deleteOne({ _id: chat._id });
+
+        throw new Error(
+          `Agent API returned ${agentResponse.status}`
+        );
+      }
+      const agentData = await agentResponse.json();
+
+      const assistantMessage = await Message.create({
+        chat: chat._id,
+        role: "assistant",
+        content: agentData.message
+      });
+
+      res.status(201).json(chat);
   } catch (error) {
     console.error("Failed to create chat:", error);
 
@@ -86,7 +144,8 @@ router.get("/:id/messages/:chatId",verifyTokenAndAuthorization,asyncHandler(asyn
 })
 );
 
-router.post("/:id/messages/:chatId",verifyTokenAndAuthorization,asyncHandler(async(req,res)=>{
+router.post("/:id/messages/:chatId",
+  verifyTokenAndAuthorization,chatMessageLimiter,asyncHandler(async(req,res)=>{
   try {
     const chatId  = req.params.chatId;
     const orgId = req.params.id;
@@ -109,14 +168,12 @@ router.post("/:id/messages/:chatId",verifyTokenAndAuthorization,asyncHandler(asy
       });
     }
 
-    // Save user message
     const userMessage = await Message.create({
       chat: chat._id,
       role: "user",
       content: content.trim(),
     });
 
-    // Call Python AI agent
     const agentResponse = await fetch(
       `${process.env.AGENT_API_URL}/api/agent/chat`,
       {
@@ -137,12 +194,8 @@ router.post("/:id/messages/:chatId",verifyTokenAndAuthorization,asyncHandler(asy
         `Agent API returned ${agentResponse.status}`
       );
     }
-
     const agentData = await agentResponse.json();
-
     const assistantContent = agentData.message;
-
-    // Save assistant message
     const assistantMessage = await Message.create({
       chat: chat._id,
       role: "assistant",
@@ -165,6 +218,63 @@ router.post("/:id/messages/:chatId",verifyTokenAndAuthorization,asyncHandler(asy
     });
   }
 })
+);
+
+router.delete(
+  "/:id/:chatId",
+  verifyTokenAndAuthorization,
+  asyncHandler(async (req, res) => {
+    try {
+      const orgId = req.params.id;
+      const chatId = req.params.chatId;
+
+      const chat = await Conversation.findOne({
+        _id: chatId,
+        organization: orgId,
+      });
+
+      if (!chat) {
+        return res.status(404).json({
+          message: "Chat not found",
+        });
+      }
+      await Message.deleteMany({
+        chat: chatId,
+      });
+
+      const agentResponse = await fetch(
+        `${process.env.AGENT_API_URL}/api/agent/thread`,
+        {
+          method: "DELETE",
+          headers: {"Content-Type": "application/json"},
+          body: JSON.stringify({thread_id: chat.threadId}),
+        }
+      );
+      if (!agentResponse.ok) {
+        console.error(
+          "Failed to delete LangGraph thread:",
+          await agentResponse.text()
+        );
+
+        return res.status(500).json({
+          message: "Failed to delete agent conversation state",
+        });
+      }
+      await Conversation.deleteOne({
+        _id: chatId,
+      });
+
+      res.status(200).json({
+        message: "Conversation deleted successfully",
+      });
+    } catch (error) {
+      console.error("Failed to delete chat:", error);
+
+      res.status(500).json({
+        message: "Failed to delete conversation",
+      });
+    }
+  })
 );
 
 export default router; 

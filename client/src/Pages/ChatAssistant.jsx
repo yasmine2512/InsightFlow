@@ -1,9 +1,11 @@
 import ChatWindow from "./ChatWindow";
-import { Bot , X ,Plus} from "lucide-react";
+import { Bot , X ,Plus , Trash2} from "lucide-react";
 import { useState , useEffect} from "react";
 import { cn } from "../lib/utils";
 import axios from "axios";
 import { useAuth } from "../context/AuthContext";
+import { ErrorDialog } from "./ErrorDialog";
+import { DeleteDialog } from "./DeleteDialog";
 
 export default function ChatAssistant({closeChat,openModal,closeModal,isModalOpen}) {
     const [chats, setChats] = useState([]);
@@ -14,6 +16,9 @@ export default function ChatAssistant({closeChat,openModal,closeModal,isModalOpe
     const { user } = useAuth();
     const id = user?.userId;
     const token = user?.token;
+    const [errorDialogState, setErrorDialogState] = useState({ open: false, title: "", message: "" });
+    const [deleteDialogState, setDeleteDialogState] = useState({ open: false, chatId: null, chatTitle: "" });
+    const MAX_CHATS = 10;
 
    async function getChats() {
     try{
@@ -55,6 +60,44 @@ export default function ChatAssistant({closeChat,openModal,closeModal,isModalOpe
     }
   };
 
+  async function deleteChat(chatId) {
+  try {
+    await axios.delete(
+      `${API_URL}/api/chats/${id}/${chatId}`,
+      {headers: {Authorization: `Bearer ${token}`,},}
+    );
+    } catch (error) {
+      console.error(
+        "Failed to delete chat:",
+        error.response?.data || error
+      );
+    }
+  }
+
+  const confirmDeleteChat = async () => {
+    const { chatId } = deleteDialogState;
+    if (!chatId) return;
+
+    try {
+      await deleteChat(chatId);
+      const updatedChats = chats.filter(c => c._id !== chatId);
+      setChats(updatedChats);
+      
+      if (activeChatId === chatId) {
+        setActiveChatId(updatedChats.length > 0 ? updatedChats[0].id : null);
+      }
+      setDeleteDialogState({ open: false, chatId: null, chatTitle: "" });
+    } catch (error) {
+      console.error("Failed to delete chat", error);
+      setDeleteDialogState({ open: false, chatId: null, chatTitle: "" });
+      setErrorDialogState({
+        open: true,
+        title: "Deletion Failed",
+        message: "Could not delete the chat session. Please try again."
+      });
+    }
+  };
+
     useEffect(() => {
       loadChats();
   }, []);
@@ -62,12 +105,20 @@ export default function ChatAssistant({closeChat,openModal,closeModal,isModalOpe
   const handleCreateChatSubmit = async (e) => {
     e.preventDefault();
     if (!newChatTitle.trim()) return;
-
+    if (chats.length >= MAX_CHATS) {
+      setIsModalOpen(false);
+      setErrorDialogState({
+        open: true,
+        title: "Chat Limit Reached",
+        message: `You have reached the maximum limit of ${MAX_CHATS} active chat sessions. Please delete an existing chat to create a new one.`
+      });
+      return;
+    }
     try {
       const newChat = await createChat(newChatTitle);
       setChats([newChat, ...chats]);
       console.log(chats);
-      setActiveChatId(newChat.id);
+      setActiveChatId(newChat._id);
       setNewChatTitle('');
       closeModal();
     } catch (error) {
@@ -112,18 +163,33 @@ export default function ChatAssistant({closeChat,openModal,closeModal,isModalOpe
                 
                 <div className="overflow-y-auto flex-1 p-2 space-y-1">
                   {chats.map((chat) => (
-                    <button
+                   <div
                       key={chat._id}
-                      onClick={() => setActiveChatId(chat._id)}
                       className={cn(
-                        "w-full text-left px-3 py-2 text-sm rounded-lg truncate transition",
+                        "group flex items-center justify-between px-3 py-2 text-sm rounded-lg transition",
                         activeChatId === chat._id 
                           ? 'bg-primary/10 text-primary font-medium' 
                           : 'text-muted-foreground hover:bg-muted hover:text-foreground'
                       )}
                     >
-                      {chat.title}
-                    </button>
+                      <button
+                        onClick={() => setActiveChatId(chat._id)}
+                        className="flex-1 text-left truncate mr-2 focus:outline-none"
+                      >
+                        {chat.title}
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setDeleteDialogState({ open: true, chatId: chat._id, chatTitle: chat.title });
+                        }}
+                        className="opacity-0 group-hover:opacity-100 p-1 text-muted-foreground hover:text-destructive transition-opacity"
+                        title="Delete Chat"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                    
                   ))}
                 </div>
               </div>
@@ -175,6 +241,21 @@ export default function ChatAssistant({closeChat,openModal,closeModal,isModalOpe
           </div>
         </div>
       )}
+      <ErrorDialog
+        open={errorDialogState.open}
+        onClose={() => setErrorDialogState({ open: false, title: "", message: "" })}
+        title={errorDialogState.title}
+        message={errorDialogState.message}
+        actionLabel="Got it"
+      />
+
+      {/* Delete Dialog Integration */}
+      <DeleteDialog
+        open={deleteDialogState.open}
+        onConfirm={confirmDeleteChat}
+        onCancel={() => setDeleteDialogState({ open: false, chatId: null, chatTitle: "" })}
+        Page="Chat"
+      />
         </div>
 
         
