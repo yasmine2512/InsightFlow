@@ -156,7 +156,7 @@ router.post("/:id/messages/:chatId",
         message: "Message content is required",
       });
     }
-
+    
     const chat = await Conversation.findOne({
       _id: chatId,
       organization: orgId,
