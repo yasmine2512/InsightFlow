@@ -32,7 +32,6 @@ test.describe("Customer Operations", () => {
     await expect(page.getByText("Updated Playwright Customer")).toBeVisible();
 
     //Delete Customer
-    const updatedCustomer = page.getByRole("row").filter({ hasText: "Updated Playwright Customer" });
     await customer.getByRole("button", {name: "Delete customer"}).click();
     const deleteDialog = page.getByRole("dialog", {name: "Delete The Customer"});
     await deleteDialog.getByRole("button", {name: "Delete"}).click();

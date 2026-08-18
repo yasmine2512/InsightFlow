@@ -136,6 +136,7 @@ let features = []
 };
 if (req.file) {
   newProductData.image = req.file.path;
+  newProductData.imagePublicId = req.file.filename;
 }
 
 const newProduct = new Product(newProductData);
@@ -159,11 +160,11 @@ return res.status(201).json({message: "Product added successfully"});
     if (usedInOrders) {return res.status(400).json({message:
           "Cannot delete product because it exists in orders",});
     }
-  const urlParts = product.image.split("/");
-  const publicId = `products/${urlParts[urlParts.length - 1].split(".")[0]}`;
   try{
-  await cloudinary.uploader.destroy(publicId);
-  await Product.deleteOne({ _id: req.params.productid ,organization:orgid});
+  if (product.imagePublicId) {
+    await cloudinary.uploader.destroy(product.imagePublicId);
+  }
+  await product.deleteOne();
   }catch(err){
     return res.status(400).json({message: "a probleme happened during deleting"});
   }
@@ -177,7 +178,7 @@ return res.status(201).json({message: "Product added successfully"});
    * @access private
    */ 
   router.put("/:id/product/:productid", verifyTokenAndAuthorization, (req, res, next) => {
-  getUpload().single("image")(req, res, next);
+  getUpload.single("image")(req, res, next);
 }, asyncHandler(async (req, res) => {
   const productId = req.params.productid;
   const orgid = req.params.id;

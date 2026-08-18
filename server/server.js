@@ -11,6 +11,7 @@ import customersRoutes from './Routes/customersRoutes.js';
 import chatRoutes from './Routes/chatRoutes.js'
 import connectDB from "./config/db.js"; 
 import passport from "./config/passport.js";
+import filesRoute from "./Routes/filesRoute.js"
 
 const app = express();
 
@@ -28,6 +29,8 @@ app.use("/api/products",productsRoutes);
 app.use("/api/orders",ordersRoutes);
 app.use("/api/dashboard",dashboardRoutes);
 app.use("/api/chats",chatRoutes);
+app.use("/api/files",filesRoute);
+
 // app.connectdb();
 app.use("/", (req, res) => {
   res.send("API is running...");

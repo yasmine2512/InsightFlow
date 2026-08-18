@@ -24,7 +24,6 @@ test.describe("Import Orders", () => {
     await successDialog.getByRole("button", {name: /Continu/i}).click();
 
     //Delete Orders
-    await page.goto("/orders");
     let order = page.getByRole("row").filter({ hasText: "John Doe" });
     await order.getByRole("button", { name: "Delete order" }).click();
     let deleteDialog = page.getByRole("dialog", {name: "Delete The Order"});
@@ -45,6 +44,19 @@ test.describe("Import Orders", () => {
     console.log(await errorPopup.innerText());
     }
     await successDialog.getByRole("button", {name: /Continu/i}).click();
+
+  //Delete Customers
+    await page.goto("/customers");
+    let customer = page.getByRole("row").filter({ hasText: "John Doe" });
+    await customer.getByRole("button", {name: "Delete customer"}).click();
+    deleteDialog = page.getByRole("dialog", {name: "Delete The Customer"});
+    await deleteDialog.getByRole("button", {name: "Delete"}).click();
+    await expect(page.getByText("John Doe")).not.toBeVisible();
+    await successDialog.getByRole("button", {name: /Continu/i}).click();
+    customer = page.getByRole("row").filter({ hasText: "Jane Smith" });
+    await customer.getByRole("button", {name: "Delete customer"}).click();
+    await deleteDialog.getByRole("button", {name: "Delete"}).click();
+    await expect(page.getByText("Jane Smith")).not.toBeVisible();
     
   });
 

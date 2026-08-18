@@ -22,6 +22,7 @@ test.describe("Create Order From Product", () => {
     }
     await expect(successDialog).toBeVisible();
     await successDialog.getByRole("button", {name: /Continu/i}).click();
+
     // Delete Order
     await page.goto("/orders");
     const order = page.getByRole("row").filter({ hasText: "Playwright Order Customer" });
@@ -35,6 +36,14 @@ test.describe("Create Order From Product", () => {
     }
     await expect(successDialog).toBeVisible();
     await successDialog.getByRole("button", {name: /Continu/i}).click();
+    await expect(page.getByText("Playwright Order Customer")).not.toBeVisible();
+
+    //Delete Customer
+    await page.goto("/customers");
+    const customer = page.getByRole("row").filter({ hasText: "Playwright Order Customer" });
+    await customer.getByRole("button", {name: "Delete customer"}).click();
+    deleteDialog = page.getByRole("dialog", {name: "Delete The Customer"});
+    await deleteDialog.getByRole("button", {name: "Delete"}).click();
     await expect(page.getByText("Playwright Order Customer")).not.toBeVisible();
   });
 

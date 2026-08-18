@@ -32,7 +32,7 @@ test.describe("Create Order", () => {
     // Delete Order
     const order = page.getByRole("row").filter({ hasText: "Playwright Customer" });
     await order.getByRole("button", { name: "Delete order" }).click();
-    const deleteDialog = page.getByRole("dialog", {name: "Delete The Order"});
+    let deleteDialog = page.getByRole("dialog", {name: "Delete The Order"});
     await deleteDialog.getByRole("button", {name: "Delete"}).click();
     await page.waitForTimeout(500);
     if (await errorPopup.isVisible()) {
@@ -41,5 +41,13 @@ test.describe("Create Order", () => {
     }
     await successDialog.getByRole("button", {name: /Continu/i}).click();
     await expect(page.getByText("Playwright Customer")).not.toBeVisible();
+
+    //Delete Customer
+    await page.goto("/customers");
+    const customer = page.getByRole("row").filter({ hasText: "playwright.order@test.com" });
+    await customer.getByRole("button", {name: "Delete customer"}).click();
+    deleteDialog = page.getByRole("dialog", {name: "Delete The Customer"});
+    await deleteDialog.getByRole("button", {name: "Delete"}).click();
+    await expect(page.getByText("playwright.order@test.com")).not.toBeVisible();
   });
 })

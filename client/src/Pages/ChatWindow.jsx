@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Bot , Send , User , AlertCircle} from "lucide-react";
+import { ErrorDialog } from './ErrorDialog';
 import axios from "axios";
 import { useAuth } from "../context/AuthContext";
 import { cn } from "../lib/utils";
