@@ -96,7 +96,7 @@ router.get("/:id/select",verifyTokenAndAuthorization,asyncHandler(async(req,res)
    * @access private
    */ 
 router.post("/:id/new-product", verifyTokenAndAuthorization, (req, res, next) => {
-  getUpload().single("image")(req, res, next); 
+  getUpload.single("image")(req, res, next); 
 }, asyncHandler(async (req, res) => {
  const orgid = req.params.id;
 const {name,price,desc,category,stock,sku} = req.body;

@@ -27,7 +27,7 @@ test.describe("Create Order From Product", () => {
     await page.goto("/orders");
     const order = page.getByRole("row").filter({ hasText: "Playwright Order Customer" });
     await order.getByRole("button", { name: "Delete order" }).click();
-    const deleteDialog = page.getByRole("dialog", {name: "Delete The Order"});
+    let deleteDialog = page.getByRole("dialog", {name: "Delete The Order"});
     await deleteDialog.getByRole("button", {name: "Delete"}).click();
     await page.waitForTimeout(500);
     if (await errorPopup.isVisible()) {
