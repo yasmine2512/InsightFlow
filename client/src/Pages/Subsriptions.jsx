@@ -1,18 +1,15 @@
 import { CreditCard, Check, TableProperties, Shield, BadgeCheck, Loader2, AlertCircle, Clock } from "lucide-react";
 import { Button } from "../components/ui/button";
-import axios from "axios"
+import { api } from "../lib/api";
 import { useAuth } from "../context/AuthContext";
 import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 
 export default function SubscriptionPage() {
-  const API_URL = import.meta.env.VITE_API_URL;
   const { user, updateUser } = useAuth();
   const navigate = useNavigate();
 
-  // Local subscription state, fetched from the server — not trusting
-  // user.plan alone anymore, since it can drift from what Stripe says.
-  const [subscription, setSubscription] = useState(null); // { plan, status, currentPeriodEnd }
+  const [subscription, setSubscription] = useState(null);
   const [statusLoading, setStatusLoading] = useState(true);
   const [upgradeLoading, setUpgradeLoading] = useState(false);
   const [cancelLoading, setCancelLoading] = useState(false);
@@ -22,16 +19,12 @@ export default function SubscriptionPage() {
 
   const isPro = subscription?.plan === "pro";
   const isCancelling = subscription?.status === "cancelling";
-
+  const id = user?.userId;
   const fetchSubscription = useCallback(async () => {
-    const token = user?.token;
-    const id = user?.userId;
-    if (!token || !id) return;
+    if (!id) return;
 
     try {
-      const response = await axios.get(`${API_URL}/api/subscription/${id}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const response = await api.get(`/api/subscription/${id}`);
       setSubscription(response.data);
       updateUser({ plan: response.data.plan });
     } catch (err) {
@@ -40,8 +33,7 @@ export default function SubscriptionPage() {
     } finally {
       setStatusLoading(false);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.token, user?.userId, API_URL]);
+  }, [ id ]);
 
   useEffect(() => {
     fetchSubscription();
@@ -50,14 +42,8 @@ export default function SubscriptionPage() {
   const handleUpgrade = async () => {
     setError(null);
     setUpgradeLoading(true);
-    const token = user?.token;
-    const id = user?.userId;
     try {
-      const response = await axios.post(
-        `${API_URL}/api/subscription/${id}/create-checkout-session`,
-        {},
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      const response = await api.post(`/api/subscription/${id}/create-checkout-session`);
       window.location.href = response.data.url;
     } catch (err) {
       setError(err.response?.data?.message ||"Couldn't start checkout. Please try again.");
@@ -68,14 +54,8 @@ export default function SubscriptionPage() {
   const handleCancel = async () => {
     setError(null);
     setCancelLoading(true);
-    const token = user?.token;
-    const id = user?.userId;
     try {
-      const response = await axios.post(
-        `${API_URL}/api/subscription/${id}/cancel`,
-        {},
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      const response = await api.post(`/api/subscription/${id}/cancel`);
       setSubscription((prev) => ({
         ...prev,
         status: "cancelling",
@@ -95,14 +75,9 @@ export default function SubscriptionPage() {
   const handleResume = async () => {
     setError(null);
     setResumeLoading(true);
-    const token = user?.token;
-    const id = user?.userId;
     try {
-      await axios.post(
-        `${API_URL}/api/subscription/${id}/resume`,
-        {},
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      await api.post(
+        `/api/subscription/${id}/resume`);
       setSubscription((prev) => ({ ...prev, status: "active" }));
     } catch (err) {
       setError(

@@ -1,17 +1,14 @@
 import { useState, useEffect } from "react";
-import axios from "axios";
+import { api } from "../lib/api";
 import { useQueryClient } from "@tanstack/react-query";
 import { ErrorDialog } from "./ErrorDialog";
 import { SuccessDialog } from "./SuccesDialog";
 import { useAuth } from "../context/AuthContext";
 import { Users } from "lucide-react";
 
-const API_URL = import.meta.env.VITE_API_URL;
-
 export default function AddCustomerPopup({ open, setOpen, mode, initialData }) {
   const queryClient = useQueryClient();
   const { user } = useAuth();
-  const token = user?.token;
   const id = user?.userId;
 
   const emptyForm = {
@@ -83,15 +80,7 @@ export default function AddCustomerPopup({ open, setOpen, mode, initialData }) {
       return;
     }
     try {
-      const res = await axios.post(
-        `${API_URL}/api/customers/${id}`,
-        cleanedForm,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const res = await api.post(`/api/customers/${id}`,cleanedForm);
       setSuccessMessage("The Client has been created and saved successfully.");
       setSuccessOpen(true);
       queryClient.invalidateQueries(["customerslist", id]);
@@ -138,15 +127,7 @@ export default function AddCustomerPopup({ open, setOpen, mode, initialData }) {
         phone: form.phone.trim(),
         address: form.address,
       };
-      const res = await axios.put(
-        `${API_URL}/api/customers/${id}/${initialData._id}`,
-        cleanedForm,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const res = await api.put(`/api/customers/${id}/${initialData._id}`,cleanedForm);
       setSuccessMessage("The Client has been updated successfully.");
       setSuccessOpen(true);
       queryClient.invalidateQueries(["customerslist", id]);

@@ -1,17 +1,14 @@
 import { useState, useEffect } from "react";
-import axios from "axios";
+import { api } from "../lib/api";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "../context/AuthContext";
 import { ErrorDialog } from "./ErrorDialog";
 import { SuccessDialog } from "./SuccesDialog";
 import { Package } from "lucide-react";
 
-const API_URL = import.meta.env.VITE_API_URL;
-
 export default function AddProductPopup({ open, setOpen, onSave, mode, initialData }) {
   const queryClient = useQueryClient();
   const { user } = useAuth();
-  const token = user?.token;
   const id = user?.userId;
 
   const [form, setForm] = useState({
@@ -121,11 +118,7 @@ export default function AddProductPopup({ open, setOpen, onSave, mode, initialDa
     }
 
     try {
-      await axios.post(`${API_URL}/api/products/${id}/new-product`, data, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      await api.post(`/api/products/${id}/new-product`, data);
       setSuccessMessage("The Product has been created and saved successfully.");
       setSuccessOpen(true);
       queryClient.invalidateQueries(["productsStats", id]);
@@ -205,11 +198,7 @@ export default function AddProductPopup({ open, setOpen, onSave, mode, initialDa
     }
     
     try {
-      await axios.put(`${API_URL}/api/products/${id}/product/${initialData._id}`, data, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      await api.put(`/api/products/${id}/product/${initialData._id}`, data);
       if (onSave) {
         await onSave();
       }

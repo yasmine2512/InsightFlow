@@ -4,7 +4,7 @@ import { ArrowLeft, Edit, Trash2, BarChart3, Users, DollarSign ,ShoppingCart,Sho
   PackageCheck,TrendingDown,TrendingUp,PackageOpen, } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { useState,useEffect } from "react";
-import axios from "axios"; 
+import { api } from "../lib/api";
 import { useAuth } from "../context/AuthContext";
 import { useQuery } from "@tanstack/react-query";
 import { useQueryClient } from "@tanstack/react-query";
@@ -21,12 +21,11 @@ export default function ProductDetail() {
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [openE, setOpenE] = useState(false);
-  const token = user?.token;
   const userId = user?.userId;
   const queryClient = useQueryClient();
   const [product, setProduct] = useState(null);
   const [stats,setstats] = useState(null);
-  const API_URL = import.meta.env.VITE_API_URL;
+
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [succesOpen, setSuccessOpen] = useState(false);
   const [successMessgae, setSuccessMessage] = useState("");
@@ -34,9 +33,7 @@ export default function ProductDetail() {
   const [errorMessage, setErrorMessage] = useState("");
   const fetchProduct = async () => {
            try {
-             const res = await axios.get(`${API_URL}/api/products/${userId}/detail/${productid}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        })
+             const res = await api.get(`/api/products/${userId}/detail/${productid}`);
              setProduct(res.data.result.product);
              setstats(res.data.result.analytics);
            } catch (err) {
@@ -51,9 +48,7 @@ export default function ProductDetail() {
        if (!product) return <div>Loading...</div>
     const handleDeleteConfirm = async () => {
   try {
-    const res = await axios.delete(`${API_URL}/api/products/${userId}/product/${deleteTarget}`, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
+    const res = await api.delete(`/api/products/${userId}/product/${deleteTarget}`);
     setDeleteTarget(null);
     queryClient.invalidateQueries(["productsStats",userId]);
     queryClient.invalidateQueries(["productlist",userId]);

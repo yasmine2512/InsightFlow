@@ -18,7 +18,7 @@ import {
 import sendEmail from "../Middlewares/sendEmail.js";
 import passport from "passport";
 import mongoose from "mongoose";
-
+const isProduction = process.env.NODE_ENV === "production";
 
 router.get("/google",passport.authenticate("google", {
     scope: ["profile", "email"]
@@ -28,7 +28,14 @@ router.get("/google/callback",
   passport.authenticate("google", {session: false,failureRedirect: "/login"}),
   async (req, res) => {
     const { user, token } = req.user;
-    res.redirect(`${process.env.CLIENT_URL}/oauth-success?token=${token}&id=${user._id}`);
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: isProduction,              
+      sameSite: isProduction ? "none" : "lax",
+      maxAge: 24 * 60 * 60 * 1000 // 1 day
+    });
+
+    res.redirect(`${process.env.CLIENT_URL}/oauth-success`);
   }
 );
 
@@ -55,8 +62,22 @@ const token = jwt.sign(
   process.env.JWT_SECRET_KEY,
   { expiresIn: "1d" }
 );
-const { password, ...other } = user._doc;
-res.status(200).json({ user :other, token });
+res.cookie("token", token, {
+    httpOnly: true,
+    secure: isProduction,              
+    sameSite: isProduction ? "none" : "lax",
+    maxAge: 24 * 60 * 60 * 1000
+  });
+
+  const sanitizedUser = {
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      isadmin: user.isadmin,
+      plan: user.plan,
+      organizationName: user.organizationName,
+    };
+res.status(200).json({ user :sanitizedUser});
   }))
   
 /** 
@@ -173,6 +194,23 @@ const verifyUrl =`${process.env.SERVER_URL}/api/auth/verify-email/${verification
 res.status(201).json({message: "Registration successful. Please verify your email."});
 }));
 
+/** 
+ * @desc Logout user / Clear cookie
+ * @route POST /api/auth/logout
+ * @method POST
+ * @access public
+ */ 
+router.post("/logout", (req, res) => {
+  // Clear the HttpOnly cookie by setting its expiry to the past
+  res.clearCookie("token", {
+    httpOnly: true,
+    secure: isProduction,              
+    sameSite: isProduction ? "none" : "lax",
+  });
+
+  res.status(200).json({ message: "Logged out successfully" });
+});
+
 
 /** 
    * @desc verify email
@@ -195,7 +233,7 @@ router.get("/verify-email/:token", asyncHandler(async (req, res) => {
         return res.status(404).json({message: "User not found."});
 
     if (user.isVerified)
-        return res.json({message: "Email already verified."});
+        return res.redirect(`${process.env.CLIENT_URL}/login?verified=already`);
 
     user.isVerified = true;
 
@@ -207,7 +245,13 @@ const token = jwt.sign(
   process.env.JWT_SECRET_KEY,
   { expiresIn: "1d" }
 );
- res.redirect(`${process.env.CLIENT_URL}/verify-success?token=${token}`);
+res.cookie("token", token, {
+      httpOnly: true,
+      secure: isProduction,              
+      sameSite: isProduction ? "none" : "lax",
+      maxAge: 24 * 60 * 60 * 1000
+    });
+ res.redirect(`${process.env.CLIENT_URL}/verify-success`);
 
 
 }));
@@ -219,7 +263,7 @@ const token = jwt.sign(
    * @access private
    */  
 router.get("/:id/all-users",verifyTokenAndAdmin,asyncHandler(async(req,res)=>{
-const all_users = await User.find(); //pagination
+const all_users = await User.find(); 
 const count = await User.countDocuments()
 res.json({users : all_users });
 }))

@@ -2,7 +2,7 @@ import ChatWindow from "./ChatWindow";
 import { Bot , X ,Plus , Trash2} from "lucide-react";
 import { useState , useEffect} from "react";
 import { cn } from "../lib/utils";
-import axios from "axios";
+import { api } from "../lib/api";
 import { useAuth } from "../context/AuthContext";
 import { ErrorDialog } from "./ErrorDialog";
 import { DeleteDialog } from "./DeleteDialog";
@@ -11,21 +11,15 @@ export default function ChatAssistant({closeChat,openModal,closeModal,isModalOpe
     const [chats, setChats] = useState([]);
     const [activeChatId, setActiveChatId] = useState(null);
     const [newChatTitle, setNewChatTitle] = useState('');
-
-    const API_URL = import.meta.env.VITE_API_URL;
     const { user } = useAuth();
     const id = user?.userId;
-    const token = user?.token;
     const [errorDialogState, setErrorDialogState] = useState({ open: false, title: "", message: "" });
     const [deleteDialogState, setDeleteDialogState] = useState({ open: false, chatId: null, chatTitle: "" });
     const MAX_CHATS = 10;
 
    async function getChats() {
     try{
-     const response = await axios.get(
-    `${API_URL}/api/chats/${id}`,
-    {headers: { Authorization: `Bearer ${token}` }}
-  );
+     const response = await api.get(`/api/chats/${id}`);
   return response.data;
   }catch(error){
     console.error("Failed to create chat:", error);
@@ -35,18 +29,13 @@ export default function ChatAssistant({closeChat,openModal,closeModal,isModalOpe
 
    async function createChat(title) {
     try{
-    const response = await axios.post(
-    `${API_URL}/api/chats/${id}`,
-    {title},
-    {headers: { Authorization: `Bearer ${token}` }}
-  );
+    const response = await api.post(`/api/chats/${id}`,{title});
     return response.data;
     } catch(error){
       console.error("Failed to create chat:", error);
       throw error;
     }
     }
-
 
     const loadChats = async () => {
     try {
@@ -62,10 +51,7 @@ export default function ChatAssistant({closeChat,openModal,closeModal,isModalOpe
 
   async function deleteChat(chatId) {
   try {
-    await axios.delete(
-      `${API_URL}/api/chats/${id}/${chatId}`,
-      {headers: {Authorization: `Bearer ${token}`,},}
-    );
+    await api.delete(`/api/chats/${id}/${chatId}`);
     } catch (error) {
       console.error(
         "Failed to delete chat:",

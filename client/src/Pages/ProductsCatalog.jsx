@@ -5,7 +5,7 @@ import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/Input";
 import { useState ,useEffect} from "react"
 import { useParams ,useNavigate } from "react-router-dom";
-import axios from "axios";
+import { api } from "../lib/api";
 import { useAuth } from "../context/AuthContext";
 import AddProductPopup from "./AddProduct";
 import { useQuery } from "@tanstack/react-query";
@@ -13,17 +13,13 @@ import { useQuery } from "@tanstack/react-query";
 export default function ProductsCatalog() {
   const{user}= useAuth();
   const isAdmin = user?.isAdmin;
-  const token = user?.token;
   const id = user?.userId;
    const [open, setOpen] = useState(false)
-  //  const [products, setProducts] = useState(null)
-    const API_URL = import.meta.env.VITE_API_URL;
     const navigate = useNavigate();
   
        const fetchProducts = async ({page,search}) => {
          try {
-           const res = await axios.get(`${API_URL}/api/products/${id}/cataloge`, {
-             headers: { Authorization: `Bearer ${token}` },
+           const res = await api.get(`/api/products/${id}/cataloge`, {
              params: { page,limit: 12,search}
            })
           return res.data;

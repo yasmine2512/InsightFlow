@@ -2,6 +2,7 @@ import express from "express";
 import dotenv from "dotenv";
 dotenv.config();
 import cors from "cors";
+import cookieParser from "cookie-parser";
 import authRoutes from'./Routes/authRoutes.js';
 import dashboardRoutes from './Routes/dashboardRoutes.js';
 import ordersRoutes from './Routes/ordersRoutes.js';
@@ -16,7 +17,11 @@ import filesRoute from "./Routes/filesRoute.js"
 const app = express();
 
 connectDB();
-app.use(cors());
+app.use(cors({
+  origin: process.env.CLIENT_URL || "http://localhost:5173",
+  credentials: true,             
+}));
+app.use(cookieParser());
 app.get("/health", (req, res) => {
   res.status(200).json({ status: "ok" });
 });
@@ -31,7 +36,6 @@ app.use("/api/dashboard",dashboardRoutes);
 app.use("/api/chats",chatRoutes);
 app.use("/api/files",filesRoute);
 
-// app.connectdb();
 app.use("/", (req, res) => {
   res.send("API is running...");
 });

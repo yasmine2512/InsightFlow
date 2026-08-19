@@ -2,7 +2,7 @@ import DashboardLayout from "../components/Layout";
 import { TrendingUp, TrendingDown, DollarSign, Package, ShoppingCart, Users,AlertTriangle} from "lucide-react";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar ,} from "recharts";
 import { useEffect, useState } from "react"
-import axios from "axios"
+import { api } from "../lib/api";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "../context/AuthContext";
 
@@ -43,19 +43,15 @@ const result = [];
 
 export default function Dashboard() {
   const { user} = useAuth();
-  const token = user?.token;
   const id = user?.userId;
   const [profile, setProfile] = useState(null)
-  const API_URL = import.meta.env.VITE_API_URL;
     const fetchProfile = async () => {
       try {
-        const res = await axios.get(`${API_URL}/api/dashboard/${id}`, {
-          headers: { Authorization: `Bearer ${token}` }
-        })
+        const res = await api.get(`/api/dashboard/${id}`);
         return res.data;
-      } catch (err) {
-        console.error("Unauthorized or token invalid", err)
-        throw err;
+      } catch (error) {
+        console.error("Unauthorized or token invalid", error)
+        throw error;
       }
     }
 const { data, isLoading, error } = useQuery({ queryKey: ["overview", id], queryFn: fetchProfile, staleTime: 1000 * 60 * 5 });

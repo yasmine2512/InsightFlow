@@ -6,7 +6,7 @@ import { Label } from "../components/ui/Label";
 import { Switch } from "../components/ui/switch";
 import { Separator } from "../components/ui/separator";
 import {Trash2, Lock, FileText, Upload} from "lucide-react"
-import axios from "axios";
+import { api } from "../lib/api";
 import { DeleteDialog } from "./DeleteDialog";
 import { SuccessDialog } from "./SuccesDialog";
 import { UpgradeModal } from "./UpgradeModal";
@@ -33,18 +33,14 @@ export default function SettingsPage() {
   const [uploading, setUploading] = useState(false);
   const [fileMessage, setFileMessage] = useState(null);
 
-  const API_URL = import.meta.env.VITE_API_URL;
   const { user, updateUser, logout } = useAuth();
-  const token = user?.token;
   const userId = user?.userId;
   const isPro = user?.plan === "pro";
   
   useEffect(() => {
     async function fetchdata() {
       try {
-        const response = await axios.get(`${API_URL}/api/auth/profile/${userId}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const response = await api.get(`/api/auth/profile/${userId}`);
         const parts = (response.data.name || "").trim().split(" ");
         const ini = parts.length >= 2
           ? parts[0][0] + parts[parts.length - 1][0]
@@ -60,17 +56,14 @@ export default function SettingsPage() {
       }
     }
     fetchdata();
-  }, [userId, token, API_URL]);
+  }, [userId]);
 
   // Fetch organization RAG files
   useEffect(() => {
     async function fetchOrgFiles() {
-      if (!token) return;
       setFilesLoading(true);
       try {
-        const response = await axios.get(`${API_URL}/api/files/${userId}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const response = await api.get(`/api/files/${userId}`);
         setFiles(response.data|| []);
       } catch (err) {
         console.error("Failed to fetch organization files", err);
@@ -79,7 +72,7 @@ export default function SettingsPage() {
       }
     }
     fetchOrgFiles();
-  }, [token, API_URL]);
+  }, [userId]);
 
   async function handleFileUpload(e) {
     const uploadedFile = e.target.files[0];
@@ -97,9 +90,8 @@ export default function SettingsPage() {
     setUploading(true);
     setFileMessage(null);
     try {
-      const response = await axios.post(`${API_URL}/api/files/${userId}`, formData, {
+      const response = await api.post(`/api/files/${userId}`, formData, {
         headers: { 
-          Authorization: `Bearer ${token}`,
           "Content-Type": "multipart/form-data"
         },
       });
@@ -118,9 +110,7 @@ export default function SettingsPage() {
   async function handleFileDelete(fileId) {
     setDeleteTarget(null);
     try {
-      await axios.delete(`${API_URL}/api/files/${userId}/file/${fileId}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      await api.delete(`/api/files/${userId}/file/${fileId}`);
       setFiles((prev) => prev.filter((f) => f._id !== fileId));
       setSuccessMessage("File deleted successfully.");
       setSuccessOpen(true);
@@ -133,9 +123,7 @@ export default function SettingsPage() {
   async function handleDelete() {
     if (!userId) return;
     try {
-      await axios.delete(`${API_URL}/api/auth/${userId}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      await api.delete(`/api/auth/${userId}`);
       logout();
     } catch (error) {
       console.log(error);
@@ -149,9 +137,7 @@ export default function SettingsPage() {
     setSaving(true);
     setMessage(null);
     try {
-      const response = await axios.put(`${API_URL}/api/auth/profile/${userId}`, { name, orgname }, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const response = await api.put(`/api/auth/profile/${userId}`, { name, orgname });
       updateUser({ username: response.data.name ,organization:response.data.organizationName });
       const parts = response.data.name.trim().split(" ");
       const ini = parts.length >= 2

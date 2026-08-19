@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Bot , Send , User , AlertCircle} from "lucide-react";
 import { ErrorDialog } from './ErrorDialog';
-import axios from "axios";
+import { api } from "../lib/api";
 import { useAuth } from "../context/AuthContext";
 import { cn } from "../lib/utils";
 
@@ -13,11 +13,8 @@ export default function ChatWindow({ chatId }) {
   const messagesEndRef = useRef(null);
   const [error,setError] = useState("");
   const [errorOpen,setErrorOpen] = useState(false);
-
-  const API_URL = import.meta.env.VITE_API_URL;
   const { user } = useAuth();
   const id = user?.userId;
-  const token = user?.token;
 
   useEffect(() => {
     setRateLimitError(false);
@@ -79,10 +76,7 @@ export default function ChatWindow({ chatId }) {
 
    async function getMessageHistory(chatId) {
     try{
-    const response = await axios.get(
-    `${API_URL}/api/chats/${id}/messages/${chatId}`,
-    {headers: { Authorization: `Bearer ${token}` }}
-  );
+    const response = await api.get(`/api/chats/${id}/messages/${chatId}`);
   console.log(response.data)
   return response.data;
     }catch(error){
@@ -94,11 +88,7 @@ export default function ChatWindow({ chatId }) {
 
    async function postMessage(chatId, content) {
     try{
-    const response = await axios.post(
-    `${API_URL}/api/chats/${id}/messages/${chatId}`,
-    {content},
-    {headers: { Authorization: `Bearer ${token}` }}
-  );
+    const response = await api.post(`/api/chats/${id}/messages/${chatId}`,{content});
     return response.data;
     }catch(error){
     setError(error.response?.data?.message);

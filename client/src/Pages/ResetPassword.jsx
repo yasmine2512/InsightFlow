@@ -1,12 +1,11 @@
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { KeyRound } from "lucide-react";
-import axios from "axios";
+import { api } from "../lib/api";
 
 function ResetPassword() {
   const { userId, token } = useParams();
   const navigate = useNavigate();
-  const API_URL = import.meta.env.VITE_API_URL;
 
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -23,7 +22,7 @@ function ResetPassword() {
     if (password !== confirmPassword) {return setError("Passwords do not match");}
 
     try {
-      const res = await axios.post(`${API_URL}/api/auth/reset-password/${userId}/${token}`,
+      const res = await api.post(`/api/auth/reset-password/${userId}/${token}`,
         {password});
       setMessage(res.data.message);
       setTimeout(() => {

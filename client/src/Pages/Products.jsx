@@ -5,7 +5,7 @@ import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/Input";
 import { useParams ,  useNavigate} from "react-router-dom"
 import { useEffect, useState } from "react"
-import axios from "axios"
+import { api } from "../lib/api";
 import { useQuery } from "@tanstack/react-query";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "../context/AuthContext";
@@ -18,11 +18,9 @@ import { UpgradeModal } from "./UpgradeModal";
 
 export default function Products() {
   const { user} = useAuth();
-  const token = user?.token;
   const id = user?.userId;
   const plan = user.plan;
   const [profile, setProfile] = useState(null)
-  const API_URL = import.meta.env.VITE_API_URL;
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const [openForm,setOpenForm] = useState(false);
@@ -35,9 +33,7 @@ export default function Products() {
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
     const fetchStats = async () => {
       try {
-        const res = await axios.get(`${API_URL}/api/products/${id}/stats`, {
-          headers: { Authorization: `Bearer ${token}` },
-        })
+        const res = await api.get(`/api/products/${id}/stats`);
         return res.data;
       } catch (err) {
         console.error("Unauthorized or token invalid", err);
@@ -46,8 +42,7 @@ export default function Products() {
     }
     const fetchProducts = async ({page,search,filter}) => {
       try {
-        const res = await axios.get(`${API_URL}/api/products/${id}`, {
-          headers: { Authorization: `Bearer ${token}` },
+        const res = await api.get(`/api/products/${id}`, {
            params: { page,limit: 10,search,filter}
         })
         return res.data;
@@ -71,11 +66,8 @@ export default function Products() {
   formData.append("file", file);
   try {
     setLoadingImport(true);
-    const res = await axios.post(
-      `${API_URL}/api/products/import/${id}`,
-      formData,
+    const res = await api.post(`/api/products/import/${id}`,formData,
       {headers: {
-          Authorization: `Bearer ${token}`,
           "Content-Type": "multipart/form-data",
         },}
     );

@@ -1,12 +1,10 @@
 import { useState,useEffect } from "react";
-import axios from "axios";
+import { api } from "../lib/api";
 import { useAuth } from "../context/AuthContext";
 import { useQueryClient } from "@tanstack/react-query";
 import { ErrorDialog } from "./ErrorDialog";
 import { SuccessDialog } from "./SuccesDialog";
 import { Plus, Trash2, ShoppingCart } from "lucide-react";
-
-const API_URL = import.meta.env.VITE_API_URL;
 
 export default function AddOrderPopup2({
   open,
@@ -17,9 +15,7 @@ export default function AddOrderPopup2({
   const [productsList,setProductsList] = useState([]);
   const fetchProducts = async () => {
          try {
-           const res = await axios.get(`${API_URL}/api/products/${id}/select`, {
-             headers: { Authorization: `Bearer ${token}` }
-           })
+           const res = await api.get(`/api/products/${id}/select`);
           return res.data;
          } catch (err) {
            console.error("Unauthorized or token invalid", err)
@@ -152,11 +148,7 @@ export default function AddOrderPopup2({
         totalPrice,
       };
 
-      await axios.post(
-        `${API_URL}/api/orders/${id}`,
-        body,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      await api.post(`${API_URL}/api/orders/${id}`,body);
 
       queryClient.invalidateQueries(["orderslist", id]);
       queryClient.invalidateQueries(["orders", id]);

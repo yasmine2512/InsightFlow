@@ -1,12 +1,10 @@
 import { useState } from "react";
-import axios from "axios";
+import { api } from "../lib/api";
 import { useAuth } from "../context/AuthContext";
 import { useQueryClient } from "@tanstack/react-query";
 import { ErrorDialog } from "./ErrorDialog";
 import { SuccessDialog } from "./SuccesDialog";
 import { ShoppingCart } from "lucide-react";
-
-const API_URL = import.meta.env.VITE_API_URL;
 
 export default function AddOrderPopup({
   open,
@@ -17,7 +15,6 @@ export default function AddOrderPopup({
 }) {
   const queryClient = useQueryClient();
   const { user } = useAuth();
-  const token = user?.token;
   const id = user?.userId;
   
   const [form, setForm] = useState({
@@ -69,11 +66,7 @@ export default function AddOrderPopup({
         ],
         totalPrice,
       };
-      const res = await axios.post(
-        `${API_URL}/api/orders/${id}`,
-        body,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      const res = await api.post(`/api/orders/${id}`,body);
       queryClient.invalidateQueries(["orderslist", id]);
       queryClient.invalidateQueries(["orders", id]);
       setSuccessMessage("The Order has been created and saved successfully.");

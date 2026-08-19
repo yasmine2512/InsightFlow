@@ -14,8 +14,7 @@ import {
 import { Button } from "../components/ui/button";
 import { useEffect, useState } from "react";
 import vd from "../assets/vid1.mp4";
-
-const API_URL = import.meta.env.VITE_API_URL;
+import axios from "axios";
 
 const features = [
   {
@@ -71,15 +70,15 @@ const fade = {
 
 export default function Index() {
   const [backendReady, setBackendReady] = useState(false);
-
+  const API_URL = import.meta.env.VITE_API_URL;
   useEffect(() => {
     let cancelled = false;
 
     const wakeBackend = async () => {
       try {
-        const response = await fetch(`${API_URL}/health`);
+        const response = await axios.get(`${API_URL}/health`);
 
-        if (response.ok && !cancelled) {
+        if (response.data.status === "ok" && !cancelled) {
           setBackendReady(true);
         }
       } catch (error) {

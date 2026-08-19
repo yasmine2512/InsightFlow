@@ -1,28 +1,42 @@
 import { createContext, useContext, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { api } from "../lib/api";
 
 const AuthContext = createContext();
 
 export function AuthProvider({ children }) {
+  const API_URL = import.meta.env.VITE_API_URL;
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
   // restore session
   useEffect(() => {
-    const storedUser = localStorage.getItem("user");
-
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
+    async function checkUserSession() {
+      try {
+        const response = await api.get(`/api/auth/me`);
+        const userData = response.data;
+        setUser({
+          userId: userData._id,
+          isAdmin: userData.isadmin,
+          username: userData.name,
+          organization: userData.organizationName,
+          plan: userData.plan,
+        });
+      } catch (err) {
+        setUser(null);
+      } finally {
+        setLoading(false);
+      }
     }
-      setLoading(false);
+
+    checkUserSession();
   }, []);
 
   // LOGIN
-  const login = (token, userData) => {
+  const login = (userData) => {
     console.log(userData)
     const fullUser = {
-      token,
       userId: userData._id,
       isAdmin: userData.isadmin,
       username: userData.name,
@@ -35,7 +49,16 @@ export function AuthProvider({ children }) {
     localStorage.setItem("user", JSON.stringify(fullUser));
   };
 
-  // UPDATE USER (VERY IMPORTANT FOR STRIPE)
+  const logout = async () => {
+  try {
+    await api.post(`/api/auth/logout`);
+  } catch (err) {
+    console.error("Logout failed", err);
+  }
+  setUser(null);
+  navigate("/");
+};
+
   const updateUser = (newData) => {
     setUser((prev) => {
       const updated = { ...prev, ...newData };
@@ -43,13 +66,14 @@ export function AuthProvider({ children }) {
       return updated;
     });
   };
-
-  // LOGOUT
-  const logout = () => {
-    setUser(null);
-    localStorage.removeItem("user");
-    navigate("/");
-  };
+  
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p>Loading session...</p>
+      </div>
+    );
+  }
 
   return (
     <AuthContext.Provider value={{ user,loading, login, logout, updateUser }}>

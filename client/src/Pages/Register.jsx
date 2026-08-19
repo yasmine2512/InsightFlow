@@ -7,13 +7,13 @@ import { Label } from "../components/ui/Label";
 import { useEffect,useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import axios from "axios"
+import axios from "axios";
 export default function Register() {
-const {login}= useAuth();
- const [error,setError] = useState(null);
- const [success,setSuccess] = useState(null);
- const navigate = useNavigate()
- const [email, setEmail] = useState("");
+  const {login}= useAuth();
+  const [error,setError] = useState(null);
+  const [success,setSuccess] = useState(null);
+  const navigate = useNavigate()
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const[name,setName] = useState("");
   const [loading, setLoading] = useState(false);
@@ -148,7 +148,7 @@ const {login}= useAuth();
           <div className="mt-4">
             <Button variant="outline" size="sm" className="w-1/2"
             onClick={() => 
-            { window.location.href ="http://localhost:5000/api/auth/google";}}>Google</Button>
+            { window.location.href =`${API_URL}/api/auth/google`;}}>Google</Button>
           </div>
           <p className="text-xs text-muted-foreground mt-6 text-center">
             By signing up, you agree to our Terms of Service and Privacy Policy.

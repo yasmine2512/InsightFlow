@@ -5,7 +5,7 @@ import { Input } from "../components/ui/Input";
 import { useParams ,  useNavigate} from "react-router-dom"
 import { useEffect, useState, useRef} from "react"
 import { createPortal } from "react-dom";
-import axios from "axios"
+import { api } from "../lib/api";
 import { useQuery } from "@tanstack/react-query";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip,BarChart ,CartesianGrid,XAxis, YAxis,Bar} from "recharts";
 import { useQueryClient } from "@tanstack/react-query";
@@ -120,11 +120,9 @@ function StatusPopover({ currentStatus, onSelect }) {
 
 export default function Orders() {
   const { user} = useAuth();
-  const token = user?.token;
   const id = user?.userId;
   const plan = user.plan;
   const [profile, setProfile] = useState(null)
-  const API_URL = import.meta.env.VITE_API_URL;
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [deleteTarget, setDeleteTarget] = useState(null);
@@ -138,9 +136,7 @@ export default function Orders() {
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const handleDeleteConfirm = async () => {
   try {
-    await axios.delete(`${API_URL}/api/orders/${id}/${deleteTarget}`, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
+    await api.delete(`/api/orders/${id}/${deleteTarget}`);
     queryClient.invalidateQueries(["orderslist", id]);
     queryClient.invalidateQueries(["orders", id]);
     setDeleteTarget(null);
@@ -156,9 +152,7 @@ export default function Orders() {
 
   const fetchStats= async () => {
       try {
-        const res = await axios.get(`${API_URL}/api/orders/${id}/stats`, {
-          headers: { Authorization: `Bearer ${token}` }
-        })
+        const res = await api.get(`/api/orders/${id}/stats`);
         return res.data;
       } catch (err) {
         console.error("Unauthorized or token invalid", err)
@@ -167,10 +161,8 @@ export default function Orders() {
     }
 const fetchOrders= async ({page,search,status}) => {
       try {
-        const res = await axios.get(`${API_URL}/api/orders/${id}`, {
-          headers: { Authorization: `Bearer ${token}` },
-           params: { page,limit: 10,search,status}
-        })
+        const res = await api.get(`/api/orders/${id}`,
+           {params: { page,limit: 10,search,status}});
         return res.data;
       } catch (err) {
         console.error("Unauthorized or token invalid", err)
@@ -193,14 +185,7 @@ const handleFileChange = async (file) => {
   formData.append("file", file);
   try {
     setLoadingImport(true);
-    const res = await axios.post(
-      `${API_URL}/api/orders/import/${id}`,
-      formData,
-      {headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "multipart/form-data",
-        },}
-    );
+    const res = await api.post(`/api/orders/import/${id}`,formData);
     
     queryClient.invalidateQueries(["orders", id]);
     queryClient.invalidateQueries(["customerslist", id]);
@@ -441,9 +426,8 @@ const colors = [
                         currentStatus={o.status}
                         onSelect={async (newStatus) => {
                           try {
-                            await axios.patch(`${API_URL}/api/orders/${id}/${o._id}/status`,
-                              { status: newStatus },
-                              { headers: { Authorization: `Bearer ${token}` } }
+                            await api.patch(`/api/orders/${id}/${o._id}/status`,
+                              { status: newStatus }
                             );
                             setSuccessMessage("Status updated successfuly");
                             setSuccessOpen(true);

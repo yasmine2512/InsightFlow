@@ -4,10 +4,11 @@ import { Mail, Lock, ArrowRight } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/Input";
 import { Label } from "../components/ui/Label";
-import axios from "axios"
+import axios from "axios";
 import { useNavigate } from "react-router-dom"
 import { useState } from "react";
 import { useAuth } from "../context/AuthContext";
+import { api } from "../lib/api";
 
 export default function Login() {
  const [error,setError] = useState(null);
@@ -33,9 +34,9 @@ export default function Login() {
     return;
   }
     try{
-     const response= await axios.post(`${API_URL}/api/auth/login`,{email,password});
-     const {token,user} = response.data;
-       login(token, user);
+     const response= await api.post(`/api/auth/login`,{email,password});
+     const {user} = response.data;
+       login(user);
       navigate(`/dashboard`);
     }catch(err){
       if (err.response && err.response.status === 401) {

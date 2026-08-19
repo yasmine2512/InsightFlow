@@ -5,7 +5,7 @@ import { Input } from "../components/ui/Input";
 import { useParams ,  useNavigate} from "react-router-dom"
 import { useEffect, useState } from "react"
 import { useAuth } from "../context/AuthContext";
-import axios from "axios"
+import { api } from "../lib/api";
 import { useQuery } from "@tanstack/react-query";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from "recharts";
 import AddCustomerPopup from "./AddCustomer"
@@ -47,10 +47,8 @@ const statusColor = {
 
 export default function Customers() {
   const { user} = useAuth();
-  const token = user?.token;
   const id = user?.userId;
   const [profile, setProfile] = useState(null)
-  const API_URL = import.meta.env.VITE_API_URL;
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [mode, setMode] = useState("create");
@@ -64,9 +62,7 @@ export default function Customers() {
 
   const handleDeleteConfirm = async () => {
   try {
-    await axios.delete(`${API_URL}/api/customers/${id}/${deleteTarget}`, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
+    await api.delete(`/api/customers/${id}/${deleteTarget}`);
     queryClient.invalidateQueries(["customerslist", id]);
     queryClient.invalidateQueries(["customer", id]);
     setDeleteTarget(null);
@@ -80,9 +76,7 @@ export default function Customers() {
     const fetchStats = async () => {
       try {
       
-        const res = await axios.get(`${API_URL}/api/customers/${id}/stats`, {
-          headers: { Authorization: `Bearer ${token}` },
-        })
+        const res = await api.get(`/api/customers/${id}/stats`)
         return res.data;
       } catch (err) {
         console.error("Unauthorized or token invalid", err)
@@ -91,10 +85,7 @@ export default function Customers() {
     }
     const fetchCustomers = async ({page,search}) => {
       try {
-        const res = await axios.get(`${API_URL}/api/customers/${id}`, {
-          headers: { Authorization: `Bearer ${token}` },
-           params: { page,limit: 10,search}
-        })
+        const res = await api.get(`/api/customers/${id}`, {params: { page,limit: 10,search}})
         return res.data;
       } catch (err) {
         console.error("Unauthorized or token invalid", err)
