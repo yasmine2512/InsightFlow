@@ -13,6 +13,7 @@ import AddProductPopup from "./AddProduct";
 import { ImportProductsModal } from "./ImportProductsModal";
 import { SuccessDialog } from "./SuccesDialog";
 import { ErrorDialog } from "./ErrorDialog";
+import { UpgradeModal } from "./UpgradeModal";
 
 
 export default function Products() {
@@ -31,6 +32,7 @@ export default function Products() {
   const [succesOpen,setSuccessOpen] = useState(false);
   const [successMessgae, setSuccessMessage] = useState("");
   const [openProductModal,setopenProductModal] = useState(false);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
     const fetchStats = async () => {
       try {
         const res = await axios.get(`${API_URL}/api/products/${id}/stats`, {
@@ -57,7 +59,7 @@ export default function Products() {
 
   const handleImport =()=>{
   if(!plan ||plan === "free"){
-    navigate("/subscriptions");
+    setShowUpgradeModal(true);
   }else{
   setopenProductModal(true);
   }
@@ -247,7 +249,7 @@ const {  data: productlist, isLoading, error } = useQuery({ queryKey: ["productl
             <td className="text-left p-4"><div>{o.stock}</div></td>
             <td className="text-left p-4">{ o.category ? (o.category):("No category")}</td>
             <td className="text-left p-4 font-medium">{o.sold}</td>
-            <td className="text-left p-4">{o.revenue}</td>
+            <td className="text-left p-4">{o.revenue.toFixed(2)}</td>
             <td className="text-left p-4">
               <span className={`px-2 py-1 rounded-full text-xs font-medium ${o.isActive ? "bg-success/10 text-success" : "bg-warning/10 text-warning"}`}>
                 {o.isActive ? "Active" : "Inactive"}
@@ -336,6 +338,12 @@ const {  data: productlist, isLoading, error } = useQuery({ queryKey: ["productl
               setOpen(false);
               }}
             />    
+      <UpgradeModal
+        isOpen={showUpgradeModal}
+        onClose={() => setShowUpgradeModal(false)}
+        featureName="Excel Import"
+        description="Unlock seamless bulk importing for products, orders, and customers by upgrading to Pro."
+      />
       </div>
   );
 }

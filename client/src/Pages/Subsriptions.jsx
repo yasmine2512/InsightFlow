@@ -255,23 +255,31 @@ export default function SubscriptionPage() {
               <span>Everything in Free</span>
             </div>
 
+            {/* AI Assistant & RAG Features */}
             <div className="pt-4 border-t">
-              <p className="font-semibold mb-3">Excel Import</p>
+              <p className="font-semibold mb-3">AI & Knowledge Base</p>
 
               <div className="space-y-3">
                 <div className="flex items-center gap-3">
-                  <TableProperties className="w-4 h-4 text-primary" />
-                  <span>Import products from Excel</span>
+                  <Check className="w-4 h-4 text-primary" />
+                  <span>AI Assistant (up to 10 messages/day)</span>
                 </div>
 
                 <div className="flex items-center gap-3">
-                  <TableProperties className="w-4 h-4 text-primary" />
-                  <span>Import orders from Excel</span>
+                  <Check className="w-4 h-4 text-primary" />
+                  <span>Organization File Upload (up to 10 files)</span>
                 </div>
+              </div>
+            </div>
 
+            {/* Excel Import */}
+            <div className="pt-4 border-t">
+              <p className="font-semibold mb-3">Excel Import</p>
+
+             <div className="space-y-2">
                 <div className="flex items-center gap-3">
                   <TableProperties className="w-4 h-4 text-primary" />
-                  <span>Import customers from Excel</span>
+                  <span>Excel Import (Products, Orders, Customers)</span>
                 </div>
               </div>
             </div>
@@ -361,4 +369,5 @@ export default function SubscriptionPage() {
       </div>
     </div>
   );
+
 }

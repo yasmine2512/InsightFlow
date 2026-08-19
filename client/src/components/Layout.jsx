@@ -1,10 +1,11 @@
 import { Link, useLocation, Outlet } from "react-router-dom";
-import { LayoutDashboard, Package, GalleryVertical, ShoppingCart, CreditCard, Settings, Users, LogOut, Menu, X, Bot, Plus } from "lucide-react";
+import { LayoutDashboard, Package, GalleryVertical, ShoppingCart, CreditCard, Settings, Users, LogOut, Menu, X, Bot, Plus, Lock } from "lucide-react";
 import { useState, useEffect } from "react";
 import { cn } from "../lib/utils";
 import { useAuth } from "../context/AuthContext";
 import ChatWindow from "../Pages/ChatWindow";
 import ChatAssistant from "../Pages/ChatAssistant";
+import { UpgradeModal } from "../Pages/UpgradeModal";
 
 export default function DashboardLayout() {
   const location = useLocation();
@@ -13,10 +14,11 @@ export default function DashboardLayout() {
   const [initials, setInitials] = useState("??");
   const username = user?.username;
   const organizationName = user?.organization || "InsightFlow Inc.";
+  const isPro = user?.plan === "pro";
   // Chat Drawer & Management States
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
-
+  const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
   const navItems = [
     { label: "Dashboard", icon: LayoutDashboard, to: `/dashboard` },
     { label: "Products", icon: Package, to: `/products` },
@@ -36,6 +38,14 @@ export default function DashboardLayout() {
     setInitials(ini.toUpperCase());
   }, [username]);
 
+  const handleAssistantClick = (e) => {
+    if (!isPro) {
+      e.preventDefault();
+      setIsUpgradeModalOpen(true);
+    }else{
+    setIsChatOpen(true);
+    }
+  };
   
   return (
     <div className="min-h-screen flex bg-background">
@@ -51,7 +61,7 @@ export default function DashboardLayout() {
           <Link to="/" className="font-heading text-xl font-bold text-sidebar-primary-foreground">
             <span className="text-primary">Insight</span>Flow
           </Link>
-          <button className="lg:hidden text-sidebar-foreground" onClick={() => setOpen(false)}><X className="w-5 h-5" /></button>
+          <button className="lg:hidden text-sidebar-foreground" onClick={() => setOpen(false)} ><X className="w-5 h-5" /></button>
         </div>
 
         <nav className="flex-1 px-3 space-y-1">
@@ -79,11 +89,18 @@ export default function DashboardLayout() {
         {/* Chatbot Entry Button inside Main Sidebar */}
         <div className="px-3 mb-2">
           <button
-            onClick={() => setIsChatOpen(true)}
+            onClick={handleAssistantClick}
             className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-primary "
           >
-            <Bot className="w-4 h-4" />
-            AI Assistant
+            <div className="flex items-center gap-2">
+          <Bot className="w-4 h-4 text-primary" />
+          <span>AI Assistant</span>
+        </div>
+        {!isPro && (
+          <span className="flex items-center gap-1 text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full font-semibold">
+            <Lock className="w-3 h-3" /> Pro
+          </span>
+        )}
           </button>
         </div>
 
@@ -137,7 +154,12 @@ export default function DashboardLayout() {
           <Outlet />
         </main>
       </div>
-
+      <UpgradeModal 
+      isOpen={isUpgradeModalOpen} 
+      onClose={() => setIsUpgradeModalOpen(false)}
+      featureName="AI Assistant"
+      description="Unlock up to 10 messages a day with our intelligent AI Assistant by upgrading to Pro."
+    />
       {/* Slide-Over Chatbot Drawer */}
       {isChatOpen && <ChatAssistant 
       closeChat={() => setIsChatOpen(false)}

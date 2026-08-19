@@ -14,6 +14,7 @@ import { ErrorDialog } from "./ErrorDialog";
 import { SuccessDialog } from "./SuccesDialog";
 import AddOrderPopup2 from "./AddOrderPopup";
 import { ImportOrdersModal } from "./ImportOrderModal";
+import { UpgradeModal } from "./UpgradeModal";
 import { useAuth } from "../context/AuthContext";
 const fillMissingDays = (data) => {
 const result = [];
@@ -134,6 +135,7 @@ export default function Orders() {
   const [openOrderModal,setopenOrderModal] = useState(false);
   const [openOrderForm,setopenOrderForm] = useState(false);
   const [errorTitle, setErrorTitle] = useState("");
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const handleDeleteConfirm = async () => {
   try {
     await axios.delete(`${API_URL}/api/orders/${id}/${deleteTarget}`, {
@@ -177,10 +179,10 @@ const fetchOrders= async ({page,search,status}) => {
     }
 const handleImport =()=>{
   if(!plan || plan === "free"){
-    navigate("/subscriptions");
-}else{
-setopenOrderModal(true);
-}
+    setShowUpgradeModal(true);
+  }else{
+    setopenOrderModal(true);
+  }
 }
 
 const fileInputRef = useRef(null);
@@ -547,6 +549,12 @@ const colors = [
             setSuccessOpen(false);
             setOpen(false);
             }}
+          />
+    <UpgradeModal
+            isOpen={showUpgradeModal}
+            onClose={() => setShowUpgradeModal(false)}
+            featureName="Excel Import"
+            description="Unlock seamless bulk importing for products, orders, and customers by upgrading to Pro."
           />
       </div>
 

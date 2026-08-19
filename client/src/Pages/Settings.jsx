@@ -5,10 +5,11 @@ import { Input } from "../components/ui/Input";
 import { Label } from "../components/ui/Label";
 import { Switch } from "../components/ui/switch";
 import { Separator } from "../components/ui/separator";
-import {Trash2} from "lucide-react"
+import {Trash2, Lock, FileText, Upload} from "lucide-react"
 import axios from "axios";
 import { DeleteDialog } from "./DeleteDialog";
 import { SuccessDialog } from "./SuccesDialog";
+import { UpgradeModal } from "./UpgradeModal";
 import { useAuth } from "../context/AuthContext";
 
 export default function SettingsPage() {
@@ -25,6 +26,7 @@ export default function SettingsPage() {
   const [successMessgae, setSuccessMessage] = useState("");
   const [open, setOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState(null);
+  const [showUpgradeModal,setShowUpgradeModal] = useState(false);
 
   const [files, setFiles] = useState([]);
   const [filesLoading, setFilesLoading] = useState(false);
@@ -35,6 +37,7 @@ export default function SettingsPage() {
   const { user, updateUser, logout } = useAuth();
   const token = user?.token;
   const userId = user?.userId;
+  const isPro = user?.plan === "pro";
   
   useEffect(() => {
     async function fetchdata() {
@@ -149,7 +152,7 @@ export default function SettingsPage() {
       const response = await axios.put(`${API_URL}/api/auth/profile/${userId}`, { name, orgname }, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      updateUser({ username: response.data.name });
+      updateUser({ username: response.data.name ,organization:response.data.organizationName });
       const parts = response.data.name.trim().split(" ");
       const ini = parts.length >= 2
         ? parts[0][0] + parts[parts.length - 1][0]
@@ -235,81 +238,111 @@ export default function SettingsPage() {
 
       <Separator />
 
-    {/* Organization Files / RAG Knowledge Base Section */}
       {/* Organization Files / RAG Knowledge Base Section */}
-      <div className="bg-card rounded-xl border border-border p-6 shadow-soft space-y-4">
-        <div className="flex items-center justify-between w-full">
-          <div className="text-left">
-            <h3 className="font-heading font-semibold m-0 leading-none">Organization Knowledge Base</h3>
-            <p className="text-xs text-muted-foreground mt-1 mb-0">Upload documents to power your organization's AI context ({files.length}/10 files uploaded)</p>
-          </div>
-          <div>
-            <input
-              type="file"
-              id="rag-file-upload"
-              className="hidden"
-              onChange={handleFileUpload}
-              disabled={uploading || files.length >= 10}
-            />
-            <label htmlFor="rag-file-upload">
-              <Button 
-                variant="outline" 
-                size="sm" 
-                disabled={uploading || files.length >= 10}
-                asChild
-              >
-                <span>{uploading ? "Uploading..." : "Upload File"}</span>
-              </Button>
-            </label>
-          </div>
-        </div>
-
-        {fileMessage && (
-          <p className={`text-sm ${fileMessage.type === "success" ? "text-green-600" : "text-destructive"}`}>
-            {fileMessage.text}
-          </p>
-        )}
-
-        {filesLoading ? (
-          <p className="text-sm text-muted-foreground">Loading files...</p>
-        ) : files.length === 0 ? (
-          <p className="text-sm text-muted-foreground italic">No files uploaded yet. Upload PDFs, text docs, or markdown files to enable RAG.</p>
-        ) : (
-          <div className="divide-y divide-border border border-border rounded-lg overflow-hidden">
-            {files.map((file) => (
-              <div key={file._id} className="flex items-center justify-between p-3 bg-background/50">
-                <div className="flex items-center space-x-3 overflow-hidden">
-                  <div className="text-sm font-medium truncate max-w-xs sm:max-w-md">{file.name}</div>
-                  <span className="text-xs text-muted-foreground">({(file.size / 1024).toFixed(1)} KB)</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-8 w-8 p-0"
-                    onClick={() => window.open(file.url, "_blank")}
-                    title="View PDF"
-                  >
-                    {/* Simple SVG eye icon or use an icon library */}
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4 text-muted-foreground hover:text-foreground">
-                      <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
-                      <circle cx="12" cy="12" r="3" />
-                    </svg>
-                  </Button>
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                    onClick={() => setDeleteTarget(file._id)}
-                  >
-                    <Trash2 size={15}/>
-                  </Button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
+  <div className="bg-card rounded-xl border border-border p-6 shadow-soft space-y-4 relative">
+    <div className="flex items-center justify-between w-full">
+      <div className="text-left">
+        <h3 className="font-heading font-semibold m-0 leading-none">Organization Knowledge Base</h3>
+        <p className="text-xs text-muted-foreground mt-1 mb-0">
+          {isPro 
+            ? `Upload documents to power your organization's AI context (${files.length}/10 files uploaded)` 
+            : "Unlock RAG-powered AI context by upgrading to Pro (up to 10 files)"}
+        </p>
       </div>
+      <div>
+        <input
+          type="file"
+          id="rag-file-upload"
+          className="hidden"
+          onChange={(e) => {
+            if (!isPro) {
+              e.preventDefault();
+              setShowUpgradeModal(true);
+            } else {
+              handleFileUpload(e);
+            }
+          }}
+          disabled={uploading || (isPro && files.length >= 10)}
+        />
+        <label htmlFor="rag-file-upload">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={(e) => {
+              if (!isPro) {
+                e.preventDefault();
+                setShowUpgradeModal(true);
+              }
+            }}
+            disabled={uploading || (isPro && files.length >= 10)}
+            asChild
+          >
+            <span>{uploading ? "Uploading..." : "Upload File"}</span>
+          </Button>
+        </label>
+      </div>
+    </div>
+
+    {fileMessage && (
+      <p className={`text-sm ${fileMessage.type === "success" ? "text-green-600" : "text-destructive"}`}>
+        {fileMessage.text}
+      </p>
+    )}
+
+    {/* Free User Preview / Locked Overlay Banner */}
+    {!isPro ? (
+      <div className="border border-dashed border-border rounded-lg p-6 text-center bg-muted/30">
+        <div className="max-w-xs mx-auto space-y-2">
+          <p className="text-sm font-medium">Upload company documents for AI training</p>
+          <p className="text-xs text-muted-foreground">Available on the Pro plan to let your AI assistant reference your business data securely.</p>
+          <Button 
+            size="sm" 
+            className="mt-2 gradient-primary text-primary-foreground border-0 w-full"
+            onClick={() => setShowUpgradeModal(true)}
+          >
+            Upgrade to Unlock Files →
+          </Button>
+        </div>
+      </div>
+    ) : filesLoading ? (
+      <p className="text-sm text-muted-foreground">Loading files...</p>
+    ) : files.length === 0 ? (
+      <p className="text-sm text-muted-foreground italic">No files uploaded yet. Upload PDFs, text docs, or markdown files to enable RAG.</p>
+    ) : (
+      <div className="divide-y divide-border border border-border rounded-lg overflow-hidden">
+        {files.map((file) => (
+          <div key={file._id} className="flex items-center justify-between p-3 bg-background/50">
+            <div className="flex items-center space-x-3 overflow-hidden">
+              <div className="text-sm font-medium truncate max-w-xs sm:max-w-md">{file.name}</div>
+              <span className="text-xs text-muted-foreground">({(file.size / 1024).toFixed(1)} KB)</span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 w-8 p-0"
+                onClick={() => window.open(file.url, "_blank")}
+                title="View PDF"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4 text-muted-foreground hover:text-foreground">
+                  <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
+                  <circle cx="12" cy="12" r="3" />
+                </svg>
+              </Button>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                onClick={() => setDeleteTarget(file._id)}
+              >
+                <Trash2 size={15}/>
+              </Button>
+            </div>
+          </div>
+        ))}
+      </div>
+    )}
+  </div>
 
       <Separator />
 
@@ -370,7 +403,13 @@ export default function SettingsPage() {
             onClose={() => {
               setSuccessOpen(false);
               }}
-            />    
+            />   
+      <UpgradeModal
+              isOpen={showUpgradeModal}
+              onClose={() => setShowUpgradeModal(false)}
+              featureName="Excel File Upload"
+              description="Unlock up to 10 files with our Knowledge Base by upgrading to Pro."
+            />
     </div>
   );
 }
