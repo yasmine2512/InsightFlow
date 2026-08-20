@@ -22,6 +22,7 @@ jobs:
           SERVER_URL: http://localhost:5000
           VITE_API_URL: http://localhost:5000
           PORT: 5000
+          NODE_ENV: "test"
 
     steps:
       - name: Checkout repository

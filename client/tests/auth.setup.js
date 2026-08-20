@@ -9,9 +9,8 @@ setup("authenticate", async ({ page }) => {
   await page.getByLabel(/password/i).fill("test123");
 
   await page.getByRole("button", { name: /Sign In/i }).click();
-
   await expect(page).toHaveURL(/dashboard/);
-
+  
   await page.context().storageState({
     path: authFile,
   });

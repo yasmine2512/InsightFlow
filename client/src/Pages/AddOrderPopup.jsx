@@ -24,7 +24,6 @@ export default function AddOrderPopup2({
 
   const queryClient = useQueryClient();
   const { user } = useAuth();
-  const token = user?.token;
   const id = user?.userId;
   const [form, setForm] = useState({
     customerName: "",
@@ -148,7 +147,7 @@ export default function AddOrderPopup2({
         totalPrice,
       };
 
-      await api.post(`${API_URL}/api/orders/${id}`,body);
+      await api.post(`/api/orders/${id}`,body);
 
       queryClient.invalidateQueries(["orderslist", id]);
       queryClient.invalidateQueries(["orders", id]);

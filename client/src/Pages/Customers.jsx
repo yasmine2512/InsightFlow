@@ -46,7 +46,7 @@ const statusColor = {
 };
 
 export default function Customers() {
-  const { user} = useAuth();
+  const { user ,loading} = useAuth();
   const id = user?.userId;
   const [profile, setProfile] = useState(null)
   const navigate = useNavigate();

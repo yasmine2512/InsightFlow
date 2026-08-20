@@ -5,7 +5,6 @@ import { api } from "../lib/api";
 const AuthContext = createContext();
 
 export function AuthProvider({ children }) {
-  const API_URL = import.meta.env.VITE_API_URL;
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
@@ -15,7 +14,7 @@ export function AuthProvider({ children }) {
     async function checkUserSession() {
       try {
         const response = await api.get(`/api/auth/me`);
-        const userData = response.data;
+        const userData = response.data.user;
         setUser({
           userId: userData._id,
           isAdmin: userData.isadmin,
@@ -35,7 +34,6 @@ export function AuthProvider({ children }) {
 
   // LOGIN
   const login = (userData) => {
-    console.log(userData)
     const fullUser = {
       userId: userData._id,
       isAdmin: userData.isadmin,
@@ -66,7 +64,7 @@ export function AuthProvider({ children }) {
       return updated;
     });
   };
-  
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">

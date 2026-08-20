@@ -6,6 +6,9 @@ import Customer from "../Models/Customer.js";
 import Subscription from "../Models/Subscription.js";
 import Order from "../Models/Order.js";
 import Counter from "../Models/Counter.js";
+import File from "../Models/File.js";
+import Conversation from "../Models/Conversation.js";
+import Message from "../Models/Message.js";
 import asyncHandler from "express-async-handler";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
@@ -18,6 +21,7 @@ import {
 import sendEmail from "../Middlewares/sendEmail.js";
 import passport from "passport";
 import mongoose from "mongoose";
+import { cloudinary } from "../Middlewares/Multer.js";
 const isProduction = process.env.NODE_ENV === "production";
 
 router.get("/google",passport.authenticate("google", {
@@ -276,11 +280,46 @@ res.json({users : all_users });
    */  
 router.delete("/:id",verifyTokenAndAuthorization,asyncHandler(async(req,res)=>{
     const userId = req.params.id;
+    const conversations = await Conversation.find(
+      { organization: userId },
+      { _id: 1, threadId: 1 }
+    );
+    const conversationIds = conversations.map(c => c._id);
+    const threadIds = conversations
+      .map(c => c.threadId)
+      .filter(Boolean);
+    const files = await File.find(
+      { organization: userId },
+      { publicId: 1 }
+    );
+
+     await Promise.all(
+      files.map(file =>
+        cloudinary.uploader.destroy(file.publicId, {
+          resource_type: "raw",
+        })
+      )
+    );
+
+    for (const threadId of threadIds) {
+      await fetch(
+        `${process.env.AGENT_API_URL}/api/agent/thread`,
+        {
+          method: "DELETE",
+          headers: {"Content-Type": "application/json"},
+          body: JSON.stringify({thread_id: threadId}),
+        }
+      );
+    }
     await Promise.all([
      Customer.deleteMany({ organization: userId }),
      Product.deleteMany({ organization: userId }),
      Order.deleteMany({ organization: userId }),
-     Subscription.deleteMany({ organization: userId })
+     Counter.deleteOne({organization: userId}),
+     Subscription.deleteMany({ organization: userId }),
+     File.deleteMany({ organization: userId }),
+     Message.deleteMany({conversation: { $in: conversationIds }}),
+     Conversation.deleteMany({organization: userId,}),
     ]);
     await User.findByIdAndDelete(userId);
     return res.status(200).json({message : "user deleted succesfully"});
