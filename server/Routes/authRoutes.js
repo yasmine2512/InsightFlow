@@ -334,7 +334,9 @@ router.delete("/:id",verifyTokenAndAuthorization,asyncHandler(async(req,res)=>{
  * @access private
  */
 router.get("/me",verifyToken,asyncHandler(async (req, res) => {
-    const user = await User.findById(req.user.id).select("-password");
+    const user = await User.findById(req.user.id).select(
+      "_id name email organizationName plan isadmin"
+    );
     if (!user) {
       return res.status(404).json({message: "User not found"});
     }

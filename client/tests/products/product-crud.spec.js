@@ -33,14 +33,13 @@ test.describe("Product Operations", () => {
     const editDialog = page.getByRole("dialog", {name: "Edit Product",});
     await editDialog.getByLabel("Product Name").fill("Updated Playwright Product");
     await editDialog.getByRole("button", {name: /Update Product/i}).click();
-    await page.waitForTimeout(500);
     if (await errorPopup.isVisible()) {
     console.log("ERROR POPUP TEXT:");
     console.log(await errorPopup.innerText());
     }
+    await expect(successDialog).toBeVisible({ timeout: 10000 });
     await successDialog.getByRole("button", { name: /Continu/i }).click();
-    await expect(page.getByRole("heading", { name: "Updated Playwright Product" }))
-    .toBeVisible({ timeout: 10000 });
+    await expect(page.getByRole("heading", { name: "Updated Playwright Product" }));
 
     // Delete Product
     await page.getByRole("button", {name: "Delete product"}).click();

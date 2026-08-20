@@ -29,6 +29,22 @@ router.get("/:id",verifyTokenAndAuthorization,asyncHandler(async(req,res)=>{
 router.post("/:id",verifyTokenAndAuthorization,asyncHandler(async(req,res)=>{
   try {
     const orgId = req.params.id;
+    
+        const user = await User.findById(orgId).select(
+        "name organizationName plan"
+      );
+
+      if (!user) {
+        return res.status(404).json({
+          message: "User not found",
+        });
+      }
+      if (user.plan !== "pro") {
+        return res.status(403).json({
+          message: "The AI Assistant is only available for Pro users.",
+        });
+      }
+
     const { title } = req.body;
     if (!title?.trim()) {
       return res.status(400).json({
@@ -43,20 +59,7 @@ router.post("/:id",verifyTokenAndAuthorization,asyncHandler(async(req,res)=>{
           message: "You have reached the maximum of 10 conversations.",
         });
       }
-    const user = await User.findById(orgId).select(
-        "name organizationName plan"
-      );
 
-      if (!user) {
-        return res.status(404).json({
-          message: "User not found",
-        });
-      }
-      if (user.plan !== "pro") {
-        return res.status(404).json({
-          message: "The AI Assistant is only available for Pro users.",
-        });
-      }
     const chatId = new mongoose.Types.ObjectId();
 
     const chat = await Conversation.create({

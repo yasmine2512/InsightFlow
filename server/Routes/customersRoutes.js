@@ -3,16 +3,12 @@ import mongoose from "mongoose";
 const router = express.Router();
 import Order from "../Models/Order.js";
 import Customer from "../Models/Customer.js";
-import bcrypt from "bcryptjs";
-import jwt from "jsonwebtoken";
 import asyncHandler from "express-async-handler";
 import {
-  verifyToken,
   verifyTokenAndAuthorization,
-  verifyTokenAndAdmin
 } from '../Middlewares/JWTauth.js'
 import {getCustomers,getTC} from "../Queries/dashboardQueries.js"
-import{gettotalcustomers,getallCustomers,getCRR,getActiveCustomers,getCLM,getAvgCLV,getCSD} from "../Queries/customersQueries.js"
+import{getallCustomers,getCRR,getActiveCustomers,getCLM,getAvgCLV,getCSD} from "../Queries/customersQueries.js"
 
 const toObjectId = (id) =>
   new mongoose.Types.ObjectId(id);

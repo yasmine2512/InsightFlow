@@ -3,16 +3,13 @@ import mongoose from "mongoose";
 import Product from "../Models/Product.js"
 import Order from "../Models/Order.js";
 import asyncHandler from "express-async-handler";
-import {
-  verifyToken,
-  verifyTokenAndAuthorization,
-  verifyTokenAndAdmin
-} from '../Middlewares/JWTauth.js'
+import {verifyTokenAndAuthorization} from '../Middlewares/JWTauth.js'
 import multer from "multer";
 import { getUpload, cloudinary } from "../Middlewares/Multer.js";
 import {getProductsWithStats,getActiveProductsGrowth,getProductKPIs,gettopproducts, 
   getallproducts,getproductdetails} from "../Queries/productsQueries.js"
 import xlsx from "xlsx";
+import User from "../Models/User.js";
 const upload = multer({
    storage: multer.memoryStorage(),
  });
@@ -226,6 +223,12 @@ return res.status(201).json({message: "Product added successfully"});
  */
 router.post("/import/:id",verifyTokenAndAuthorization,upload.single("file"),
   asyncHandler(async (req, res) => {
+    const user = await User.findById(req.params.id);
+    if(user.plan !== "pro"){
+      return res.status(403).json({
+      message: "A paid subscription is required to access this resource."
+    });
+    }
     const orgId = new mongoose.Types.ObjectId(req.params.id);
     if (!req.file) {
       return res.status(400).json({

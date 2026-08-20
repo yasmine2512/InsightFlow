@@ -2,13 +2,8 @@ import express, { request } from "express";
 const router = express.Router();
 export default router; 
 import asyncHandler from "express-async-handler";
-import User from "../Models/User.js"
-import Product from "../Models/Product.js"
-import Order from "../Models/Order.js"
 import {
-  verifyToken,
   verifyTokenAndAuthorization,
-  verifyTokenAndAdmin
 } from '../Middlewares/JWTauth.js'
 import{getMGR,getOrders,getCustomers,getrevenuel7m,getBSP,getstockalert,getTC,getrecentorders} from "../Queries/dashboardQueries.js"
 import{getordersperday} from "../Queries/ordersQueries.js"

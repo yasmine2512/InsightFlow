@@ -2,11 +2,12 @@ import express from "express";
 import mongoose from "mongoose";
 import Order from "../Models/Order.js";
 import Product from "../Models/Product.js";
+import User from "../Models/User.js";
 import Customer from "../Models/Customer.js"
 import Counter from "../Models/Counter.js";
 import asyncHandler from "express-async-handler";
-import { verifyTokenAndAdmin, verifyTokenAndAuthorization } from "../Middlewares/JWTauth.js";
-import {getallOrders,gettotalOrders,getCompletedOrders,getOrdersByStatus,getordersperday} 
+import { verifyTokenAndAuthorization } from "../Middlewares/JWTauth.js";
+import {getallOrders,getCompletedOrders,getOrdersByStatus,getordersperday} 
 from "../Queries/ordersQueries.js";
 import { getMGR,getOrders } from "../Queries/dashboardQueries.js";
 import multer from "multer";
@@ -176,6 +177,12 @@ router.delete("/:id/:orderId", asyncHandler(async (req, res) => {
  */
 router.post("/import/:id",verifyTokenAndAuthorization,upload.single("file"),
   asyncHandler(async (req, res) => {
+     const user = await User.findById(req.params.id);
+        if(user.plan !== "pro"){
+          return res.status(403).json({
+          message: "A paid subscription is required to access this resource."
+        });
+        }
     const orgId = new mongoose.Types.ObjectId(req.params.id);
     if (!req.file) {
       return res.status(400).json({

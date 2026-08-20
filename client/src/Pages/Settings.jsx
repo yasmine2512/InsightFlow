@@ -13,11 +13,6 @@ import { UpgradeModal } from "./UpgradeModal";
 import { useAuth } from "../context/AuthContext";
 
 export default function SettingsPage() {
-  const [name, setFullname] = useState("");
-  const [orgname, setOrganization] = useState("");
-  const [email, setEmail] = useState("");
-  const [initials, setInitials] = useState("??");
-  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState(null);
   const [errorOpen, setErrorOpen] = useState(false);
@@ -36,27 +31,14 @@ export default function SettingsPage() {
   const { user, updateUser, logout } = useAuth();
   const userId = user?.userId;
   const isPro = user?.plan === "pro";
-  
-  useEffect(() => {
-    async function fetchdata() {
-      try {
-        const response = await api.get(`/api/auth/profile/${userId}`);
-        const parts = (response.data.name || "").trim().split(" ");
-        const ini = parts.length >= 2
-          ? parts[0][0] + parts[parts.length - 1][0]
-          : (parts[0]?.[0] ?? "?");
-        setInitials(ini.toUpperCase());
-        setFullname(response.data.name);
-        setOrganization(response.data.organizationName);
-        setEmail(response.data.email);
-      } catch (err) {
-        setMessage({ type: "error", text: "Failed to load profile." });
-      } finally {
-        setLoading(false);
-      }
-    }
-    fetchdata();
-  }, [userId]);
+  const [name, setFullname] = useState(user?.username || "");
+  const [orgname, setOrganization] = useState(user?.organization || "");
+  const email= user?.email || "" ;
+  const parts = (name|| "").trim().split(" ");
+  const ini = parts.length >= 2
+        ? parts[0][0] + parts[parts.length - 1][0]
+        : (parts[0]?.[0] ?? "?");
+  const [initials, setInitials] = useState(ini.toUpperCase() || "??");
 
   // Fetch organization RAG files
   useEffect(() => {
@@ -174,9 +156,6 @@ export default function SettingsPage() {
           </div>
         </div>
 
-        {loading ? (
-          <p className="text-sm text-muted-foreground">Loading profile…</p>
-        ) : (
           <div className="grid sm:grid-cols-2 gap-4">
              <div className="space-y-2 sm:col-span-2">
               <Label htmlFor="email">Email</Label>
@@ -205,7 +184,6 @@ export default function SettingsPage() {
               />
             </div>
           </div>
-        )}
 
         {message && (
           <p className={`text-sm ${message.type === "success" ? "text-green-600" : "text-destructive"}`}>
@@ -216,7 +194,7 @@ export default function SettingsPage() {
         <Button
           className="gradient-primary border-0 text-primary-foreground"
           onClick={handleSave}
-          disabled={saving || loading}
+          disabled={saving}
         >
           {saving ? "Saving…" : "Save Changes"}
         </Button>

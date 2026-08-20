@@ -6,12 +6,10 @@ function OAuth() {
   const navigate = useNavigate();
   const {login}= useAuth();
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const id = params.get("id");
    const loadUser = async () => {
  
-      const res = await api.get(`/api/auth/profile/${id}`);
-      const user = res.data;
+      const res = await api.get(`/api/auth/me`);
+      const user = res.data.user;
       login(user);
       navigate(`/dashboard`);
     };

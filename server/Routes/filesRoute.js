@@ -52,14 +52,20 @@ router.post("/:id",verifyTokenAndAuthorization,(req, res, next) => {
     });
   },
   asyncHandler(async (req, res) => {
-const orgId = req.params.id;
-if (!req.file) {
+    const orgId = req.params.id;
+     const user = await User.findById(orgId);
+        if(user.plan !== "pro"){
+          return res.status(403).json({
+          message: "A paid subscription is required to access this resource."
+        });
+        }
+    if (!req.file) {
             return res.status(400).json({
                 message: "No file provided",
             });
         }
-try{
-const result = await new Promise((resolve, reject) => {
+    try{
+    const result = await new Promise((resolve, reject) => {
     const stream = cloudinary.uploader.upload_stream(
         {
             folder: "uploads",

@@ -5,11 +5,6 @@ import Customer from "../Models/Customer.js";
 const toObjectId = (id) =>
   new mongoose.Types.ObjectId(id);
 
-
-//number of customers
-export const gettotalcustomers= async (orgId) => {
-  return Customer.countDocuments({organization: toObjectId(orgId)})};
-
 //get all customers
 export const getallCustomers = async (orgId, query) => {
   const page = parseInt(query.page) || 1;

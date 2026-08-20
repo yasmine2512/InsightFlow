@@ -90,10 +90,7 @@ export const getallOrders = async (orgId, query) => {
   const result = await Order.aggregate(pipeline);
   return {orders: result[0].orders,total: result[0].totalCount[0]?.count || 0};
 };
-//total orders
-export const gettotalOrders = async(orgId)=>{
-    return Order.countDocuments({organization : orgId});
-};
+
 //completed orders 
 export const getCompletedOrders =async(orgId) =>{
 const now = new Date();

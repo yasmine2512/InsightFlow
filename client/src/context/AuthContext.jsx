@@ -17,6 +17,7 @@ export function AuthProvider({ children }) {
         const userData = response.data.user;
         setUser({
           userId: userData._id,
+          email: userData.email,
           isAdmin: userData.isadmin,
           username: userData.name,
           organization: userData.organizationName,
@@ -36,6 +37,7 @@ export function AuthProvider({ children }) {
   const login = (userData) => {
     const fullUser = {
       userId: userData._id,
+      email: userData.email,
       isAdmin: userData.isadmin,
       username: userData.name,
       organization: userData.organizationName,
