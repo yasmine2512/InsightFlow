@@ -115,10 +115,56 @@ export const getOrdersByStatus = async (orgId) => {
 return Order.aggregate([{$match:{organization:toObjectId(orgId),createdAt: { $gte: startMonth }}},
  { $group: {_id: "$status",count: { $sum: 1 }}}]);};
 
-//orders per day (7 days)
-export const getordersperday = async(orgId)=>{
-    const last7days = new Date();
-    last7days.setDate(last7days.getDate() - 6);
-    return Order.aggregate([{$match:{organization: toObjectId(orgId),createdAt:{$gte : last7days},status: {$ne:"canceled"} }},{$group:{_id : {$dateToString: {format: "%Y-%m-%d",date: "$createdAt"}},
-    orders : {$sum: 1}}},{$project:{_id:0,day:"$_id",orders:1}},{$sort:{day: 1}}]);
-}
+
+export const getPendingOrdersCount = async (orgId) => {
+return Order.countDocuments({organization:orgId,status:"pending"});
+};
+
+//orders per day (7 days),per month 
+export const getOrdersChart = async (orgId, period = "7days") => {
+  const now = new Date();
+  let startDate;
+  let groupId;
+  if (period === "7months") {
+    startDate = new Date(now.getFullYear(), now.getMonth() - 6, 1);
+    groupId = {
+      $dateToString: {
+        format: "%Y-%m",
+        date: "$createdAt",
+      }
+    };
+  } else {
+    startDate = new Date(now);
+    startDate.setHours(0, 0, 0, 0);
+    startDate.setDate(startDate.getDate() - 6);
+    groupId = {
+      $dateToString: {
+        format: "%Y-%m-%d",
+        date: "$createdAt",
+      }
+    };
+  }
+  return Order.aggregate([
+    {$match: {
+        organization: toObjectId(orgId),
+        createdAt: { $gte: startDate },
+        status: { $ne: "canceled" },
+      },
+    },
+    {$group: {
+        _id: groupId,
+        orders: { $sum: 1 },
+      },
+    },
+    {$project: {
+        _id: 1,
+        day: "$_id",
+        orders: 1,
+      },
+    },
+    {$sort: {
+        day: 1,
+      },
+    },
+  ]);
+};

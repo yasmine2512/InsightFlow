@@ -255,7 +255,8 @@ const FR= data.fulfillmentrate.toFixed(1) || 0;
 const FRG=data.FRgrowth.toFixed(1) || 0;
 const ordersData = data.ordersbystatus || [];
 const orders = orderslist.orders.orders || [];
-const ordersperday = fillMissingDays(data.ordersperday || []);
+const ordersperday = fillMissingDays(data.ordersChart || []);
+const pendingOrders = data.pendingOrders || 0;
   const rowsPerPage = 10;
   const totalorders = orderslist.orders.total;
   const totalPages = Math.max(1,Math.ceil(totalorders / rowsPerPage));
@@ -263,7 +264,7 @@ const ordersperday = fillMissingDays(data.ordersperday || []);
 const end = Math.min(currentPage * rowsPerPage,totalorders);
    const stats = [
   { label: "Orders This Month", value: data.ordersTM,change:OG,growth:true, up:OG>= 0, icon: Package },
-  { label: "All Orders", value:totalorders,growth:false, icon: ShoppingCart },
+  { label: "Pending Orders", value:pendingOrders,growth:false, icon: ShoppingCart },
   { label: "Average Order Value", value:AOV,change:AOVG,up:AOVG>0
 ,growth:true, stock:0, icon: DollarSign },
   { label: "Fulfillment Rate", value:FR ,change:FRG,growth:true,up:FRG>0, icon: CheckCircle2 },
@@ -335,7 +336,7 @@ const colors = [
         <BarChart data={ordersperday}>
           <CartesianGrid strokeDasharray="3 3" stroke="hsl(220 13% 90%)" />
           <XAxis dataKey="name" tick={{ fontSize: 12 }} stroke="hsl(220 10% 46%)" />
-          <YAxis tick={{ fontSize: 12 }} stroke="hsl(220 10% 46%)" />
+          <YAxis tick={{ fontSize: 12 }} stroke="hsl(220 10% 46%)" allowDecimals={false} />
           <Tooltip />
           <Bar dataKey="value" fill="hsl(172 66% 50%)" radius={[6, 6, 0, 0]} />
         </BarChart>

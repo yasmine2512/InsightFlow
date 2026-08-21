@@ -7,7 +7,7 @@ import Customer from "../Models/Customer.js"
 import Counter from "../Models/Counter.js";
 import asyncHandler from "express-async-handler";
 import { verifyTokenAndAuthorization } from "../Middlewares/JWTauth.js";
-import {getallOrders,getCompletedOrders,getOrdersByStatus,getordersperday} 
+import {getallOrders,getCompletedOrders,getOrdersByStatus,getOrdersChart,getPendingOrdersCount} 
 from "../Queries/ordersQueries.js";
 import { getMGR,getOrders } from "../Queries/dashboardQueries.js";
 import multer from "multer";
@@ -35,12 +35,14 @@ const router = express.Router();
    */  
 router.get("/:id/stats",verifyTokenAndAuthorization,asyncHandler(async(req,res)=>{
    const orgid = req.params.id;
-   const[completedOrders,ordersbystatus,ordersperday,revenu,orders] = await Promise.all([
+   const period = req.query.period;
+   const[completedOrders,ordersbystatus,orderschart,revenu,orders,pending] = await Promise.all([
    getCompletedOrders(orgid),
    getOrdersByStatus(orgid),
-   getordersperday(orgid),
+   getOrdersChart(orgid,period),
    getMGR(orgid),
-   getOrders(orgid)
+   getOrders(orgid),
+   getPendingOrdersCount(orgid)
    ]);
   const currentO = orders[0]?.currentOrders || 0;
   const previousO = orders[0]?.previousOrders || 0;
@@ -56,7 +58,7 @@ router.get("/:id/stats",verifyTokenAndAuthorization,asyncHandler(async(req,res)=
   const PFR = previousO === 0 ? 0 : (previousCO / previousO) * 100;
   const FRgrowth = PFR === 0 ? 0 : ((CFR - PFR) / PFR) * 100;
   
-   return res.status(200).json({ordersTM:currentO,ordersgrowth:growthO,averageordervalue:CAOV,AOVgrowth:AOVgrowth,fulfillmentrate:CFR,FRgrowth:FRgrowth,ordersperday:ordersperday,ordersbystatus:ordersbystatus});
+   return res.status(200).json({ordersTM:currentO,ordersgrowth:growthO,averageordervalue:CAOV,AOVgrowth:AOVgrowth,fulfillmentrate:CFR,FRgrowth:FRgrowth,ordersChart:orderschart,ordersbystatus:ordersbystatus,pendingOrders:pending});
 }));
 
 

@@ -130,7 +130,7 @@ const topCustomers = data.topCustomers;
               <BarChart data={ordersData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(220 13% 90%)" />
                 <XAxis dataKey="name" tick={{ fontSize: 12 }} stroke="hsl(220 10% 46%)" />
-                <YAxis tick={{ fontSize: 12 }} stroke="hsl(220 10% 46%)" />
+                <YAxis tick={{ fontSize: 12 }} stroke="hsl(220 10% 46%)" allowDecimals={false} />
                 <Tooltip />
                 <Bar dataKey="value" fill="hsl(172 66% 50%)" radius={[6, 6, 0, 0]} />
               </BarChart>

@@ -89,21 +89,50 @@ export const getrevenuel7m = async (orgId) => {
 
 
 //5 best seller products
-export const getBSP =  async (orgId) => {
-  return Order.aggregate([{$match:{organization : toObjectId(orgId),status: "completed"}},
-  {$unwind:"$products"},
-  {$group:{_id: "$products.product",totalSold: { $sum: "$products.quantity" }}},
-  { $sort: { totalSold: -1 } },
-  { $limit: 5 },
-  {
-  $lookup: {
-    from: "products",
-    localField: "_id",
-    foreignField: "_id",
-    as: "product"
-  }},
-  {$unwind:"$product"}
-]);};
+export const getBSP = async (orgId, period = "month") => {
+  const match = {organization: toObjectId(orgId),status: "completed"};
+  const now = new Date();
+  if (period === "year") {
+    match.createdAt = {
+      $gte: new Date(now.getFullYear(), 0, 1),
+      $lt: new Date(now.getFullYear() + 1, 0, 1),
+    };
+  }
+  if (period === "month") {
+    match.createdAt = {
+      $gte: new Date(now.getFullYear(), now.getMonth(), 1),
+      $lt: new Date(now.getFullYear(), now.getMonth() + 1, 1),
+    };
+  }
+  return Order.aggregate([
+    { $match: match },
+    { $unwind: "$products" },
+    {$group: {
+        _id: "$products.product",
+        totalSold: { $sum: "$products.quantity" },
+      }
+    },
+    { $sort: { totalSold: -1, _id: 1 } },
+    { $limit: 5 },
+    {$lookup: {
+        from: "products",
+        localField: "_id",
+        foreignField: "_id",
+        as: "product",
+      }
+    },
+    {$unwind: "$product" },
+        {$project: {
+        _id:1,
+        totalSold: 1,
+        product:{
+          name:"$product.name",
+          price:"$product.price"
+        }
+      }
+    }
+  ]);
+};
 
 
 //stock alert
@@ -116,22 +145,47 @@ export const getstockalert = async (orgId) =>{
 };
 
 //top 5 customers
-export const getTC = async (orgId) =>{
-  return Order.aggregate([{$match:{organization : toObjectId(orgId),status: "completed"}},{$group:{_id: "$customer",numOrders: {$sum: 1},totalSpent: { $sum: "$totalPrice" }}},
-  {$sort :{totalSpent: -1,numOrders:-1,_id: 1}},{$limit : 5},
-  {$lookup: {
-      from: "customers",         
-      localField: "_id",          
-      foreignField: "_id",        
-      as: "customer"}},
-  { $unwind: "$customer"},
-  {$project: {
-      _id: 0,
-      customerId: "$customer._id",
-      name: "$customer.name",
-      email: "$customer.email",
-      numOrders: 1,
-      totalSpent: 1}}]);};
+export const getTC = async (orgId, period = "month") => {
+  const match = {organization: toObjectId(orgId),status: "completed",};
+  const now = new Date();
+  if (period === "year") {
+    match.createdAt = {
+      $gte: new Date(now.getFullYear(), 0, 1),
+      $lt: new Date(now.getFullYear() + 1, 0, 1),
+    };
+  }
+  if (period === "month") {
+    match.createdAt = {
+      $gte: new Date(now.getFullYear(), now.getMonth(), 1),
+      $lt: new Date(now.getFullYear(), now.getMonth() + 1, 1),
+    };
+  }
+  return Order.aggregate([
+    { $match: match },
+    {$group: {_id: "$customer",
+        numOrders: { $sum: 1 },
+        totalSpent: { $sum: "$totalPrice" },},
+    },
+    {$sort: {totalSpent: -1,numOrders: -1,_id: 1}},
+    { $limit: 5 },
+    {$lookup: {
+        from: "customers",
+        localField: "_id",
+        foreignField: "_id",
+        as: "customer",}
+    },
+    { $unwind: "$customer" },
+    {$project: {
+        _id: 0,
+        customerId: "$customer._id",
+        name: "$customer.name",
+        email: "$customer.email",
+        numOrders: 1,
+        totalSpent: 1
+      }
+    }
+  ]);
+};
 
 //recent orders
 export const getrecentorders = async (orgId) =>{

@@ -6,7 +6,7 @@ import {
   verifyTokenAndAuthorization,
 } from '../Middlewares/JWTauth.js'
 import{getMGR,getOrders,getCustomers,getrevenuel7m,getBSP,getstockalert,getTC,getrecentorders} from "../Queries/dashboardQueries.js"
-import{getordersperday} from "../Queries/ordersQueries.js"
+import { getOrdersChart } from "../Queries/ordersQueries.js";
 
 /** 
  * @desc dashboards stats
@@ -16,16 +16,17 @@ import{getordersperday} from "../Queries/ordersQueries.js"
  */  
 router.get("/:id",verifyTokenAndAuthorization,asyncHandler(async(req,res)=>{
   const orgid= req.params.id;
-
+  const periodP = req.query.periodP;
+  const periodC = req.query.periodC;
 const [MGR,orders,customers,revenuel7m,ordersthisweek,BSP,stockalert,TC,recentorders] = await Promise.all([
 getMGR(orgid),
 getOrders(orgid),
 getCustomers(orgid),
 getrevenuel7m(orgid),
-getordersperday(orgid),
-getBSP(orgid),
+getOrdersChart(orgid),
+getBSP(orgid,periodP),
 getstockalert(orgid),
-getTC(orgid),
+getTC(orgid,periodC),
 getrecentorders(orgid)
 ]);
 const currentR = MGR[0]?.currentRevenue || 0;
