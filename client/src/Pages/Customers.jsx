@@ -1,4 +1,3 @@
-import DashboardLayout from "../components/Layout";
 import { Search, Filter, Download ,DollarSign,TrendingUp, TrendingDown,Package, ShoppingCart, Users,RefreshCw,UserCheck,Plus,Trash2,UserPen,PenLine} from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/Input";

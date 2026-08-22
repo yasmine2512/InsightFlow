@@ -35,11 +35,9 @@ const router = express.Router();
    */  
 router.get("/:id/stats",verifyTokenAndAuthorization,asyncHandler(async(req,res)=>{
    const orgid = req.params.id;
-   const period = req.query.period;
-   const[completedOrders,ordersbystatus,orderschart,revenu,orders,pending] = await Promise.all([
+   const[completedOrders,ordersbystatus,revenu,orders,pending] = await Promise.all([
    getCompletedOrders(orgid),
    getOrdersByStatus(orgid),
-   getOrdersChart(orgid,period),
    getMGR(orgid),
    getOrders(orgid),
    getPendingOrdersCount(orgid)
@@ -57,8 +55,7 @@ router.get("/:id/stats",verifyTokenAndAuthorization,asyncHandler(async(req,res)=
   const CFR = currentO === 0 ? 0 : (currentCO / currentO) * 100;
   const PFR = previousO === 0 ? 0 : (previousCO / previousO) * 100;
   const FRgrowth = PFR === 0 ? 0 : ((CFR - PFR) / PFR) * 100;
-  
-   return res.status(200).json({ordersTM:currentO,ordersgrowth:growthO,averageordervalue:CAOV,AOVgrowth:AOVgrowth,fulfillmentrate:CFR,FRgrowth:FRgrowth,ordersChart:orderschart,ordersbystatus:ordersbystatus,pendingOrders:pending});
+   return res.status(200).json({ordersTM:currentO,ordersgrowth:growthO,averageordervalue:CAOV,AOVgrowth:AOVgrowth,fulfillmentrate:CFR,FRgrowth:FRgrowth,ordersbystatus:ordersbystatus,pendingOrders:pending});
 }));
 
 
@@ -67,6 +64,14 @@ router.get("/:id",verifyTokenAndAuthorization,asyncHandler(async(req,res)=>{
    const allOrders = await getallOrders(orgid,req.query);
    return res.status(200).json({ orders :allOrders});
   }));
+
+router.get("/:id/chart",verifyTokenAndAuthorization,asyncHandler(async(req,res)=>{
+   const orgid = req.params.id;
+   const period = req.query.period;
+   const chart = await getOrdersChart(orgid,period);
+   return res.status(200).json(chart);
+  }));
+
 
 /** 
    * @desc create an order

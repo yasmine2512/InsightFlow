@@ -1,10 +1,10 @@
-import DashboardLayout from "../components/Layout";
-import { TrendingUp, TrendingDown, DollarSign, Package, ShoppingCart, Users,AlertTriangle} from "lucide-react";
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar ,} from "recharts";
-import { useEffect, useState } from "react"
+import { TrendingUp, TrendingDown, DollarSign, Package, ShoppingCart, Users,AlertTriangle,ChevronDown} from "lucide-react";
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from "recharts";
+import { useState } from "react"
 import { api } from "../lib/api";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "../context/AuthContext";
+import { ErrorDialog } from "./ErrorDialog";
 
 const fillMissingMonths = (data) => {
   const now = new Date();
@@ -29,7 +29,7 @@ const result = [];
     date.setDate(date.getDate() - i);
     const formattedDate = date.toISOString().split("T")[0];
     const existing = data.find(
-      (item) => item.day === formattedDate
+      (item) => item.date === formattedDate
     );
     result.push({
       name: date.toLocaleDateString("en-US", {
@@ -44,7 +44,11 @@ const result = [];
 export default function Dashboard() {
   const { user} = useAuth();
   const id = user?.userId;
-  const [profile, setProfile] = useState(null)
+  const [customerFilter, setCustomerFilter] = useState('month');
+  const [productFilter, setProductFilter] = useState('month');
+  const [errorMessage, setErrorMessage] = useState("");
+  const [errorOpen, setErrorOpen] = useState(false);
+
     const fetchProfile = async () => {
       try {
         const res = await api.get(`/api/dashboard/${id}`);
@@ -55,11 +59,43 @@ export default function Dashboard() {
       }
     }
 const { data, isLoading, error } = useQuery({ queryKey: ["overview", id], queryFn: fetchProfile, staleTime: 1000 * 60 * 5 });
-  
- 
 
+const fetchTopCustomers = async (filterValue) => {
+  const response = await api.get(`/api/dashboard/${id}/tc`, {
+    params: { period: filterValue },
+  });
+
+  return response.data;
+};
+
+const fetchBestProducts = async (filterValue) => {
+  const response = await api.get(`/api/dashboard/${id}/bsp`, {
+    params: { period: filterValue },
+  });
+
+  return response.data;
+};
+
+const handleCustomerFilterChange = (e) => {
+  setCustomerFilter(e.target.value);
+};
+
+const handleProductFilterChange = (e) => {
+  setProductFilter(e.target.value);
+};
+  
+
+const {data: topCustomers = [],isLoading: customersLoading,error: customersError,
+} = useQuery({queryKey: ["topCustomers", id, customerFilter],
+  queryFn: () => fetchTopCustomers(customerFilter),staleTime: 1000 * 60 * 5});
+
+const { data: bestProducts = [], isLoading: productsLoading, error: productsError,
+} = useQuery({ queryKey: ["bestProducts", id, productFilter],
+  queryFn: () => fetchBestProducts(productFilter), staleTime: 1000 * 60 * 5});
+
+ 
   if (isLoading) return <div>Loading...</div>
-  if (error) return <p>Error loading dashboard</p>;
+  if (error || customersError || productsError) return <p>Error loading dashboard</p>;
   const Rgrowth = `${data.revenugrowth>= 0 ? "+" : ""}${data.revenugrowth.toFixed(1)}% from last month`;
   const Ogrowth = `${data.ordersgrowth>= 0 ? "+" : ""}${data.ordersgrowth.toFixed(1)}% from last month`;
   const lowstock = data?.stockAlert[0]?.lowStock || 0;
@@ -76,8 +112,7 @@ const revenueData = fillMissingMonths(data.revenuL7M);
 
 const ordersData = fillMissingDays(data.ordersThisWeek);
 const recentOrders = data.recentOrders;
-const bestProducts = data.bestSellerProducts;
-const topCustomers = data.topCustomers;
+
   return (
       <div className="space-y-6">
         <div>
@@ -186,13 +221,34 @@ const topCustomers = data.topCustomers;
           </div>
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-<div className="bg-card rounded-xl border border-border shadow-soft overflow-hidden">
-  <div className="p-5 border-b border-border">
-    <h3 className="font-heading font-semibold flex items-center justify-center gap-2">
-      <Users size={18} className=" text-success"/> Top Customers</h3>
-  </div>
+<div className="bg-card rounded-xl border border-border shadow-soft overflow-hidden flex flex-col">
+          <div className="p-5 border-b border-border relative flex items-center justify-center">
+            <h3 className="font-heading font-semibold flex items-center gap-2">
+              <Users size={18} className="text-success" /> Top Customers
+            </h3>
+            <div className="absolute right-5">
+              <div className="relative">
+                <select
+                  value={customerFilter}
+                  onChange={handleCustomerFilterChange}
+                  aria-label="Filter Top Customers"
+                  className="appearance-none bg-background/80 hover:bg-muted/50 border border-border/80 rounded-lg w-9 h-9 pl-2.5 pr-6 text-transparent focus:text-foreground cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all shadow-xs"
+                >
+                  <option value="all" className="bg-card text-foreground py-2">All Time</option>
+                  <option value="year" className="bg-card text-foreground py-2">Year</option>
+                  <option value="month" className="bg-card text-foreground py-2">Month</option>
+                </select>
+                <ChevronDown size={15} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+              </div>
+            </div>
+          </div>
 
-  <div className="overflow-x-auto">
+  <div className="overflow-x-auto relative">
+    {customersLoading && (
+              <div className="absolute inset-0 bg-background/50 backdrop-blur-xs flex items-center justify-center z-10">
+                <span className="text-xs font-medium animate-pulse text-primary">Loading Customers...</span>
+              </div>
+            )}
     <table className="w-full text-sm">
       <thead>
         <tr className="border-b border-border">
@@ -217,12 +273,34 @@ const topCustomers = data.topCustomers;
     </table>
   </div>
 </div>
-<div className="bg-card rounded-xl border border-border shadow-soft overflow-hidden">
-  <div className="p-5 border-b border-border">
-    <h3 className="font-heading font-semibold flex items-center justify-center gap-2"><TrendingUp size={18} className="text-success"/> Best Selling Products</h3>
-  </div>
+<div className="bg-card rounded-xl border border-border shadow-soft overflow-hidden flex flex-col">
+          <div className="p-5 border-b border-border relative flex items-center justify-center">
+            <h3 className="font-heading font-semibold flex items-center gap-2">
+              <TrendingUp size={18} className="text-success" /> Best Selling Products
+            </h3>
+            <div className="absolute right-5">
+              <div className="relative">
+                <select
+                  value={productFilter}
+                  onChange={handleProductFilterChange}
+                  aria-label="Filter Best Selling Products"
+                  className="appearance-none bg-background/80 hover:bg-muted/50 border border-border/80 rounded-lg w-9 h-9 pl-2.5 pr-6 text-transparent focus:text-foreground cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all shadow-xs"
+                >
+                  <option value="all" className="bg-card text-foreground py-2">All Time</option>
+                  <option value="year" className="bg-card text-foreground py-2">Year</option>
+                  <option value="month" className="bg-card text-foreground py-2">Month</option>
+                </select>
+                <ChevronDown size={15} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+              </div>
+            </div>
+          </div>
 
-  <div className="overflow-x-auto">
+  <div className="overflow-x-auto relative">
+    {productsLoading && (
+              <div className="absolute inset-0 bg-background/50 backdrop-blur-xs flex items-center justify-center z-10">
+                <span className="text-xs font-medium animate-pulse text-primary">Loading products...</span>
+              </div>
+            )}
     <table className="w-full text-sm">
       <thead>
         <tr className="border-b border-border">
@@ -249,6 +327,13 @@ const topCustomers = data.topCustomers;
 </div>
 
         </div>
+        <ErrorDialog
+                  open={errorOpen}
+                  title="Error"
+                  message={errorMessage}
+                  actionLabel="Okay"
+                  onClose={() => setErrorOpen(false)}
+                        />
       </div>
   );
 }

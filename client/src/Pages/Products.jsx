@@ -1,9 +1,8 @@
-import DashboardLayout from "../components/Layout";
-import { Search,Filter,Download,DollarSign,TrendingUp,TrendingDown, Package, ShoppingCart, Users,PackageCheck,AlertTriangle,XCircle,Plus} from "lucide-react";
+import { Search,Filter,Download,DollarSign,TrendingUp,TrendingDown,PackageCheck,AlertTriangle,XCircle,Plus} from "lucide-react";
 
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/Input";
-import { useParams ,  useNavigate} from "react-router-dom"
+import { useNavigate} from "react-router-dom"
 import { useEffect, useState } from "react"
 import { api } from "../lib/api";
 import { useQuery } from "@tanstack/react-query";

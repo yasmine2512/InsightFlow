@@ -1,8 +1,6 @@
-import DashboardLayout from "../components/Layout";
-import { Search, Filter, Download ,Package,ShoppingCart,DollarSign,TrendingDown,TrendingUp,CheckCircle2,Trash2,Plus} from "lucide-react";
+import { Search, Filter, Download ,Package,ShoppingCart,DollarSign,TrendingDown,TrendingUp,CheckCircle2,Trash2,Plus,ChevronDown} from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/Input";
-import { useParams ,  useNavigate} from "react-router-dom"
 import { useEffect, useState, useRef} from "react"
 import { createPortal } from "react-dom";
 import { api } from "../lib/api";
@@ -23,7 +21,7 @@ const result = [];
     date.setDate(date.getDate() - i);
     const formattedDate = date.toISOString().split("T")[0];
     const existing = data.find(
-      (item) => item.day === formattedDate
+      (item) => item.date === formattedDate
     );
     result.push({
       name: date.toLocaleDateString("en-US", {
@@ -34,6 +32,36 @@ const result = [];
   }
   return result;
 };
+
+const fillMissingMonths = (data) => {
+  const now = new Date();
+  const result = [];
+
+  const monthNames = [
+    "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+  ];
+  for (let i = 5; i >= 0; i--) {
+    const date = new Date(
+      now.getFullYear(),
+      now.getMonth() - i,
+      1
+    );
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const dateKey = `${year}-${month}`;
+
+    const existing = data.find(
+      (item) => item.date === dateKey
+    );
+    result.push({
+      name: monthNames[date.getMonth()],
+      value: existing ? existing.orders : 0,
+    });
+  }
+  return result;
+};
+
 const STATUS_OPTIONS = ["pending", "canceled", "completed"];
 
 function StatusPopover({ currentStatus, onSelect }) {
@@ -122,8 +150,6 @@ export default function Orders() {
   const { user} = useAuth();
   const id = user?.userId;
   const plan = user.plan;
-  const [profile, setProfile] = useState(null)
-  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [errorOpen,setErrorOpen] = useState(false);
@@ -134,6 +160,8 @@ export default function Orders() {
   const [openOrderForm,setopenOrderForm] = useState(false);
   const [errorTitle, setErrorTitle] = useState("");
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [chartFilter, setChartFilter] = useState("Month");
+
   const handleDeleteConfirm = async () => {
   try {
     await api.delete(`/api/orders/${id}/${deleteTarget}`);
@@ -152,7 +180,9 @@ export default function Orders() {
 
   const fetchStats= async () => {
       try {
-        const res = await api.get(`/api/orders/${id}/stats`);
+        const res = await api.get(`/api/orders/${id}/stats`,
+           {params: {period:"Month"}});
+           console.log(res.data.ordersChart);
         return res.data;
       } catch (err) {
         console.error("Unauthorized or token invalid", err)
@@ -177,7 +207,19 @@ const handleImport =()=>{
   }
 }
 
-const fileInputRef = useRef(null);
+const fetchOrdersChart = async (filterValue) => {
+  const response = await api.get(`/api/orders/${id}/chart`, {
+    params: { period: filterValue },
+  });
+  return filterValue === "Week"
+    ? fillMissingDays(response.data)
+    : fillMissingMonths(response.data);
+};
+
+  const handleChartFilterChange = (e) => {
+     setChartFilter(e.target.value);
+  };
+
 const [loadingImport, setLoadingImport] = useState(false);
 const handleFileChange = async (file) => {
   if (!file) return;
@@ -242,12 +284,18 @@ useEffect(() => {
   setCurrentPage(1);
 }, [debouncedSearch]);
 const { data:data,isLoading: isLoadingstats,error: errorstats } = useQuery({ queryKey: ["orders", id], queryFn: fetchStats, staleTime: 1000 * 60 * 5 });
+const {data: ordersChart = [],isLoading: isLoadingChart,error: errorChart,} = useQuery({
+  queryKey: ["ordersChart", id, chartFilter],
+  queryFn: () => fetchOrdersChart(chartFilter),
+  staleTime: 1000 * 60 * 5,
+});
+
 const [currentPage, setCurrentPage] = useState(1);
 const {  data: orderslist, isLoading, error } = useQuery({
    queryKey: ["orderslist", id,currentPage,debouncedSearch,filter],
    queryFn: () => fetchOrders({page:currentPage,search:debouncedSearch,status:filter}),keepPreviousData: true,staleTime: 1000 * 60 * 5});
-  if (isLoading || !data) return <div>Loading...</div>
-  if (error) return <p>Error loading orders</p>;
+  if (isLoading  || isLoadingstats || !data) return <div>Loading...</div>
+  if (error || errorstats || errorChart) return <p>Error loading orders</p>;
 const OG = data.ordersgrowth.toFixed(1) || 0;
 const AOV = data.averageordervalue.toFixed(1) || 0;
 const AOVG = data.averageordervalue.toFixed(1) || 0;
@@ -255,7 +303,6 @@ const FR= data.fulfillmentrate.toFixed(1) || 0;
 const FRG=data.FRgrowth.toFixed(1) || 0;
 const ordersData = data.ordersbystatus || [];
 const orders = orderslist.orders.orders || [];
-const ordersperday = fillMissingDays(data.ordersChart || []);
 const pendingOrders = data.pendingOrders || 0;
   const rowsPerPage = 10;
   const totalorders = orderslist.orders.total;
@@ -330,18 +377,44 @@ const colors = [
       </div>
     </div>
 
-    <div className="bg-card rounded-xl border border-border p-5 shadow-soft">
-      <h3 className="font-heading font-semibold mb-4">Orders This Week</h3>
-      <ResponsiveContainer width="100%" height={240}>
-        <BarChart data={ordersperday}>
-          <CartesianGrid strokeDasharray="3 3" stroke="hsl(220 13% 90%)" />
-          <XAxis dataKey="name" tick={{ fontSize: 12 }} stroke="hsl(220 10% 46%)" />
-          <YAxis tick={{ fontSize: 12 }} stroke="hsl(220 10% 46%)" allowDecimals={false} />
-          <Tooltip />
-          <Bar dataKey="value" fill="hsl(172 66% 50%)" radius={[6, 6, 0, 0]} />
-        </BarChart>
-      </ResponsiveContainer>
+    <div className="bg-card rounded-2xl border border-border/60 p-5 shadow-soft">
+  <div className="relative flex items-center justify-center mb-4">
+    <h3 className="font-heading font-semibold">Orders {chartFilter === "Week" ? "This Week":"Last Months" }</h3>
+    <div className="absolute right-0">
+      <div className="relative">
+        <select
+          value={chartFilter}
+          onChange={handleChartFilterChange}
+          aria-label="Filter Orders Chart"
+          className="appearance-none bg-background/95 hover:bg-muted/40 border border-border/80 rounded-xl w-9 h-9 px-2 text-transparent focus:text-foreground focus:w-28 cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all duration-300 shadow-xs text-xs font-medium"
+        >
+          <option value="Week" className="bg-card text-foreground py-2 font-medium">This Week</option>
+          <option value="Month" className="bg-card text-foreground py-2 font-medium">Last Months</option>
+        </select>
+        <ChevronDown size={15} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none transition-transform duration-200" />
+      </div>
     </div>
+  </div>
+  <div className="relative">
+    {isLoadingChart && (
+      <div className="absolute inset-0 bg-background/50 backdrop-blur-xs flex items-center justify-center z-10 rounded-lg">
+        <span className="text-xs font-medium animate-pulse text-green-500">
+          Loading Chart...
+        </span>
+      </div>
+    )}
+
+  <ResponsiveContainer width="100%" height={240}>
+    <BarChart data={ordersChart}>
+      <CartesianGrid strokeDasharray="3 3" stroke="hsl(220 13% 90%)" />
+      <XAxis dataKey="name" tick={{ fontSize: 12 }} stroke="hsl(220 10% 46%)" />
+      <YAxis tick={{ fontSize: 12 }} stroke="hsl(220 10% 46%)" allowDecimals={false} />
+      <Tooltip />
+      <Bar dataKey="value" fill="hsl(172 66% 50%)" radius={[6, 6, 0, 0]} />
+    </BarChart>
+  </ResponsiveContainer>
+  </div>
+</div>
   </div>
 
         <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3">

@@ -121,11 +121,11 @@ return Order.countDocuments({organization:orgId,status:"pending"});
 };
 
 //orders per day (7 days),per month 
-export const getOrdersChart = async (orgId, period = "7days") => {
+export const getOrdersChart = async (orgId, period = "Week") => {
   const now = new Date();
   let startDate;
   let groupId;
-  if (period === "7months") {
+  if (period === "Month") {
     startDate = new Date(now.getFullYear(), now.getMonth() - 6, 1);
     groupId = {
       $dateToString: {
@@ -158,12 +158,12 @@ export const getOrdersChart = async (orgId, period = "7days") => {
     },
     {$project: {
         _id: 1,
-        day: "$_id",
+        date: "$_id",
         orders: 1,
       },
     },
     {$sort: {
-        day: 1,
+        date: 1,
       },
     },
   ]);

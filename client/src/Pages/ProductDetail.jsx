@@ -1,12 +1,10 @@
 import { useParams, Link,useNavigate, } from "react-router-dom";
-import DashboardLayout from "../components/Layout";
-import { ArrowLeft, Edit, Trash2, BarChart3, Users, DollarSign ,ShoppingCart,ShoppingBag,Package,
-  PackageCheck,TrendingDown,TrendingUp,PackageOpen, } from "lucide-react";
+import { Edit, Trash2, BarChart3, Users, DollarSign ,ShoppingBag,Package,TrendingDown,TrendingUp } 
+from "lucide-react";
 import { Button } from "../components/ui/button";
 import { useState,useEffect } from "react";
 import { api } from "../lib/api";
 import { useAuth } from "../context/AuthContext";
-import { useQuery } from "@tanstack/react-query";
 import { useQueryClient } from "@tanstack/react-query";
 import AddOrderPopup from "./CreateOrder";
 import { DeleteDialog } from "./DeleteDialog";

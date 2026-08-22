@@ -5,7 +5,7 @@ import { Input } from "../components/ui/Input";
 import { Label } from "../components/ui/Label";
 import { Switch } from "../components/ui/switch";
 import { Separator } from "../components/ui/separator";
-import {Trash2, Lock, FileText, Upload} from "lucide-react"
+import {Trash2,Upload} from "lucide-react"
 import { api } from "../lib/api";
 import { DeleteDialog } from "./DeleteDialog";
 import { SuccessDialog } from "./SuccesDialog";
@@ -241,7 +241,7 @@ export default function SettingsPage() {
             disabled={uploading || (isPro && files.length >= 10)}
             asChild
           >
-            <span>{uploading ? "Uploading..." : "Upload File"}</span>
+            <span><Upload/>{uploading ? "Uploading..." : "Upload File"}</span>
           </Button>
         </label>
       </div>
