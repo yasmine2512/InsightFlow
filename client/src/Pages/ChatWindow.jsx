@@ -58,8 +58,9 @@ export default function ChatWindow({ chatId }) {
     try {
       // Post message to backend and receive assistant reply
       const response = await postMessage(chatId, userMsgContent);
-
+      if (response?.assistantMessage) {
       setMessages((prev) => [...prev, response.assistantMessage]);
+      }
     } catch (error) {
       console.error("Failed to send message", error);
       const errorMsg = error?.response?.data?.message || error?.message || "";
@@ -87,13 +88,8 @@ export default function ChatWindow({ chatId }) {
 
 
    async function postMessage(chatId, content) {
-    try{
     const response = await api.post(`/api/chats/${id}/messages/${chatId}`,{content});
     return response.data;
-    }catch(error){
-    setError(error.response?.data?.message);
-    setErrorOpen(true);
-  }
   }
 
   return (
