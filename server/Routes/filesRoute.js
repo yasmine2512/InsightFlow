@@ -4,6 +4,7 @@ import File from "../Models/File.js";
 import User from "../Models/User.js";
 import { cloudinary , uploadFile } from "../Middlewares/Multer.js";
 import { verifyTokenAndAuthorization } from "../Middlewares/JWTauth.js";
+import { ragQueue } from "../config/ragQueue.js";
 
 const router = express.Router()
 
@@ -30,9 +31,9 @@ router.post("/:id",verifyTokenAndAuthorization,(req, res, next) => {
       if (err) {
         console.error("Upload middleware error:", err);
          if (
-        error.message?.toLowerCase().includes("password-protected") ||
-        error.message?.toLowerCase().includes("password protected")
-    ) {
+        err.message?.toLowerCase().includes("password-protected") ||
+        err.message?.toLowerCase().includes("password protected")
+        ) {
         return res.status(400).json({
             message: "Password-protected PDFs are not supported. Please upload an unlocked PDF.",
         });
@@ -89,8 +90,28 @@ const file = new File({
     url: result.secure_url,
     publicId: result.public_id,
     size: req.file.size,
+    ragStatus: "pending",
     }
 );
+await ragQueue.add(
+      "process-document",
+      {
+        fileId: file._id.toString(),
+        organizationId: orgId,
+        filename: file.name,
+        fileUrl: file.url,
+      },
+      {
+        attempts: 2,
+        backoff: {
+          type: "exponential",
+          delay: 5000,
+        },
+        removeOnComplete: true,
+        removeOnFail: false,
+      }
+    );
+file.ragStatus = "processing";
 await file.save();
  return res.status(201).json({message: "File uploaded successfully",file});
 } catch (error) {

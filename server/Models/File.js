@@ -9,7 +9,10 @@ const fileSchema = new mongoose.Schema(
         name: {type:String , required: true},
         url: {type:String , required: true},
         publicId: {type: String,required: true},
-        size: {type: Number,required: true}
+        size: {type: Number,required: true},
+        ragStatus: {type: String,
+        enum: ["pending", "processing", "ready", "failed"],default: "pending",},
+        ragError: {type: String}
     },
     {
         timestamps: true,
