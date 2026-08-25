@@ -1,53 +1,66 @@
 # InsightFlow
 
-> A SaaS business intelligence platform that gives business owners a unified view of their performance — orders, revenue, customers, and products — without the spreadsheets.
+> A SaaS business intelligence platform that gives business owners a unified view of their performance — orders, revenue, customers, and products — with an AI-powered business assistant and organization-specific knowledge base.
 
 ---
 
 ## What is InsightFlow?
 
-Most small business owners track their business across disconnected tools — an Excel sheet for orders, another for customers, manual revenue calculations. InsightFlow replaces all of that with a single dashboard powered by real analytics.
+Most small business owners track their business across disconnected tools — an Excel sheet for orders, another for customers, manual revenue calculations. InsightFlow replaces all of that with a single dashboard powered by real analytics and an AI business assistant.
 
-You get live KPIs, trend charts, and actionable insights calculated directly from your data using MongoDB's Aggregation Framework — not cached summaries or approximations.
+You get live KPIs, trend charts, and actionable insights calculated directly from your data using MongoDB's Aggregation Framework, combined with an AI agent that can analyze business data and answer questions about uploaded business documents.
+
+The AI assistant supports:
+
+* Business analytics through specialized tools
+* Organization-specific document search
+* Retrieval-Augmented Generation (RAG)
+* Vector search with MongoDB Atlas
+* Conversation context management and summarization
+* Asynchronous document processing
 
 ---
 
-## 📸 Preview
+## Preview
 
 <div align="center">
 
 ### Dashboard
+
 <img src="./client/public/Screenshots/InsightFlow-Dasboard.png" alt="Dashboard Preview" width="850">
 <p><em>Real-time analytics and business metrics overview</em></p>
 
 ---
 
 ### Orders
+
 <img src="./client/public/Screenshots/InsightFlow-Orders.png" alt="Orders Preview" width="850">
 <p><em>Order management and fulfillment tracking table</em></p>
 
 ---
 
 ### Products
+
 <img src="./client/public/Screenshots/InsightFlow-Products.png" alt="Products Preview" width="850">
 <p><em>Inventory and stock management interface</em></p>
 
 ---
 
 ### Catalog
+
 <img src="./client/public/Screenshots/InsightFlow-Catalog.png" alt="Catalog Preview" width="850">
 <p><em>Product categorization and catalog structure</em></p>
 
 ---
 
 ### Customers
+
 <img src="./client/public/Screenshots/InsightFlow-Customers.png" alt="Customers Preview" width="850">
 <p><em>Customer relationship management and details view</em></p>
 
 </div>
 
 ---
-
 
 ## Features
 
@@ -123,7 +136,242 @@ The import system includes:
 
 An Excel template is also provided to help users prepare correctly formatted data before importing.
 
-### Analytics Layer
+---
+
+## AI Business Assistant
+
+InsightFlow includes an AI-powered business assistant designed specifically for organization-level business analysis.
+
+The assistant uses **LangGraph** to orchestrate conversations, tools, and document retrieval.
+
+### Business Analysis Tools
+
+The agent can access specialized tools for business questions, including:
+
+* Customer analysis
+* Product analysis
+* Order statistics
+* Inventory information
+* Business KPIs
+* Organization-specific analytics
+
+For example:
+
+```text
+User:
+Who are my top customers this month?
+
+Agent:
+Top customers this month:
+
+1. younes — $649.87
+2. Amine Meziane — $529.95
+3. Yasmine Kaci — $99.99
+4. Jane Smith — $38.97
+```
+
+The assistant is instructed to produce concise, clean responses rather than verbose conversational output.
+
+### Dynamic Tool Selection
+
+Tools are bound to the LLM based on the requested route/context instead of unnecessarily exposing every available tool for every request.
+
+This reduces unnecessary context and helps the model select the appropriate business operation.
+
+---
+
+## RAG Knowledge Base
+
+Organizations can upload business documents and ask the AI assistant questions about their contents.
+
+The RAG pipeline works as follows:
+
+```text
+Upload document
+       ↓
+File stored
+       ↓
+Status: pending
+       ↓
+Background processing
+       ↓
+Extract document text
+       ↓
+Split into chunks
+       ↓
+Generate embeddings
+       ↓
+Store chunks + embeddings
+       ↓
+MongoDB Atlas Vector Search
+       ↓
+AI agent retrieves relevant passages
+       ↓
+Gemini generates the answer
+```
+
+### Document Processing
+
+Uploaded documents are processed asynchronously using a background worker.
+
+Files maintain processing states:
+
+```text
+pending
+   ↓
+processing
+   ↓
+ready
+```
+
+If processing fails:
+
+```text
+failed
+```
+
+This allows the frontend to display the current document state without blocking the upload request.
+
+### Embeddings
+
+Document chunks are converted into vector embeddings using a sentence-transformer embedding model.
+
+Embeddings are stored alongside the document chunks and used for semantic similarity search.
+
+Batch processing is used when generating embeddings to improve processing efficiency.
+
+### MongoDB Atlas Vector Search
+
+MongoDB Atlas Vector Search is used to retrieve semantically relevant document chunks.
+
+Each vector search is scoped to the authenticated organization:
+
+```text
+organization_id
+      ↓
+Vector Search filter
+      ↓
+Only that organization's documents
+```
+
+This prevents one organization's knowledge base from being exposed to another organization.
+
+The search returns relevant passages rather than entire documents, reducing the amount of context sent to the LLM.
+
+### File Lifecycle
+
+Deleting an uploaded file also removes:
+
+* The Cloudinary file
+* The MongoDB file record
+* Associated document chunks
+* Associated embeddings
+
+The Vector Search index itself remains intact while the indexed documents are removed.
+
+---
+
+## AI Conversation Management
+
+The AI agent uses LangGraph state management and checkpoints to maintain conversation history.
+
+### Context Limiting
+
+Long conversations can cause the LLM context to grow significantly, especially when tool results contain large datasets.
+
+InsightFlow therefore limits the recent conversation context and summarizes older messages when the state exceeds a configured token threshold.
+
+```text
+Conversation grows
+       ↓
+Token threshold reached
+       ↓
+Summarize older messages
+       ↓
+Keep recent conversation
+       ↓
+Store summary in state
+       ↓
+Send smaller context to LLM
+```
+
+The summarizer preserves useful information such as:
+
+* Important user requests
+* Business context
+* Relevant IDs
+* Important dates
+* Numerical results
+* Conclusions
+* Information needed for follow-up questions
+
+Unnecessary greetings, repeated answers, raw tool arguments, and large database results are removed from the summarized context.
+
+### LangGraph Checkpoints
+
+Conversation state is persisted using LangGraph checkpoints, allowing conversations to survive application restarts.
+
+The checkpoint system stores the state associated with a conversation thread rather than relying only on in-memory state.
+
+---
+
+## AI Model
+
+InsightFlow uses Google's Gemini models through LangChain.
+
+Current integration:
+
+* Google Gemini
+* `langchain-google-genai`
+* LangChain tool calling
+* LangGraph agent orchestration
+
+The agent can perform multiple tool calls when necessary before producing the final response.
+
+The application also handles provider errors such as:
+
+* Rate limits
+* API failures
+* Invalid requests
+* Model errors
+* Temporary external-service failures
+
+---
+
+## Document Processing Queue
+
+Document processing is separated from the normal API request using a background job queue.
+
+```text
+Node.js API
+    │
+    │ Upload
+    ▼
+MongoDB File
+status: pending
+    │
+    ▼
+BullMQ / Redis
+    │
+    ▼
+Background Worker
+    │
+    ├── Extract text
+    ├── Chunk document
+    ├── Generate embeddings
+    └── Store vectors
+    │
+    ▼
+File status: ready
+```
+
+This prevents expensive document processing from blocking the Express request.
+
+BullMQ is used for background jobs because it integrates naturally with the existing Redis infrastructure.
+
+---
+
+## Analytics Layer
 
 InsightFlow's strongest feature. Every metric is calculated live via **MongoDB Aggregation Framework pipelines** — no stale data.
 
@@ -135,6 +383,8 @@ InsightFlow's strongest feature. Every metric is calculated live via **MongoDB A
 | Products  | Product revenue, inventory value, low-stock alerts, active product count |
 
 Growth percentages use **MTD vs same MTD last month** — comparing June 1–8 against May 1–8, not a full prior month, so the numbers are always a fair apples-to-apples comparison.
+
+The same analytics layer is exposed to the AI agent through specialized tools, allowing users to ask natural-language questions about their business.
 
 ---
 
@@ -170,6 +420,8 @@ InsightFlow supports multiple authentication mechanisms.
 * Google OAuth 2.0
 * Organization-level data isolation
 
+The AI knowledge base follows the same organization-level isolation rules.
+
 ---
 
 ## Subscription & Billing
@@ -178,20 +430,23 @@ InsightFlow uses **Stripe** for Pro subscriptions.
 
 ### Free Plan
 
-* Product management
-* Customer management
-* Order management
-* Dashboard
-* KPI calculations
-* Analytics
-* Unlimited records
+Product management
+Customer management
+Order management
+Dashboard
+KPI calculations
+Analytics
+Unlimited records
 
 ### Pro Plan
 
 Everything in Free, plus:
 
-* Excel bulk import
-* Stripe subscription billing
+Excel bulk import — import products, customers, and orders from .xlsx files
+Knowledge Base — upload up to 10 business documents
+AI Assistant — ask questions about business data and uploaded documents
+Daily AI message limit
+Stripe subscription billing
 
 ### Subscription Lifecycle
 
@@ -280,8 +535,9 @@ Examples include:
 * Stale-time configuration
 * Automatic refetching
 * Cache invalidation after mutations
+* File processing status polling
 
-This reduces unnecessary API requests while keeping frequently accessed dashboard data responsive.
+When a document is pending or processing, the frontend automatically refetches the organization's files every few seconds until processing completes.
 
 ### MongoDB Aggregation
 
@@ -296,6 +552,12 @@ This avoids loading large datasets into Node.js just to calculate:
 * Retention
 * Product performance
 * Order statistics
+
+### Rate Limiting
+
+The application uses rate limiting to prevent excessive requests.
+
+AI interactions are also subject to usage limits to control resource consumption and protect external LLM APIs from unnecessary traffic.
 
 ---
 
@@ -390,27 +652,13 @@ The application distinguishes between common cases such as:
 * Database errors
 * Stripe errors
 * External API errors
+* LLM provider errors
+* Rate-limit responses
 
 The frontend displays appropriate success and error feedback to users instead of exposing raw backend errors.
 
 ---
 
-## Pricing
-
-### Free Plan
-
-* Full product, customer, and order management
-* Dashboard with all KPIs and charts
-* Analytics layer
-* Unlimited records
-
-### Pro Plan
-
-* Everything in Free
-* **Excel Import** — bulk import products, customers, and orders directly from `.xlsx` spreadsheets
-* **Stripe subscription billing**
-
----
 
 ## Tech Stack
 
@@ -438,14 +686,30 @@ The frontend displays appropriate success and error feedback to users instead of
 | Passport.js            | Google OAuth 2.0                  |
 | Axios                  | External HTTP requests            |
 | Nodemailer / Gmail API | Transactional email functionality |
+| BullMQ                 | Background job processing         |
+| Upstash                | Managed Redis backend for queues  |
+
+### AI & RAG
+
+| Tool                        | Purpose                                  |
+| --------------------------- | ---------------------------------------- |
+| LangGraph                   | Agent orchestration and state management |
+| LangChain                   | LLM and tool integration                 |
+| `langchain-google-genai`    | Gemini integration                       |
+| Google Gemini               | AI reasoning and response generation     |
+| Sentence Transformers       | Document embeddings                      |
+| PyMuPDF                     | PDF text extraction                      |
+| MongoDB Atlas Vector Search | Semantic document retrieval              |
+| FastAPI                     | AI/RAG service API                       |
 
 ### Database
 
-| Tool                  | Purpose                         |
-| --------------------- | ------------------------------- |
-| MongoDB Atlas         | Cloud database                  |
-| Mongoose              | Schema modeling and query layer |
-| Aggregation Framework | Analytics calculations          |
+| Tool                  | Purpose                          |
+| --------------------- | -------------------------------- |
+| MongoDB Atlas         | Cloud database and vector search |
+| Mongoose              | Schema modeling and query layer  |
+| Aggregation Framework | Analytics calculations           |
+| MongoDB Vector Search | Semantic similarity search       |
 
 ### External Services
 
@@ -455,52 +719,139 @@ The frontend displays appropriate success and error feedback to users instead of
 | Stripe Webhooks | Subscription lifecycle synchronization |
 | Google OAuth    | Social authentication                  |
 | Gmail API       | Transactional emails                   |
-| Cloudinary      | Product image storage                  |
+| Cloudinary      | Product image and document storage     |
 | GitHub Actions  | CI and automated testing               |
 
 ---
 
 ## Architecture
 
-InsightFlow follows a client-server architecture:
+InsightFlow now uses a multi-service architecture for the main SaaS application and AI/RAG processing:
 
 ```text
-                    ┌──────────────────────┐
-                    │      React Client    │
-                    │                      │
-                    │ React Query          │
-                    │ React Router         │
-                    │ Tailwind CSS         │
-                    └──────────┬───────────┘
-                               │
-                         REST / HTTP
-                               │
-                               ▼
-                    ┌──────────────────────┐
-                    │   Express.js API     │
-                    │                      │
-                    │ Routes               │
-                    │ Authentication       │
-                    │ Authorization        │
-                    │ Business Logic       │
-                    └──────────┬───────────┘
-                               │
-                    ┌──────────▼───────────┐
-                    │       MongoDB        │
-                    │                      │
-                    │ Users                │
-                    │ Products             │
-                    │ Orders               │
-                    │ Customers            │
-                    │ Subscriptions        │
-                    └──────────────────────┘
+                         ┌──────────────────────┐
+                         │      React Client    │
+                         │                      │
+                         │ React Query          │
+                         │ React Router         │
+                         │ Tailwind CSS         │
+                         └──────────┬───────────┘
+                                    │
+                              REST / HTTP
+                                    │
+                                    ▼
+                         ┌──────────────────────┐
+                         │   Express.js API     │
+                         │                      │
+                         │ Authentication       │
+                         │ Authorization        │
+                         │ Business Logic       │
+                         │ File Management      │
+                         └───────┬───────┬──────┘
+                                 │       │
+                     ┌───────────┘       └──────────────┐
+                     ▼                                  ▼
+              ┌──────────────┐                   ┌──────────────┐
+              │   MongoDB    │                   │ Cloudinary   │
+              │              │                   │              │
+              │ Users        │                   │ Images       │
+              │ Products     │                   │ Files        │
+              │ Orders       │                   └──────────────┘
+              │ Customers    │
+              │ Files        │
+              │ Conversations │
+              └──────┬───────┘
+                     │
+                     │
+              ┌──────▼───────┐
+              │ Redis/BullMQ │
+              └──────┬───────┘
+                     │
+                     ▼
+              ┌──────────────┐
+              │ Document     │
+              │ Worker       │
+              │              │
+              │ Extract      │
+              │ Chunk        │
+              │ Embed        │
+              │ Store        │
+              └──────────────┘
 
-         External integrations:
-         
-         Stripe ──────── Subscription billing
-         Google ──────── OAuth authentication
-         Gmail API ───── Transactional emails
-         Cloudinary ──── Product images
+                         AI REQUEST
+                              │
+                              ▼
+                     ┌──────────────────┐
+                     │ FastAPI AI Agent │
+                     │                  │
+                     │ LangGraph        │
+                     │ Gemini           │
+                     │ Business Tools   │
+                     │ RAG Tools        │
+                     └───────┬──────────┘
+                             │
+                 ┌───────────┴───────────┐
+                 ▼                       ▼
+        ┌─────────────────┐      ┌──────────────────┐
+        │ Business Tools  │      │ Vector Search    │
+        │                 │      │                  │
+        │ Customers       │      │ MongoDB Atlas    │
+        │ Products        │      │ Vector Search    │
+        │ Orders          │      │                  │
+        │ Analytics       │      │ Document Chunks  │
+        └─────────────────┘      └──────────────────┘
+```
+
+### Request Flow
+
+For a normal business question:
+
+```text
+React
+  ↓
+Express
+  ↓
+FastAPI Agent
+  ↓
+LangGraph
+  ↓
+Gemini
+  ↓
+Business Tool
+  ↓
+MongoDB
+  ↓
+Gemini
+  ↓
+Express
+  ↓
+React
+```
+
+For a document question:
+
+```text
+React
+  ↓
+Express
+  ↓
+FastAPI Agent
+  ↓
+LangGraph
+  ↓
+Gemini
+  ↓
+RAG Tool
+  ↓
+Embedding Model
+  ↓
+MongoDB Atlas Vector Search
+  ↓
+Relevant Document Chunks
+  ↓
+Gemini
+  ↓
+Answer
 ```
 
 ---
@@ -526,6 +877,7 @@ insightflow/
 │   ├── Models/              # Mongoose schemas
 │   ├── Middleware/          # JWT auth and middleware
 │   ├── Queries/             # MongoDB aggregation pipelines
+│   ├── Workers/             # Background document processing
 │   ├── Config/              # Database and Passport configuration
 │   └── ...
 │
@@ -543,10 +895,13 @@ insightflow/
 ### Prerequisites
 
 * Node.js 20+
-* MongoDB Atlas or local MongoDB
+* Python 3.10+
+* MongoDB Atlas with Vector Search
+* Upstash Redis account
 * Stripe account for Pro subscriptions
 * Google Cloud OAuth credentials for Google Sign-In
-* Cloudinary account for product images
+* Gemini API key
+* Cloudinary account for product images and files
 * Stripe CLI for local webhook development
 
 ### Installation
@@ -564,6 +919,16 @@ npm install
 # Install client dependencies
 cd ../client
 npm install
+
+# Install AI service dependencies
+cd ../agent
+python -m venv venv
+
+# Windows
+venv\Scripts\activate
+
+# Install Python dependencies
+pip install -r requirements.txt
 ```
 
 ### Environment Variables
@@ -596,19 +961,28 @@ GMAIL_SENDER=your_sender_email
 
 CLIENT_URL=http://localhost:5173
 SERVER_URL=http://localhost:5000
+
+AGENT_API_URL=http://localhost:8000
+
+NODE_ENV=test
+REDIS_URL=your_upstash_redis_url
 ```
 
-**Never commit `.env` files or secret credentials to Git.**
+Create the AI service environment variables according to the deployment configuration:
 
-For CI and deployment, sensitive environment variables should be configured through the hosting platform or GitHub Actions Secrets.
+```env
+GOOGLE_API_KEY=your_gemini_api_key
+MONGO_URI=your_mongodb_connection_string
+```
 
 ---
 
 ## Running Locally
 
-### Start both frontend and backend
+### Start frontend
 
 ```bash
+cd client
 npm run dev
 ```
 
@@ -619,23 +993,29 @@ cd server
 npm run dev
 ```
 
-### Start frontend
+### Start AI service
 
 ```bash
-cd client
-npm run dev
+cd agent
+
+# Activate environment on Windows
+venv\Scripts\activate
+
+# Start FastAPI
+uvicorn app.main:app --reload
 ```
 
-Frontend:
+### Start Redis / Worker
+
+Start Redis and the document processing worker according to the local BullMQ/Redis configuration.
+
+The main services are:
 
 ```text
-http://localhost:5173
-```
-
-Backend:
-
-```text
-http://localhost:5000
+Frontend     → http://localhost:5173
+Backend      → http://localhost:5000
+AI Agent     → http://localhost:8000
+Upstash Redis → Cloud-hosted Redis
 ```
 
 Health check:
@@ -699,7 +1079,7 @@ This avoids comparing a partial current month against a full previous month, whi
 
 ## Deployment
 
-The application is designed to be deployed as separate frontend and backend services.
+The application is designed to be deployed as separate frontend, backend, and AI services.
 
 Typical deployment architecture:
 
@@ -709,17 +1089,31 @@ Typical deployment architecture:
                  │   React / Vite    │
                  └─────────┬─────────┘
                            │
-                           │ HTTPS API requests
+                           │ HTTPS
                            ▼
                  ┌───────────────────┐
                  │  Backend Hosting  │
                  │ Node.js + Express │
-                 └─────────┬─────────┘
-                           │
-             ┌─────────────┼─────────────┐
-             ▼             ▼             ▼
-        MongoDB Atlas    Stripe       Cloudinary
+                 └───────┬─────┬─────┘
+                         │     │
+              ┌──────────┘     └─────────────┐
+              ▼                              ▼
+      ┌───────────────┐             ┌────────────────┐
+      │ MongoDB Atlas │             │ AI Service     │
+      │               │             │ FastAPI        │
+      │ Business Data │             │ LangGraph      │
+      │ Documents     │             │ Gemini         │
+      │ Vectors       │             │ RAG            │
+      └───────────────┘             └───────┬────────┘
+                                            │
+                                      ┌─────┴─────┐
+                                      ▼           ▼
+                                  MongoDB      Gemini
+                                  Vector       API
+                                  Search
 ```
+
+Background document processing runs asynchronously through BullMQ workers using Upstash Redis as the managed queue backend.f
 
 Production environment variables are configured through the hosting provider rather than committed to the repository.
 
@@ -730,6 +1124,7 @@ Production environment variables are configured through the hosting provider rat
 InsightFlow demonstrates several production-oriented engineering practices:
 
 * RESTful API architecture
+* Multi-service architecture
 * JWT authentication and authorization
 * Google OAuth 2.0
 * Organization-level data isolation
@@ -737,16 +1132,32 @@ InsightFlow demonstrates several production-oriented engineering practices:
 * React Query server-state caching
 * Pagination and search
 * Excel bulk import and validation
-* Cloudinary image lifecycle management
+* Cloudinary image and file lifecycle management
 * Stripe subscription lifecycle management
 * Stripe webhook synchronization
 * Transactional email integration
+* LangGraph agent orchestration
+* Gemini LLM integration
+* Tool calling
+* Business-specific AI tools
+* Retrieval-Augmented Generation (RAG)
+* Sentence-transformer embeddings
+* MongoDB Atlas Vector Search
+* Organization-scoped semantic search
+* Asynchronous document processing
+* BullMQ and Redis
+* File processing state management
+* Automatic document-chunk cleanup
+* Conversation context limiting
+* Automatic conversation summarization
+* LangGraph checkpoint persistence
+* AI rate limiting
 * Automated Playwright E2E testing
 * GitHub Actions CI
 * Environment-based configuration
 * API health checks
 * Responsive UI
-* Error handling and user feedback
+* Centralized error handling
 * External service integrations
 
 ---
