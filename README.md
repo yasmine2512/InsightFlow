@@ -1006,12 +1006,6 @@ venv\Scripts\activate
 uvicorn app.main:app --reload
 ```
 
-### Health check:
-
-```text
-http://localhost:5000/api/health
-```
-
 ---
 
 ## Stripe Webhooks During Local Development
