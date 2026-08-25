@@ -5,6 +5,8 @@ import { Input } from "../components/ui/Input";
 import { Label } from "../components/ui/Label";
 import { Switch } from "../components/ui/switch";
 import { Separator } from "../components/ui/separator";
+import { useQuery } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import {Trash2,Upload} from "lucide-react"
 import { api } from "../lib/api";
 import { DeleteDialog } from "./DeleteDialog";
@@ -22,9 +24,8 @@ export default function SettingsPage() {
   const [open, setOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [showUpgradeModal,setShowUpgradeModal] = useState(false);
+  const queryClient = useQueryClient();
 
-  const [files, setFiles] = useState([]);
-  const [filesLoading, setFilesLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [fileMessage, setFileMessage] = useState(null);
 
@@ -41,20 +42,23 @@ export default function SettingsPage() {
   const [initials, setInitials] = useState(ini.toUpperCase() || "??");
 
   // Fetch organization RAG files
-  useEffect(() => {
-    async function fetchOrgFiles() {
-      setFilesLoading(true);
+   async function fetchOrgFiles() {
       try {
         const response = await api.get(`/api/files/${userId}`);
-        setFiles(response.data|| []);
+        return response.data|| [];
       } catch (err) {
         console.error("Failed to fetch organization files", err);
-      } finally {
-        setFilesLoading(false);
-      }
+      } 
     }
-    fetchOrgFiles();
-  }, [userId]);
+
+const {data: files = [],isLoading: filesLoading,refetch} = useQuery({
+  queryKey: ["files", userId],queryFn: fetchOrgFiles,enabled: !!userId,
+  refetchInterval: (query) => {const files = query.state.data || [];
+    const processing = files.some(
+      (file) => file.ragStatus === "pending" || file.status === "processing");
+    return processing ? 3000 : false;
+  },
+});
 
   async function handleFileUpload(e) {
     const uploadedFile = e.target.files[0];
@@ -77,7 +81,7 @@ export default function SettingsPage() {
           "Content-Type": "multipart/form-data"
         },
       });
-      setFiles((prev) => [...prev, response.data.file]);
+      queryClient.invalidateQueries({queryKey: ["files", userId]});
       setSuccessMessage("File uploaded successfully.");
       setSuccessOpen(true);
     } catch (err) {
@@ -93,7 +97,7 @@ export default function SettingsPage() {
     setDeleteTarget(null);
     try {
       await api.delete(`/api/files/${userId}/file/${fileId}`);
-      setFiles((prev) => prev.filter((f) => f._id !== fileId));
+      queryClient.invalidateQueries({queryKey: ["files", userId]});
       setSuccessMessage("File deleted successfully.");
       setSuccessOpen(true);
     } catch (err) {
@@ -274,35 +278,43 @@ export default function SettingsPage() {
       <p className="text-sm text-muted-foreground italic">No files uploaded yet. Upload PDFs, text docs, or markdown files to enable RAG.</p>
     ) : (
       <div className="divide-y divide-border border border-border rounded-lg overflow-hidden">
-        {files.map((file) => (
-          <div key={file._id} className="flex items-center justify-between p-3 bg-background/50">
-            <div className="flex items-center space-x-3 overflow-hidden">
-              <div className="text-sm font-medium truncate max-w-xs sm:max-w-md">{file.name}</div>
-              <span className="text-xs text-muted-foreground">({(file.size / 1024).toFixed(1)} KB)</span>
-            </div>
-            <div className="flex items-center space-x-2">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-8 w-8 p-0"
-                onClick={() => window.open(file.url, "_blank")}
-                title="View PDF"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4 text-muted-foreground hover:text-foreground">
-                  <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
-                  <circle cx="12" cy="12" r="3" />
-                </svg>
-              </Button>
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                onClick={() => setDeleteTarget(file._id)}
-              >
-                <Trash2 size={15}/>
-              </Button>
-            </div>
-          </div>
+  {files.map((file) => (
+    <div key={file._id} className="flex items-center justify-between p-3 bg-background/50">
+      <div className="flex items-center space-x-3 overflow-hidden">
+        <div className="text-sm font-medium truncate max-w-xs sm:max-w-md">{file.name}</div>
+        <span className="text-xs text-muted-foreground">({(file.size / 1024).toFixed(1)} KB)</span>
+        <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+          file.ragStatus === "ready" ? "bg-success/10 text-success" :
+          file.ragStatus === "pending" || "processing" ? "bg-primary/10 text-primary animate-pulse" :
+          file.ragStatus === "failed" ? "bg-destructive/10 text-destructive" :
+          "bg-muted text-muted-foreground"
+        }`}>
+          {file.ragStatus}
+        </span>
+      </div>
+      <div className="flex items-center space-x-2">
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-8 w-8 p-0"
+          onClick={() => window.open(file.url, "_blank")}
+          title="View PDF"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4 text-muted-foreground hover:text-foreground">
+            <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
+            <circle cx="12" cy="12" r="3" />
+          </svg>
+        </Button>
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          className="text-destructive hover:text-destructive hover:bg-destructive/10"
+          onClick={() => setDeleteTarget(file._id)}
+        >
+          <Trash2 size={15}/>
+        </Button>
+      </div>
+    </div>
         ))}
       </div>
     )}

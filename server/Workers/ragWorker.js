@@ -14,8 +14,6 @@ const worker = new Worker(
       fileUrl,
     } = job.data;
 
-    console.log(`Processing RAG file: ${filename}`);
-
     await File.findByIdAndUpdate(fileId, {
       ragStatus: "processing",
       ragError: null,
@@ -57,10 +55,6 @@ const worker = new Worker(
     concurrency: 1,
   }
 );
-
-worker.on("completed", (job) => {
-  console.log(`RAG job ${job.id} completed`);
-});
 
 worker.on("failed", (job, error) => {
   console.error(`RAG job ${job?.id} failed:`, error.message);

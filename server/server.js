@@ -12,7 +12,8 @@ import customersRoutes from './Routes/customersRoutes.js';
 import chatRoutes from './Routes/chatRoutes.js'
 import connectDB from "./config/db.js"; 
 import passport from "./config/passport.js";
-import filesRoute from "./Routes/filesRoute.js"
+import filesRoute from "./Routes/filesRoute.js";
+import "./Workers/ragWorker.js";
 
 const app = express();
 

@@ -2,6 +2,7 @@ import express from "express"
 import asyncHandler from "express-async-handler";
 import File from "../Models/File.js";
 import User from "../Models/User.js";
+import DocumentChunk from "../Models/DocumentChunk.js";
 import { cloudinary , uploadFile } from "../Middlewares/Multer.js";
 import { verifyTokenAndAuthorization } from "../Middlewares/JWTauth.js";
 import { ragQueue } from "../config/ragQueue.js";
@@ -136,7 +137,8 @@ if(!file){
 }
 
 try{
-   await cloudinary.uploader.destroy(file.publicId, {resource_type: "raw"});
+  await cloudinary.uploader.destroy(file.publicId, {resource_type: "raw"});
+  await DocumentChunk.deleteMany({fileId: file._id,organization: orgId});
   await file.deleteOne();
 }
 catch(error){
