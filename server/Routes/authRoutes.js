@@ -12,7 +12,7 @@ import Message from "../Models/Message.js";
 import asyncHandler from "express-async-handler";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import axios from "axios";
+import emailDomainExists from "../utils/emailDomainExists.js";
 import {
   verifyToken,
   verifyTokenAndAuthorization,
@@ -504,27 +504,6 @@ router.post("/reset-password/:userId/:token", asyncHandler(async (req, res) => {
 
 }));
 
-async function emailDomainExists(email) {
-  const domain = email.split("@")[1];
-  try {
-    const response = await axios.get(
-      "https://dns.google/resolve",
-      {
-        params: {
-          name: domain,
-          type: "MX"
-        }
-      }
-    );
-    return (
-      response.data.Answer &&
-      response.data.Answer.length > 0
-    );
-  } catch(error) {
-    console.error(error.message);
-    return false;
-  }
-}
 
 export default router; 
 
