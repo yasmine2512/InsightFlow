@@ -412,6 +412,7 @@ InsightFlow supports multiple authentication mechanisms.
 ### Account Security
 
 * JWT-based authentication
+* HTTP-only cookies for JWT storage
 * Protected API routes
 * Authorization middleware
 * Password hashing
@@ -430,23 +431,23 @@ InsightFlow uses **Stripe** for Pro subscriptions.
 
 ### Free Plan
 
-Product management
-Customer management
-Order management
-Dashboard
-KPI calculations
-Analytics
-Unlimited records
+* Product management
+* Customer management
+* Order management
+* Dashboard
+* KPI calculations
+* Analytics
+* Unlimited records
 
 ### Pro Plan
 
-Everything in Free, plus:
+* Everything in Free, plus:
 
-Excel bulk import — import products, customers, and orders from .xlsx files
-Knowledge Base — upload up to 10 business documents
-AI Assistant — ask questions about business data and uploaded documents
-Daily AI message limit
-Stripe subscription billing
+* Excel bulk import — import products, customers, and orders from .xlsx files
+* Knowledge Base — upload up to 10 business documents
+* AI Assistant — ask questions about business data and uploaded documents
+* Daily AI message limit
+* Stripe subscription billing
 
 ### Subscription Lifecycle
 
@@ -1005,20 +1006,7 @@ venv\Scripts\activate
 uvicorn app.main:app --reload
 ```
 
-### Start Redis / Worker
-
-Start Redis and the document processing worker according to the local BullMQ/Redis configuration.
-
-The main services are:
-
-```text
-Frontend     → http://localhost:5173
-Backend      → http://localhost:5000
-AI Agent     → http://localhost:8000
-Upstash Redis → Cloud-hosted Redis
-```
-
-Health check:
+### Health check:
 
 ```text
 http://localhost:5000/api/health
@@ -1125,7 +1113,7 @@ InsightFlow demonstrates several production-oriented engineering practices:
 
 * RESTful API architecture
 * Multi-service architecture
-* JWT authentication and authorization
+* JWT authentication with secure HTTP-only cookies
 * Google OAuth 2.0
 * Organization-level data isolation
 * MongoDB aggregation pipelines for analytics
