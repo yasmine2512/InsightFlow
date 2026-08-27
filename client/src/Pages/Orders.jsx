@@ -180,9 +180,7 @@ export default function Orders() {
 
   const fetchStats= async () => {
       try {
-        const res = await api.get(`/api/orders/${id}/stats`,
-           {params: {period:"Month"}});
-           console.log(res.data.ordersChart);
+        const res = await api.get(`/api/orders/${id}/stats`);
         return res.data;
       } catch (err) {
         console.error("Unauthorized or token invalid", err)
