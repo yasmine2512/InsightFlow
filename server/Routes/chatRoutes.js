@@ -145,13 +145,11 @@ router.post("/:id/messages/:chatId",
       role: "user",
       content: content.trim(),
     });
-    console.log("call llm");
     const agentData = await chatWithAI({
     message: content.trim(),
     organizationId: chat.organization.toString(),
     threadId: chat.threadId,
   });
-    console.log("agent response", agentData);
   const assistantMessage = await Message.create({
     chat: chat._id,
     role: "assistant",
