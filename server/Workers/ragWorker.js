@@ -1,7 +1,7 @@
 import { Worker } from "bullmq";
-import axios from "axios";
 import { redisConnection } from "../config/ragQueue.js";
 import File from "../Models/File.js";
+import { processAIDocument } from "../Services/aiService.js";
 
 const worker = new Worker(
   "rag-processing",
@@ -20,15 +20,7 @@ const worker = new Worker(
     });
 
     try {
-      const response = await axios.post(
-        `${process.env.AGENT_API_URL}/api/rag/upload`,
-        {
-          file_id: fileId,
-          organization_id: organizationId,
-          filename,
-          file_url: fileUrl,
-        }
-      );
+      const response = await processAIDocument({fileId,organizationId,filename,fileUrl});
 
       await File.findByIdAndUpdate(fileId, {
         ragStatus: "ready",

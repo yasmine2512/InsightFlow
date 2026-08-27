@@ -51,7 +51,7 @@ export default function ChatWindow({ chatId }) {
     setInputMessage('');
     setRateLimitError(false);
     // Optimistically update UI with user message
-    const tempUserMessage = { role: 'user', content: userMsgContent, id: Date.now() };
+    const tempUserMessage = { role: 'user', content: userMsgContent, _id: Date.now() };
     setMessages((prev) => [...prev, tempUserMessage]);
     setLoading(true);
 
@@ -78,7 +78,6 @@ export default function ChatWindow({ chatId }) {
    async function getMessageHistory(chatId) {
     try{
     const response = await api.get(`/api/chats/${id}/messages/${chatId}`);
-  console.log(response.data)
   return response.data;
     }catch(error){
     setError(error.response?.data?.message);
@@ -120,9 +119,9 @@ export default function ChatWindow({ chatId }) {
               >
                 {msg.role === "user" ? <User className="w-4 h-4" /> : <Bot className="w-4 h-4 text-primary" />}
               </div>
-              <div
+              <div 
                 className={cn(
-                  "p-3 rounded-2xl text-sm leading-relaxed",
+                  "p-3 rounded-2xl text-sm leading-relaxed whitespace-pre-line text-left",
                   msg.role === "user"
                     ? "bg-primary text-primary-foreground rounded-tr-none"
                     : "bg-muted text-foreground border border-border rounded-tl-none"

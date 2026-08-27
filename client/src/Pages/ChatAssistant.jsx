@@ -11,6 +11,7 @@ export default function ChatAssistant({closeChat,openModal,closeModal,isModalOpe
     const [chats, setChats] = useState([]);
     const [activeChatId, setActiveChatId] = useState(null);
     const [newChatTitle, setNewChatTitle] = useState('');
+    const [isCreating, setIsCreating] = useState(false);
     const { user } = useAuth();
     const id = user?.userId;
     const [errorDialogState, setErrorDialogState] = useState({ open: false, title: "", message: "" });
@@ -92,7 +93,7 @@ export default function ChatAssistant({closeChat,openModal,closeModal,isModalOpe
     e.preventDefault();
     if (!newChatTitle.trim()) return;
     if (chats.length >= MAX_CHATS) {
-      setIsModalOpen(false);
+      closeModal()
       setErrorDialogState({
         open: true,
         title: "Chat Limit Reached",
@@ -101,6 +102,7 @@ export default function ChatAssistant({closeChat,openModal,closeModal,isModalOpe
       return;
     }
     try {
+      setIsCreating(true);
       const newChat = await createChat(newChatTitle);
       setChats([newChat, ...chats]);
       console.log(chats);
@@ -109,7 +111,9 @@ export default function ChatAssistant({closeChat,openModal,closeModal,isModalOpe
       closeModal();
     } catch (error) {
       console.error("Failed to create chat", error);
-    }
+    } finally {
+    setIsCreating(false);
+  }
   };
 
     return(
@@ -196,37 +200,50 @@ export default function ChatAssistant({closeChat,openModal,closeModal,isModalOpe
 
            {/* New Chat Title Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/40 backdrop-blur-xs">
-          <div className="bg-card border border-border rounded-xl p-6 w-96 shadow-2xl animate-fade-in">
-            <h3 className="text-lg font-heading font-bold mb-4">Create New Chat Session</h3>
-            <form onSubmit={handleCreateChatSubmit}>
-              <input
-                type="text"
-                placeholder="e.g., Subscription Analysis"
-                value={newChatTitle}
-                onChange={(e) => setNewChatTitle(e.target.value)}
-                className="w-full bg-background border border-input rounded-lg px-3 py-2 text-sm mb-4 focus:outline-none focus:ring-2 focus:ring-primary"
-                autoFocus
-              />
-              <div className="flex justify-end gap-2">
-                <button
-                  type="button"
-                  onClick={closeModal}
-                  className="px-4 py-2 text-sm font-medium text-muted-foreground hover:bg-muted rounded-lg transition"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-medium rounded-lg transition"
-                >
-                  Create Chat
-                </button>
-              </div>
-            </form>
-          </div>
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/40 backdrop-blur-xs">
+    <div className="bg-card border border-border rounded-xl p-6 w-96 shadow-2xl animate-fade-in">
+      <h3 className="text-lg font-heading font-bold mb-4">Create New Chat Session</h3>
+      <form onSubmit={handleCreateChatSubmit}>
+        <input
+          type="text"
+          placeholder="e.g., Subscription Analysis"
+          value={newChatTitle}
+          onChange={(e) => setNewChatTitle(e.target.value)}
+          disabled={isCreating} 
+          className="w-full bg-background border border-input rounded-lg px-3 py-2 text-sm mb-4 focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50"
+          autoFocus
+        />
+        <div className="flex justify-end gap-2">
+          <button
+            type="button"
+            onClick={closeModal}
+            disabled={isCreating}
+            className="px-4 py-2 text-sm font-medium text-muted-foreground hover:bg-muted rounded-lg transition disabled:opacity-50"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            disabled={isCreating}
+            className="px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-medium rounded-lg transition flex items-center gap-2 disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed"
+          >
+            {isCreating ? (
+              <>
+                <svg className="animate-spin h-4 w-4 text-current" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Creating...
+              </>
+            ) : (
+              "Create Chat"
+            )}
+          </button>
         </div>
-      )}
+      </form>
+    </div>
+  </div>
+)}
       <ErrorDialog
         open={errorDialogState.open}
         onClose={() => setErrorDialogState({ open: false, title: "", message: "" })}

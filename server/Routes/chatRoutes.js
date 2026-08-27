@@ -6,6 +6,7 @@ import Message from "../Models/Message.js";
 import User from "../Models/User.js";
 import { verifyTokenAndAuthorization} from '../Middlewares/JWTauth.js'
 import { chatMessageLimiter } from "../Middlewares/chatLimiter.js";
+import { deleteAIThread , chatWithAI } from "../Services/aiService.js";
 const router = express.Router();
 
 router.get("/:id",verifyTokenAndAuthorization,asyncHandler(async(req,res)=>{
@@ -69,41 +70,9 @@ router.post("/:id",verifyTokenAndAuthorization,asyncHandler(async(req,res)=>{
       threadId: chatId.toString(),
     });
 
-    const initialContext = `
-    hello this is a new conversation from 
-    Organization:${user.organizationName}
-    User: ${user.name} 
-    `;
-    const agentResponse = await fetch(
-        `${process.env.AGENT_API_URL}/api/agent/chat`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            message: initialContext,
-            organization_id: orgId,
-            thread_id: chat.threadId,
-          }),
-        }
-      );
-      if (!agentResponse.ok) {
-        await Conversation.deleteOne({ _id: chat._id });
 
-        throw new Error(
-          `Agent API returned ${agentResponse.status}`
-        );
-      }
-      const agentData = await agentResponse.json();
+      return res.status(201).json(chat);
 
-      const assistantMessage = await Message.create({
-        chat: chat._id,
-        role: "assistant",
-        content: agentData.message
-      });
-
-      res.status(201).json(chat);
   } catch (error) {
     console.error("Failed to create chat:", error);
 
@@ -149,10 +118,10 @@ router.get("/:id/messages/:chatId",verifyTokenAndAuthorization,asyncHandler(asyn
 
 router.post("/:id/messages/:chatId",
   verifyTokenAndAuthorization,chatMessageLimiter,asyncHandler(async(req,res)=>{
+  const chatId  = req.params.chatId;
+  const orgId = req.params.id;
+  const { content } = req.body;
   try {
-    const chatId  = req.params.chatId;
-    const orgId = req.params.id;
-    const { content } = req.body;
 
     if (!content?.trim()) {
       return res.status(400).json({
@@ -176,46 +145,24 @@ router.post("/:id/messages/:chatId",
       role: "user",
       content: content.trim(),
     });
+    console.log("call llm");
+    const agentData = await chatWithAI({
+    message: content.trim(),
+    organizationId: chat.organization.toString(),
+    threadId: chat.threadId,
+  });
+    console.log("agent response", agentData);
+  const assistantMessage = await Message.create({
+    chat: chat._id,
+    role: "assistant",
+    content: agentData.message,
+  });
 
-    const agentResponse = await fetch(
-      `${process.env.AGENT_API_URL}/api/agent/chat`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          message: content.trim(),
-          organization_id: chat.organization.toString(),
-          thread_id: chat.threadId,
-        }),
-      }
-    );
-
-    if (!agentResponse.ok) {
-      throw new Error(
-        `Agent API returned ${agentResponse.status}`
-      );
-    }
-    const agentData = await agentResponse.json();
-    const assistantContent = agentData.message;
-    const assistantMessage = await Message.create({
-      chat: chat._id,
-      role: "assistant",
-      content: assistantContent,
-    });
-
-    // Update chat's last activity
-    chat.updatedAt = new Date();
-    await chat.save();
-
-    res.status(201).json({
-      userMessage,
-      assistantMessage,
-    });
+  chat.updatedAt = new Date();
+  await chat.save();
+  return res.status(201).json({assistantMessage});
   } catch (error) {
-    console.error("Failed to send message:", error);
-
+    console.error("Failed to send message:", error.response?.data || error.message);
     res.status(500).json({
       message: "Failed to send message",
     });
@@ -223,14 +170,10 @@ router.post("/:id/messages/:chatId",
 })
 );
 
-router.delete(
-  "/:id/:chatId",
-  verifyTokenAndAuthorization,
-  asyncHandler(async (req, res) => {
+router.delete("/:id/:chatId",verifyTokenAndAuthorization,asyncHandler(async (req, res) => {
+    const orgId = req.params.id;
+    const chatId = req.params.chatId;
     try {
-      const orgId = req.params.id;
-      const chatId = req.params.chatId;
-
       const chat = await Conversation.findOne({
         _id: chatId,
         organization: orgId,
@@ -245,28 +188,8 @@ router.delete(
         chat: chatId,
       });
 
-      const agentResponse = await fetch(
-        `${process.env.AGENT_API_URL}/api/agent/thread`,
-        {
-          method: "DELETE",
-          headers: {"Content-Type": "application/json"},
-          body: JSON.stringify({thread_id: chat.threadId}),
-        }
-      );
-      if (!agentResponse.ok) {
-        console.error(
-          "Failed to delete LangGraph thread:",
-          await agentResponse.text()
-        );
-
-        return res.status(500).json({
-          message: "Failed to delete agent conversation state",
-        });
-      }
-      await Conversation.deleteOne({
-        _id: chatId,
-      });
-
+      await deleteAIThread(chat.threadId);
+      await Conversation.deleteOne({_id: chatId,});
       res.status(200).json({
         message: "Conversation deleted successfully",
       });

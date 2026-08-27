@@ -285,7 +285,7 @@ const {data: files = [],isLoading: filesLoading,refetch} = useQuery({
         <span className="text-xs text-muted-foreground">({(file.size / 1024).toFixed(1)} KB)</span>
         <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
           file.ragStatus === "ready" ? "bg-success/10 text-success" :
-          file.ragStatus === "pending" || "processing" ? "bg-primary/10 text-primary animate-pulse" :
+          file.ragStatus === "pending" || file.ragStatus === "processing" ? "bg-primary/10 text-primary animate-pulse" :
           file.ragStatus === "failed" ? "bg-destructive/10 text-destructive" :
           "bg-muted text-muted-foreground"
         }`}>

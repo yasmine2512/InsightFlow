@@ -13,6 +13,7 @@ import asyncHandler from "express-async-handler";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import emailDomainExists from "../utils/emailDomainExists.js";
+import { deleteAIThread } from "../Services/aiService.js";
 import {
   verifyToken,
   verifyTokenAndAuthorization,
@@ -302,14 +303,7 @@ router.delete("/:id",verifyTokenAndAuthorization,asyncHandler(async(req,res)=>{
     );
 
     for (const threadId of threadIds) {
-      await fetch(
-        `${process.env.AGENT_API_URL}/api/agent/thread`,
-        {
-          method: "DELETE",
-          headers: {"Content-Type": "application/json"},
-          body: JSON.stringify({thread_id: threadId}),
-        }
-      );
+      await deleteAIThread(threadId);
     }
     await Promise.all([
      Customer.deleteMany({ organization: userId }),
