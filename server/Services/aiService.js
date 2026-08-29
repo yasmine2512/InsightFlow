@@ -8,6 +8,30 @@ const aiService = axios.create({
   timeout: 120000,
 });
 
+async function waitForAIService() {
+  const maxAttempts = 20;
+  const delay = 5000;
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      const response = await aiService.get("/health", {
+        timeout: 180000,
+      });
+
+      if (response.status === 200) {
+        return true;
+      }
+    } catch (error) {
+      console.log(
+        `AI service not ready yet: ${error.message}`
+      );
+    }
+    await new Promise((resolve) =>
+      setTimeout(resolve, delay)
+    );
+  }
+  throw new Error("AI service did not wake up in time");
+}
+
 export async function chatWithAI({
   message,
   organizationId,
@@ -38,6 +62,7 @@ export async function processAIDocument({
   filename,
   fileUrl,
 }) {
+  await waitForAIService();
   const response = await aiService.post("/api/rag/upload", {
     file_id: fileId,
     organization_id: organizationId,
