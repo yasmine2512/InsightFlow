@@ -13,7 +13,7 @@ async function waitForAIService() {
   const delay = 5000;
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     try {
-      const response = await aiService.get("/health", {
+      const response = await axios.get(`${process.env.AGENT_API_URL}/health`,{
         timeout: 180000,
       });
 

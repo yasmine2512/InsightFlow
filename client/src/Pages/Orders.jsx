@@ -161,6 +161,7 @@ export default function Orders() {
   const [errorTitle, setErrorTitle] = useState("");
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [chartFilter, setChartFilter] = useState("Month");
+  const tableTopRef = useRef(null);
 
   const handleDeleteConfirm = async () => {
   try {
@@ -191,6 +192,9 @@ const fetchOrders= async ({page,search,status}) => {
       try {
         const res = await api.get(`/api/orders/${id}`,
            {params: { page,limit: 10,search,status}});
+        setTimeout(() => {
+          tableTopRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+        }, 50);
         return res.data;
       } catch (err) {
         console.error("Unauthorized or token invalid", err)
@@ -275,20 +279,20 @@ const [filter, setFilter] = useState("");
 useEffect(() => {
   const timer = setTimeout(() => {
     setDebouncedSearch(search);
-  }, 400);
+  }, 500);
   return () => clearTimeout(timer);
 }, [search]);
 useEffect(() => {
   setCurrentPage(1);
 }, [debouncedSearch]);
 const { data:data,isLoading: isLoadingstats,error: errorstats } = useQuery({ queryKey: ["orders", id], queryFn: fetchStats, staleTime: 1000 * 60 * 5 });
-const {data: ordersChart = [],isLoading: isLoadingChart,error: errorChart,} = useQuery({
+const {data: ordersChart = [],isLoading: isLoadingChart,error: errorChart} = useQuery({
   queryKey: ["ordersChart", id, chartFilter],
   queryFn: () => fetchOrdersChart(chartFilter),
   staleTime: 1000 * 60 * 5,
 });
-
 const [currentPage, setCurrentPage] = useState(1);
+
 const {  data: orderslist, isLoading, error } = useQuery({
    queryKey: ["orderslist", id,currentPage,debouncedSearch,filter],
    queryFn: () => fetchOrders({page:currentPage,search:debouncedSearch,status:filter}),keepPreviousData: true,staleTime: 1000 * 60 * 5});
@@ -459,7 +463,8 @@ const colors = [
             </div>
         </div>
 
-        <div className="bg-card rounded-xl border border-border shadow-soft overflow-hidden">
+        <div ref={tableTopRef} 
+        className="bg-card rounded-xl border border-border shadow-soft overflow-hidden">
           <div className="w-full overflow-x-auto">
              <table className="w-full text-sm">
               <thead>
