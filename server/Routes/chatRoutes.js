@@ -160,7 +160,8 @@ router.post("/:id/messages/:chatId",
   await chat.save();
   return res.status(201).json({assistantMessage});
   } catch (error) {
-    console.error("Failed to send message:", error.response?.data || error.message);
+   console.error("Failed to send message:", {status: error.response?.status,
+    message: error.message});
     res.status(500).json({
       message: "Failed to send message",
     });

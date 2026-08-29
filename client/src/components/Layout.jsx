@@ -3,7 +3,6 @@ import { LayoutDashboard, Package, GalleryVertical, ShoppingCart, CreditCard, Se
 import { useState, useEffect } from "react";
 import { cn } from "../lib/utils";
 import { useAuth } from "../context/AuthContext";
-import ChatWindow from "../Pages/ChatWindow";
 import ChatAssistant from "../Pages/ChatAssistant";
 import { UpgradeModal } from "../Pages/UpgradeModal";
 
@@ -42,29 +41,30 @@ export default function DashboardLayout() {
     if (!isPro) {
       e.preventDefault();
       setIsUpgradeModalOpen(true);
-    }else{
-    setIsChatOpen(true);
+    } else {
+      setIsChatOpen(true);
     }
   };
   
   return (
-    <div className="min-h-screen flex bg-background">
+    // Changed min-h-screen to h-screen and added overflow-hidden to lock viewport height
+    <div className="h-screen w-screen flex overflow-hidden bg-background">
       {/* Mobile overlay */}
       {open && <div className="fixed inset-0 bg-foreground/20 z-40 lg:hidden" onClick={() => setOpen(false)} />}
 
       {/* Sidebar */}
       <aside className={cn(
-        "fixed lg:sticky top-0 left-0 z-50 h-screen w-64 bg-sidebar text-sidebar-foreground flex flex-col transition-transform duration-300 lg:translate-x-0",
+        "fixed lg:sticky top-0 left-0 z-50 h-full w-64 bg-sidebar text-sidebar-foreground flex flex-col transition-transform duration-300 lg:translate-x-0 shrink-0",
         open ? "translate-x-0" : "-translate-x-full"
       )}>
-        <div className="p-6 flex items-center justify-between mb-5">
+        <div className="p-6 flex items-center justify-between mb-2">
           <Link to="/" className="font-heading text-xl font-bold text-sidebar-primary-foreground">
             <span className="text-primary">Insight</span>Flow
           </Link>
           <button className="lg:hidden text-sidebar-foreground" onClick={() => setOpen(false)} ><X className="w-5 h-5" /></button>
         </div>
 
-        <nav className="flex-1 px-3 space-y-1">
+        <nav className="flex-1 px-3 space-y-1 overflow-y-auto">
           {navItems.map((item) => {
             const active = location.pathname.startsWith(item.to);
             return (
@@ -87,25 +87,25 @@ export default function DashboardLayout() {
         </nav>
 
         {/* Chatbot Entry Button inside Main Sidebar */}
-        <div className="px-3 mb-2">
+        <div className="px-3 mb-2 shrink-0">
           <button
             onClick={handleAssistantClick}
-            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-primary "
+            className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium transition-colors text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-primary"
           >
             <div className="flex items-center gap-2">
-          <Bot className="w-4 h-4 text-primary" />
-          <span>AI Assistant</span>
-        </div>
-        {!isPro && (
-          <span className="flex items-center gap-1 text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full font-semibold">
-            <Lock className="w-3 h-3" /> Pro
-          </span>
-        )}
+              <Bot className="w-4 h-4 text-primary" />
+              <span>AI Assistant</span>
+            </div>
+            {!isPro && (
+              <span className="flex items-center gap-1 text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full font-semibold">
+                <Lock className="w-3 h-3" /> Pro
+              </span>
+            )}
           </button>
         </div>
 
         {/* Profile Section & Sign Out Enclosed in a Box */}
-        <div className="p-3 mt-auto border-t border-sidebar-border">
+        <div className="p-3 mt-auto border-t border-sidebar-border shrink-0">
           <div className="bg-sidebar-accent/55 border border-sidebar-border rounded-xl p-3 space-y-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3 min-w-0">
@@ -143,31 +143,33 @@ export default function DashboardLayout() {
 
       </aside>
 
-      {/* Main */}
-      <div className="flex-1 flex flex-col min-w-0">
-        <header className="h-14 border-b border-border bg-card flex items-center px-4 gap-4 sticky top-0 z-30">
+      {/* Main Content Pane */}
+      <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
+        <header className="h-14 border-b border-border bg-card flex items-center px-4 gap-4 shrink-0 z-30">
           <button className="lg:hidden" onClick={() => setOpen(true)}><Menu className="w-5 h-5" /></button>
           <div className="flex-1" />
           <div className="w-8 h-8 rounded-full gradient-primary flex items-center justify-center text-xs font-bold text-primary-foreground">{initials}</div>
         </header>
-        <main className="flex-1 p-6 animate-fade-in">
+        {/* Only this main container will scroll internally if content is too long */}
+        <main className="flex-1 p-6 overflow-y-auto animate-fade-in">
           <Outlet />
         </main>
       </div>
+
       <UpgradeModal 
-      isOpen={isUpgradeModalOpen} 
-      onClose={() => setIsUpgradeModalOpen(false)}
-      featureName="AI Assistant"
-      description="Unlock up to 10 messages a day with our intelligent AI Assistant by upgrading to Pro."
-    />
+        isOpen={isUpgradeModalOpen} 
+        onClose={() => setIsUpgradeModalOpen(false)}
+        featureName="AI Assistant"
+        description="Unlock up to 10 messages a day with our intelligent AI Assistant by upgrading to Pro."
+      />
+
       {/* Slide-Over Chatbot Drawer */}
       {isChatOpen && <ChatAssistant 
-      closeChat={() => setIsChatOpen(false)}
-      openModal={() => setIsModalOpen(true)}
-      closeModal={() => setIsModalOpen(false)}
-      isModalOpen={isModalOpen}
+        closeChat={() => setIsChatOpen(false)}
+        openModal={() => setIsModalOpen(true)}
+        closeModal={() => setIsModalOpen(false)}
+        isModalOpen={isModalOpen}
       />}
-
     </div>
   );
 }

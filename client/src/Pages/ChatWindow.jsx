@@ -5,7 +5,7 @@ import { api } from "../lib/api";
 import { useAuth } from "../context/AuthContext";
 import { cn } from "../lib/utils";
 
-export default function ChatWindow({ chatId }) {
+export default function ChatWindow({ chatId , isWakingUp}) {
   const [messages, setMessages] = useState([]);
   const [inputMessage, setInputMessage] = useState('');
   const [loading, setLoading] = useState(false);
@@ -160,10 +160,11 @@ export default function ChatWindow({ chatId }) {
         <form onSubmit={handleSendMessage} className="flex items-center gap-2">
           <input
             type="text"
-            placeholder={rateLimitError ? "Daily limit reached for today..." : "Type your message to AI Assistant..."}
+            placeholder={rateLimitError ? "Daily limit reached for today..." : 
+              isWakingUp ? "Waking up AI assistant..." : "Type your message to AI Assistant..."}
             value={inputMessage}
             onChange={(e) => setInputMessage(e.target.value)}
-            disabled={loading || rateLimitError}
+            disabled={loading || rateLimitError || isWakingUp}
             className={cn(
               "flex-1 bg-background border border-input rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary transition-all",
               rateLimitError && "opacity-60 cursor-not-allowed bg-muted"
@@ -171,7 +172,7 @@ export default function ChatWindow({ chatId }) {
           />
           <button
             type="submit"
-            disabled={!inputMessage.trim() || loading || rateLimitError}
+            disabled={!inputMessage.trim() || loading || rateLimitError || isWakingUp}
             className="p-2.5 bg-primary hover:bg-primary/90 disabled:opacity-50 text-primary-foreground rounded-xl transition-colors shadow-xs shrink-0 flex items-center justify-center"
             title="Send Message"
           >

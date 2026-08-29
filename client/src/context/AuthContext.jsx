@@ -67,14 +67,6 @@ export function AuthProvider({ children }) {
     });
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p>Loading session...</p>
-      </div>
-    );
-  }
-
   return (
     <AuthContext.Provider value={{ user,loading, login, logout, updateUser }}>
       {children}
