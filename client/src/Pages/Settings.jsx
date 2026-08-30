@@ -13,6 +13,7 @@ import { DeleteDialog } from "./DeleteDialog";
 import { SuccessDialog } from "./SuccesDialog";
 import { UpgradeModal } from "./UpgradeModal";
 import { useAuth } from "../context/AuthContext";
+import axios from "axios";
 
 export default function SettingsPage() {
   const [saving, setSaving] = useState(false);
@@ -75,7 +76,7 @@ const AI_SERVICE_URL = import.meta.env.VITE_AI_SERVICE_URL;
   }
   } 
   wakeUpService();
-  }, [userId]);
+  }, []);
 
 
   async function handleFileUpload(e) {
