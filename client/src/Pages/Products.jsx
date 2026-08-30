@@ -2,8 +2,7 @@ import { Search,Filter,Download,DollarSign,TrendingUp,TrendingDown,PackageCheck,
 
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/Input";
-import { useNavigate} from "react-router-dom"
-import { useEffect, useState } from "react"
+import { useEffect, useState , useRef } from "react"
 import { api } from "../lib/api";
 import { useQuery } from "@tanstack/react-query";
 import { useQueryClient } from "@tanstack/react-query";
@@ -19,9 +18,7 @@ export default function Products() {
   const { user} = useAuth();
   const id = user?.userId;
   const plan = user.plan;
-  const [profile, setProfile] = useState(null)
   const queryClient = useQueryClient();
-  const navigate = useNavigate();
   const [openForm,setOpenForm] = useState(false);
   const [loadingImport, setLoadingImport] = useState(false);
   const [errorOpen,setErrorOpen] = useState(false);
@@ -30,6 +27,7 @@ export default function Products() {
   const [successMessgae, setSuccessMessage] = useState("");
   const [openProductModal,setopenProductModal] = useState(false);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const tableTopRef = useRef(null);
     const fetchStats = async () => {
       try {
         const res = await api.get(`/api/products/${id}/stats`);
@@ -44,6 +42,9 @@ export default function Products() {
         const res = await api.get(`/api/products/${id}`, {
            params: { page,limit: 10,search,filter}
         })
+        setTimeout(() => {
+          tableTopRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+        }, 50);
         return res.data;
       } catch (err) {
         console.error("Unauthorized or token invalid", err);
@@ -113,7 +114,7 @@ const [filter,setFilter] = useState("");
 useEffect(() => {
   const timer = setTimeout(() => {
     setDebouncedSearch(search);
-  }, 800);
+  }, 700);
   return () => clearTimeout(timer);
 }, [search]);
 useEffect(() => {
@@ -216,7 +217,8 @@ const {  data: productlist, isLoading, error } = useQuery({ queryKey: ["productl
             </div>
         </div>
 
-       <div className="bg-card rounded-xl border border-border shadow-soft overflow-hidden">
+       <div ref={tableTopRef}
+       className="bg-card rounded-xl border border-border shadow-soft overflow-hidden">
   <div className="overflow-x-auto">
     <table className="w-full text-sm">
       <thead>

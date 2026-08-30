@@ -1,8 +1,7 @@
 import { Search, Filter, Download ,DollarSign,TrendingUp, TrendingDown,Package, ShoppingCart, Users,RefreshCw,UserCheck,Plus,Trash2,UserPen,PenLine} from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/Input";
-import { useParams ,  useNavigate} from "react-router-dom"
-import { useEffect, useState } from "react"
+import { useEffect, useState , useRef } from "react"
 import { useAuth } from "../context/AuthContext";
 import { api } from "../lib/api";
 import { useQuery } from "@tanstack/react-query";
@@ -39,16 +38,9 @@ const spendingDistribution = (data) => {
     }; });
 };
 
-const statusColor = {
-  Active: "bg-success/10 text-success",
-  Cancelling: "bg-warning/10 text-warning",
-};
-
 export default function Customers() {
   const { user ,loading} = useAuth();
   const id = user?.userId;
-  const [profile, setProfile] = useState(null)
-  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [mode, setMode] = useState("create");
   const [selectedCustomer, setSelectedCustomer] = useState(null);
@@ -58,6 +50,7 @@ export default function Customers() {
   const [errorMessage, setErrorMessage] = useState("");
   const [succesOpen,setSuccessOpen] = useState(false);
   const [successMessgae, setSuccessMessage] = useState("");
+  const tableTopRef = useRef(null);
 
   const handleDeleteConfirm = async () => {
   try {
@@ -85,6 +78,9 @@ export default function Customers() {
     const fetchCustomers = async ({page,search}) => {
       try {
         const res = await api.get(`/api/customers/${id}`, {params: { page,limit: 10,search}})
+        setTimeout(() => {
+          tableTopRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+        }, 50);
         return res.data;
       } catch (err) {
         console.error("Unauthorized or token invalid", err)
@@ -96,7 +92,7 @@ const [debouncedSearch, setDebouncedSearch] = useState(search);
 useEffect(() => {
   const timer = setTimeout(() => {
     setDebouncedSearch(search);
-  }, 400);
+  }, 700);
   return () => clearTimeout(timer);
 }, [search]);
 useEffect(() => {
@@ -204,7 +200,8 @@ const end = Math.min(currentPage * rowsPerPage,totalcustomers);
         initialData={selectedCustomer}/>
         </div>
 
-        <div className="bg-card rounded-xl border border-border shadow-soft overflow-hroleden">
+        <div ref={tableTopRef}
+        className="bg-card rounded-xl border border-border shadow-soft overflow-hroleden">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>

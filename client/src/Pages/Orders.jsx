@@ -279,7 +279,7 @@ const [filter, setFilter] = useState("");
 useEffect(() => {
   const timer = setTimeout(() => {
     setDebouncedSearch(search);
-  }, 500);
+  }, 700);
   return () => clearTimeout(timer);
 }, [search]);
 useEffect(() => {

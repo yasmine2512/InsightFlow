@@ -1,10 +1,9 @@
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Mail, Lock, ArrowRight } from "lucide-react";
+import { Mail, Lock, ArrowRight, Loader2 } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/Input";
 import { Label } from "../components/ui/Label";
-import axios from "axios";
 import { useNavigate } from "react-router-dom"
 import { useState } from "react";
 import { useAuth } from "../context/AuthContext";
@@ -12,6 +11,7 @@ import { api } from "../lib/api";
 
 export default function Login() {
  const [error,setError] = useState(null);
+ const [isLoading, setIsLoading] = useState(false);
  const navigate = useNavigate()
  const { login } = useAuth();
  const [email, setEmail] = useState("");
@@ -34,6 +34,7 @@ export default function Login() {
     return;
   }
     try{
+    setIsLoading(true);
      const response= await api.post(`/api/auth/login`,{email,password});
      const {user} = response.data;
        login(user);
@@ -48,6 +49,8 @@ export default function Login() {
   } else {
     setError("Login failed. Please try again.");
   }
+    }finally {
+      setIsLoading(false);
     }
   }
 
@@ -77,7 +80,7 @@ export default function Login() {
             {error}
           </div>
         )}
-          <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
+          <form className="space-y-4" onSubmit={(e) => {e.preventDefault(); handleLogin();}}>
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <div className="relative">
@@ -95,8 +98,17 @@ export default function Login() {
             <div className="flex items-center justify-end">
               <a href="/forgot-password" className="text-xs text-primary hover:underline">Forgot password?</a>
             </div>
-              <Button className="w-full gradient-primary border-0 text-primary-foreground mt-2" onClick={handleLogin} >
-                Sign In <ArrowRight className="ml-2 w-4 h-4" />
+              <Button type="submit" className="w-full gradient-primary border-0 text-primary-foreground mt-2" disabled={isLoading}>
+                {isLoading ? (
+                  <>
+                    <Loader2 className="mr-2 w-4 h-4 animate-spin" />
+                    Signing in...
+                  </>
+                ) : (
+                  <>
+                    Sign In <ArrowRight className="ml-2 w-4 h-4" />
+                  </>
+                )}
               </Button>
   
           </form>

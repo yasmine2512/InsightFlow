@@ -1,18 +1,15 @@
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Mail, Lock, User, ArrowRight } from "lucide-react";
+import { Mail, Lock, User, ArrowRight ,  Loader2  } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/Input";
 import { Label } from "../components/ui/Label";
-import { useEffect,useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
+import { useState } from "react";
+
 import axios from "axios";
 export default function Register() {
-  const {login}= useAuth();
   const [error,setError] = useState(null);
   const [success,setSuccess] = useState(null);
-  const navigate = useNavigate()
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const[name,setName] = useState("");
@@ -61,8 +58,8 @@ export default function Register() {
   async function handleRegister(){
     if (!validateInputs()) return;
     if (loading) return;
-     setLoading(true);
     try{
+     setLoading(true);
      const response= await axios.post(`${API_URL}/api/auth/register`,{name,email,password});
      setSuccess(response.data.message);
     }catch(err){
@@ -109,7 +106,7 @@ export default function Register() {
             {success}
           </div>
           )}
-          <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
+          <form className="space-y-4" onSubmit={(e) => {e.preventDefault(); handleRegister();}}>
             <div className="space-y-2">
               <Label htmlFor="name">Full Name</Label>
               <div className="relative">
@@ -134,10 +131,17 @@ export default function Register() {
                 value={password} onChange={e => setPassword(e.target.value)}/>
               </div>
             </div>
-              <Button className="w-full gradient-primary border-0 text-primary-foreground mt-2"
-              onClick={handleRegister}
-              disabled={loading}>
-                Create Account <ArrowRight className="ml-2 w-4 h-4" />
+              <Button type="submit" className="w-full gradient-primary border-0 text-primary-foreground mt-2" disabled={loading}>
+                {loading ? (
+                  <>
+                    <Loader2 className="mr-2 w-4 h-4 animate-spin" />
+                    Creating Acount...
+                  </>
+                ) : (
+                  <>
+                    Create Account <ArrowRight className="ml-2 w-4 h-4" />
+                  </>
+                )}
               </Button>
           </form>
              <div className="mt-6 flex items-center gap-3">
