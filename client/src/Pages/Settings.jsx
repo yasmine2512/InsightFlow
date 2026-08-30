@@ -60,6 +60,24 @@ const {data: files = [],isLoading: filesLoading,refetch} = useQuery({
   },
 });
 
+const AI_SERVICE_URL = import.meta.env.VITE_AI_SERVICE_URL;
+
+   
+
+  useEffect(() => {
+  async function wakeUpService() {
+  try {
+      await axios.get(`${AI_SERVICE_URL}/health`, {
+          timeout: 180000,
+      });
+  } catch (error) {
+      console.error("Failed to wake up AI service:", error);
+  }
+  } 
+  wakeUpService();
+  }, [userId]);
+
+
   async function handleFileUpload(e) {
     const uploadedFile = e.target.files[0];
     if (!uploadedFile) return;

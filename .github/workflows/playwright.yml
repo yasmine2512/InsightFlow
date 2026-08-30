@@ -18,6 +18,7 @@ jobs:
           CLOUDINARY_CLOUD_NAME: ${{ secrets.CLOUDINARY_CLOUD_NAME }}
           CLOUDINARY_API_KEY: ${{ secrets.CLOUDINARY_API_KEY }}
           CLOUDINARY_API_SECRET: ${{ secrets.CLOUDINARY_API_SECRET }}
+          REDIS_URL: ${{ secrets.REDIS_URL }}
           CLIENT_URL: http://localhost:5173
           SERVER_URL: http://localhost:5000
           VITE_API_URL: http://localhost:5000

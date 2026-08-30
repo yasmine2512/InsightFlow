@@ -15,15 +15,8 @@ async function waitForAIService() {
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     try {
       const url = `${process.env.AGENT_API_URL}/health`;
-      console.log(`Waking AI service (Attempt ${attempt}/${maxAttempts})...`);
-
       const response = await axios.get(url, {
         timeout: 15000,
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-          'Accept': 'application/json, text/plain, */*',
-          'Cache-Control': 'no-cache',
-        },
       });
       if (response.status === 200) {
         return true;
