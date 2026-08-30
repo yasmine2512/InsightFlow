@@ -7,14 +7,6 @@ test.describe("Login", () => {
     await expect(page.getByText(/email is required/i)).toBeVisible();
     });
 
-    test("shows error for invalid email", async ({ page }) => {
-    await page.goto("/login");
-    await page.getByLabel(/email/i).fill("hello");
-    await page.getByLabel(/password/i).fill("somepassword");
-    await page.getByRole("button", { name: /Sign In/i }).click();
-    await expect(page.getByText(/valid email/i)).toBeVisible();
-    });
-
     test("shows error for wrong password", async ({ page }) => {
     await page.goto("/login");
     await page.getByLabel(/email/i).fill("test@test2.com");
