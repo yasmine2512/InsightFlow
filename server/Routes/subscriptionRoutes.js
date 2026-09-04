@@ -123,7 +123,7 @@ router.post("/webhook", express.raw({ type: "application/json" }), async (req, r
           const sub = event.data.object;
           await Subscription.findOneAndUpdate(
             { stripeSubscriptionId: sub.id },
-            { status: "cancelled" }
+            { status: "cancelled" ,plan:"free" }
           );
           await User.findOneAndUpdate(
             { stripeCustomerId: sub.customer },
